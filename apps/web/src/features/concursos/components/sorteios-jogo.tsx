@@ -3,9 +3,14 @@ import { useQuery } from '@tanstack/react-query';
 import type { ReactNode } from 'react';
 import { Carregando, Falha, Vazio } from '@/components/ui/estado';
 import { Paginacao } from '@/components/ui/paginacao';
-import { formatarInteiro } from '@/lib/formatadores';
+
 import type { Pagina } from '@/types/api';
-import { buscarConcursosQuery, listarConcursosQuery, type ParametrosBusca } from '../api/consultas';
+import {
+  buscarConcursosQuery,
+  calcularFaixaAcertos,
+  listarConcursosQuery,
+  type ParametrosBusca,
+} from '../api/consultas';
 import type { ResumoConcurso } from '../types';
 import { BarraBusca } from './barra-busca';
 import { TabelaConcursos } from './tabela-concursos';
@@ -15,6 +20,12 @@ interface SorteiosJogoProps {
   readonly busca: ParametrosBusca;
   readonly aoBuscar: (busca: ParametrosBusca) => void;
 }
+
+const descreverFaixa = (regra: RegraJogo, busca: ParametrosBusca): string => {
+  const { minimo, maximo } = calcularFaixaAcertos(regra, busca);
+  const rotulo = maximo === 1 ? 'acerto' : 'acertos';
+  return minimo === maximo ? `${maximo} ${rotulo}` : `${minimo} a ${maximo} ${rotulo}`;
+};
 
 interface ConteudoProps<T extends ResumoConcurso> extends SorteiosJogoProps {
   readonly pagina: Pagina<T>;
@@ -70,14 +81,16 @@ const ListaCompleta = (props: SorteiosJogoProps) => {
 };
 
 const ResultadoBusca = (props: SorteiosJogoProps) => {
-  const consulta = useQuery(buscarConcursosQuery(props.regra.codigo, props.busca));
+  const consulta = useQuery(buscarConcursosQuery(props.regra, props.busca));
 
   if (consulta.isPending) return <Estado>{<Carregando mensagem="Buscando concursos…" />}</Estado>;
   if (consulta.isError) return <Estado>{<Falha erro={consulta.error} />}</Estado>;
   if (consulta.data.itens.length === 0) {
     return (
       <Estado>
-        <Vazio>Nenhum concurso com pelo menos {props.busca.minimoAcertos} dessas dezenas.</Vazio>
+        <Vazio>
+          Nenhum concurso com {descreverFaixa(props.regra, props.busca)} entre essas dezenas.
+        </Vazio>
       </Estado>
     );
   }
@@ -107,10 +120,10 @@ export const SorteiosJogo = (props: SorteiosJogoProps) => {
       <div className="flex shrink-0 flex-col gap-3 border-b border-slate-200 px-4 py-3 xl:flex-row xl:items-center xl:justify-between dark:border-slate-800">
         <h2 className="text-sm font-semibold">
           {buscaAtiva
-            ? `Concursos com ${formatarInteiro(props.busca.minimoAcertos)}+ acertos`
+            ? `Concursos com ${descreverFaixa(props.regra, props.busca)}`
             : 'Histórico de sorteios'}
         </h2>
-        <div className="xl:w-[42rem]">
+        <div className="xl:w-[52rem]">
           <BarraBusca
             key={props.busca.dezenas.join(',')}
             regra={props.regra}

@@ -58,16 +58,18 @@ export class ConcursoService {
     const regra = obterRegraJogo(jogo);
     const { dezenas } = busca;
 
-    if (dezenas.length === 0 || dezenas.length > regra.dezenasPorSorteio) {
-      throw entradaInvalida(`Informe de 1 a ${regra.dezenasPorSorteio} dezenas`);
+    const limite = regra.dezenasPorAposta.maximo;
+    if (dezenas.length === 0 || dezenas.length > limite) {
+      throw entradaInvalida(`Informe de 1 a ${limite} dezenas`);
     }
 
     const erros = validarDezenas(regra, dezenas, dezenas.length);
     if (erros.length > 0) throw entradaInvalida(`Dezenas inválidas: ${JSON.stringify(erros)}`);
 
-    const minimoAcertos = busca.minimoAcertos ?? dezenas.length;
-    if (minimoAcertos < 1 || minimoAcertos > dezenas.length) {
-      throw entradaInvalida(`O mínimo de acertos deve estar entre 1 e ${dezenas.length}`);
+    const acertosMaximos = Math.min(dezenas.length, regra.dezenasPorSorteio);
+    const minimoAcertos = busca.minimoAcertos ?? acertosMaximos;
+    if (minimoAcertos < 1 || minimoAcertos > acertosMaximos) {
+      throw entradaInvalida(`O mínimo de acertos deve estar entre 1 e ${acertosMaximos}`);
     }
 
     const pagina = await this.#repository.buscarPorDezenas(

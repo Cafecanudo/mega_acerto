@@ -17,7 +17,7 @@ const lerBusca = (parametros: URLSearchParams): ParametrosBusca => {
 
   return {
     dezenas,
-    minimoAcertos: lerInteiro(parametros.get('minimo'), dezenas.length),
+    incluirCombinacoes: parametros.get('combinacoes') === '1',
     pagina: lerInteiro(parametros.get('pagina'), 1),
   };
 };
@@ -28,7 +28,7 @@ const paraParametros = (busca: ParametrosBusca): Record<string, string> => {
   return {
     ...pagina,
     dezenas: busca.dezenas.join(','),
-    minimo: String(busca.minimoAcertos),
+    ...(busca.incluirCombinacoes ? { combinacoes: '1' } : {}),
   };
 };
 
