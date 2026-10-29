@@ -1,13 +1,12 @@
 import { IconTarget, IconTrophy } from '@tabler/icons-react';
 import type { ReactNode } from 'react';
 import { formatarInteiro } from '@/lib/formatadores';
+import { resumirFavoritas } from '../resumir-favoritas';
 import type { Aposta } from '../types';
 
 interface ResumoFavoritasProps {
   readonly apostas: readonly Aposta[];
 }
-
-const acertosNoUltimo = (aposta: Aposta): number => aposta.conferencia.ultimoConcurso?.acertos ?? 0;
 
 const Balao = ({
   icone,
@@ -33,14 +32,8 @@ const Balao = ({
 );
 
 export const ResumoFavoritas = ({ apostas }: ResumoFavoritasProps) => {
-  if (apostas.length === 0) return null;
-
-  const comAcertos = apostas.filter((aposta) => acertosNoUltimo(aposta) > 0);
-  const melhor = apostas.reduce((atual, aposta) =>
-    acertosNoUltimo(aposta) > acertosNoUltimo(atual) ? aposta : atual,
-  );
-  const maiorAcerto = acertosNoUltimo(melhor);
-  const concurso = melhor.conferencia.ultimoConcurso?.numero;
+  const { total, comAcertos, maiorAcerto, melhor } = resumirFavoritas(apostas);
+  if (!melhor) return null;
 
   return (
     <div className="grid shrink-0 gap-3 sm:grid-cols-2">
@@ -49,10 +42,10 @@ export const ResumoFavoritas = ({ apostas }: ResumoFavoritasProps) => {
         rotulo="Favoritas com acertos"
         valor={
           <>
-            {formatarInteiro(comAcertos.length)}
+            {formatarInteiro(comAcertos)}
             <span className="text-base font-medium text-slate-400">
               {' '}
-              de {formatarInteiro(apostas.length)}
+              de {formatarInteiro(total)}
             </span>
           </>
         }
@@ -64,7 +57,7 @@ export const ResumoFavoritas = ({ apostas }: ResumoFavoritasProps) => {
         valor={formatarInteiro(maiorAcerto)}
         detalhe={
           maiorAcerto > 0
-            ? `${melhor.nome ?? `Aposta #${melhor.id}`} · concurso ${concurso ?? '—'}`
+            ? `${melhor.nome ?? `Aposta #${melhor.id}`} · concurso ${melhor.conferencia.ultimoConcurso?.numero ?? '—'}`
             : 'Nenhuma favorita acertou no último concurso'
         }
       />

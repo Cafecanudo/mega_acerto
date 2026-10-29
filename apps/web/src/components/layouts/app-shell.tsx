@@ -17,7 +17,7 @@ const Marca = () => (
 );
 
 export const AppShell = ({ menu, children }: AppShellProps) => (
-  <div className="min-h-dvh lg:grid lg:h-dvh lg:grid-cols-[14.5rem_minmax(0,1fr)] lg:overflow-hidden">
+  <div className="min-h-dvh lg:grid lg:h-dvh lg:grid-cols-[16.5rem_minmax(0,1fr)] lg:overflow-hidden">
     <aside className="sticky top-0 z-10 flex flex-col gap-3 border-b border-slate-200 bg-white/90 px-2 py-3 backdrop-blur lg:h-dvh lg:border-r lg:border-b-0 dark:border-slate-800 dark:bg-slate-900/90">
       <Marca />
       <nav className="-mx-2 overflow-x-auto px-2 lg:mx-0 lg:flex-1 lg:overflow-y-auto lg:px-0">

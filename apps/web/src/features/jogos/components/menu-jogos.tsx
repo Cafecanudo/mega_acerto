@@ -1,6 +1,7 @@
 import { apresentacoesJogo, type ApresentacaoJogo } from '@mega/domain';
 import { IconClover } from '@tabler/icons-react';
 import { useQuery } from '@tanstack/react-query';
+import type { ReactNode } from 'react';
 import { NavLink } from 'react-router';
 import { paths } from '@/config/paths';
 import { formatarDataHoraCurta, formatarInteiro } from '@/lib/formatadores';
@@ -31,7 +32,11 @@ const classeItem = ({ isActive }: { readonly isActive: boolean }) =>
       : 'hover:bg-slate-100/70 dark:hover:bg-slate-800/60'
   }`;
 
-export const MenuJogos = () => {
+interface MenuJogosProps {
+  readonly indicadores?: (codigoJogo: string) => ReactNode;
+}
+
+export const MenuJogos = ({ indicadores }: MenuJogosProps) => {
   const { data: resumos } = useQuery(listarJogosQuery());
 
   return (
@@ -52,6 +57,7 @@ export const MenuJogos = () => {
                 {descreverStatus(apresentacao, resumos?.get(apresentacao.codigo))}
               </span>
             </span>
+            {indicadores?.(apresentacao.codigo)}
           </NavLink>
         </li>
       ))}
