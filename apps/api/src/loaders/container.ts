@@ -4,10 +4,12 @@ import type { Kysely } from 'kysely';
 import type { Config } from '../config/config.ts';
 import type { Database } from '../data/database.ts';
 import { AnaliseRepository } from '../data/repositories/analise-repository.ts';
+import { ApostaRepository } from '../data/repositories/aposta-repository.ts';
 import { ConcursoLeituraRepository } from '../data/repositories/concurso-leitura-repository.ts';
 import { JogoRepository } from '../data/repositories/jogo-repository.ts';
 import type { ExecutorAnalise } from '../services/analises/executor-analise.ts';
 import { AnaliseService } from '../services/analise-service.ts';
+import { ApostaService } from '../services/aposta-service.ts';
 import { ConcursoService } from '../services/concurso-service.ts';
 import type { IngestaoService } from '../services/ingestao-service.ts';
 import { JogoService } from '../services/jogo-service.ts';
@@ -21,6 +23,7 @@ export interface Container {
   readonly jogoService: () => JogoService;
   readonly concursoService: () => ConcursoService;
   readonly analiseService: () => AnaliseService;
+  readonly apostaService: () => ApostaService;
   readonly ingestaoService: () => Promise<IngestaoService>;
   readonly executorAnalise: () => Promise<ExecutorAnalise>;
 }
@@ -92,6 +95,7 @@ export const criarContainer = (config: Config, db: Kysely<Database>, logger: Log
     jogoService: lazy(() => new JogoService(new JogoRepository(db))),
     concursoService: lazy(() => new ConcursoService(concursosLeitura())),
     analiseService: lazy(() => new AnaliseService(new AnaliseRepository(db), concursosLeitura())),
+    apostaService: lazy(() => new ApostaService(new ApostaRepository(db))),
     ingestaoService: lazy(() => criarIngestaoService(config, db, logger)),
     executorAnalise: lazy(() => criarExecutorAnalise(config, db, logger)),
   };

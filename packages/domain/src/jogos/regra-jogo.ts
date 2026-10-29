@@ -11,4 +11,10 @@ export interface RegraJogo {
   readonly dezenasPorSorteio: number;
   readonly sorteiosPorConcurso: number;
   readonly dezenasPorAposta: IntervaloNumerico;
+  readonly faixasPremiadas: readonly FaixaPremiada[];
+}
+
+export interface FaixaPremiada {
+  readonly acertos: number;
+  readonly nome: string;
 }

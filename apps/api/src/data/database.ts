@@ -91,4 +91,15 @@ export interface Database {
   payload_bruto: PayloadBrutoTabela;
   ingestao_execucao: IngestaoExecucaoTabela;
   analise: AnaliseTabela;
+  aposta: ApostaTabela;
+}
+
+export interface ApostaTabela {
+  id: Generated<number>;
+  jogo: string;
+  nome: string | null;
+  dezenas: number[];
+  favorita: Generated<boolean>;
+  criada_em: Generated<Date>;
+  atualizada_em: Generated<Date>;
 }

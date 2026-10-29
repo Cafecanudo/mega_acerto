@@ -1,8 +1,8 @@
-import { listarRegrasJogo, type RegraJogo } from '@mega/domain';
+import { listarRegrasJogo, type FaixaPremiada, type RegraJogo } from '@mega/domain';
 import type { JogoRepository, ResumoJogo } from '../data/repositories/jogo-repository.ts';
 
 export interface JogoDisponivel {
-  readonly regra: RegraJogo;
+  readonly regra: Omit<RegraJogo, 'faixasPremiadas'> & { faixasPremiadas: FaixaPremiada[] };
   readonly totalConcursos: number;
   readonly ultimoConcurso: number | null;
   readonly ultimaData: string | null;
@@ -40,7 +40,7 @@ export class JogoService {
     return listarRegrasJogo().map((regra) => {
       const resumo = resumos.get(regra.codigo) ?? resumoVazio(regra.codigo);
       return {
-        regra,
+        regra: { ...regra, faixasPremiadas: [...regra.faixasPremiadas] },
         totalConcursos: resumo.totalConcursos,
         ultimoConcurso: resumo.ultimoConcurso,
         ultimaData: resumo.ultimaData,

@@ -8,4 +8,9 @@ export const megaSena = {
   dezenasPorSorteio: 6,
   sorteiosPorConcurso: 1,
   dezenasPorAposta: { minimo: 6, maximo: 20 },
+  faixasPremiadas: [
+    { acertos: 6, nome: 'Sena' },
+    { acertos: 5, nome: 'Quina' },
+    { acertos: 4, nome: 'Quadra' },
+  ],
 } as const satisfies RegraJogo;

@@ -13,6 +13,7 @@ export const RegraJogoSchema = Type.Object({
   dezenasPorSorteio: Type.Integer(),
   sorteiosPorConcurso: Type.Integer(),
   dezenasPorAposta: IntervaloSchema,
+  faixasPremiadas: Type.Array(Type.Object({ acertos: Type.Integer(), nome: Type.String() })),
 });
 
 export const JogoDisponivelSchema = Type.Object({
