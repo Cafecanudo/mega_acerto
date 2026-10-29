@@ -18,5 +18,33 @@ services:
       timeout: 3s
       retries: 10
 
+  app:
+    build:
+      context: .
+      dockerfile: docker/app.Dockerfile
+    restart: unless-stopped
+    depends_on:
+      db:
+        condition: service_healthy
+    environment:
+      DATABASE_URL: postgres://mega:mega@db:5432/mega_acerto
+      LOG_LEVEL: ${LOG_LEVEL:-info}
+      CAIXA_INTERVALO_MS: ${CAIXA_INTERVALO_MS:-500}
+      SINCRONIZACAO_INTERVALO_MIN: ${SINCRONIZACAO_INTERVALO_MIN:-30}
+    ports:
+      - '${APP_PORTA_HOST:-3000}:3000'
+    healthcheck:
+      test:
+        [
+          'CMD',
+          'node',
+          '-e',
+          "fetch('http://localhost:3000/api/saude').then((r) => process.exit(r.ok ? 0 : 1)).catch(() => process.exit(1))",
+        ]
+      interval: 15s
+      timeout: 5s
+      start_period: 20s
+      retries: 3
+
 volumes:
   dados-postgres:

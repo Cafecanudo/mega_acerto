@@ -4,20 +4,27 @@
 
 Maximizar o valor esperado das apostas e validar estratégias com backtest, usando o Claude (assinatura Max via Claude Code headless) para todas as estimativas. O projeto coleta, organiza e valida; o Claude calcula.
 
-## Fase 1: Fundação de dados (Mega-Sena)
+## Fase 1: Fundação de dados (Mega-Sena) — concluída
 
-- [ ] Monorepo pnpm, TypeScript, ESLint, Prettier, Lefthook, `.editorconfig`
-- [ ] `packages/domain` com a configuração declarativa da Mega-Sena
-- [ ] API Fastify com config validada, loaders e PostgreSQL via Kysely
-- [ ] Migrations: `jogo`, `concurso`, `dezena_sorteada`, `premiacao`, `payload_bruto`, `ingestao_execucao`
-- [ ] Cliente da Caixa: throttling, retry com backoff, timeout, sanitização de `\u0000`, parse de datas e dezenas
-- [ ] Ingestão retomável (backfill) e sincronização periódica do último concurso
-- [ ] Validação de integridade (sequência sem buracos, dezenas distintas no universo)
-- [ ] Endpoints: jogos, concursos paginados, detalhe, busca por dezenas, status e disparo da ingestão
-- [ ] Front React: histórico paginado, detalhe do concurso, busca por combinação, status da ingestão
-- [ ] Docker Compose com `db` e `app`
+- [x] Monorepo pnpm, TypeScript, ESLint, Prettier, Lefthook, `.editorconfig`
+- [x] `packages/domain` com a configuração declarativa da Mega-Sena
+- [x] API Fastify com config validada, loaders e PostgreSQL via Kysely
+- [x] Migrations: `jogo`, `concurso`, `dezena_sorteada`, `premiacao`, `payload_bruto`, `ingestao_execucao`
+- [x] Cliente da Caixa: throttling, retry com backoff, timeout, sanitização de `\u0000`, parse de datas e dezenas
+- [x] Ingestão retomável (backfill) e sincronização periódica do último concurso
+- [x] Validação de integridade (sequência sem buracos, dezenas distintas no universo)
+- [x] Endpoints: jogos, concursos paginados, detalhe, busca por dezenas, status e disparo da ingestão
+- [x] Front React: histórico paginado, detalhe do concurso, busca por combinação, status da ingestão
+- [x] Docker Compose com `db` e `app`
 
 Critério de pronto: todos os concursos da Mega-Sena no banco, validação sem erros e sincronização captando o próximo sorteio sozinha.
+
+Resultado (29/10/2026): 3077 concursos importados, sem lacunas e sem dezenas inválidas; ordem de extração presente em todos os concursos; banco com 18 MB.
+
+Observações de dados para as próximas fases:
+
+- 1069 concursos sem `valorArrecadado` (zero na Caixa, gravado como nulo); o primeiro com arrecadação é o 106. A regressão de popularidade (Fase 4) precisa restringir a amostra aos concursos com arrecadação.
+- A sincronização periódica verifica o último concurso a cada 30 minutos (`SINCRONIZACAO_INTERVALO_MIN`), sem depender do calendário de sorteios.
 
 ## Fase 2: Integração com Claude
 

@@ -49,6 +49,11 @@ corepack pnpm format
 docker compose up -d --build
 ```
 
+- Desenvolvimento: `dev:db` sobe só o Postgres (host `localhost:5442`); `dev` roda API (`:3000`, lê `.env` da raiz) e Vite (`:5173`, proxy de `/api`). Copie `.env.example` para `.env`.
+- Uso local completo: `docker compose up -d --build` sobe `db` e `app`; acesse `http://localhost:3000`. A API serve o build do front e aplica migrations ao iniciar.
+- Não rodar a API de desenvolvimento e o container `app` ao mesmo tempo: ambos usam a porta 3000 e disparariam a ingestão em paralelo.
+- Ao testar processos em background, encerrar apenas o PID iniciado na sessão; nunca matar todos os processos `node`.
+
 ## API da Caixa
 
 - Base: `https://servicebus2.caixa.gov.br/portaldeloterias/api/{jogo}/{concurso?}`. Sem concurso, retorna o último.
