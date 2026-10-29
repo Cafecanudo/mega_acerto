@@ -29,8 +29,12 @@ export interface ItemEfetivacao {
   readonly favoritoId: number | null;
 }
 
+export interface ItemEfetivacaoJogo extends ItemEfetivacao {
+  readonly jogo: string;
+}
+
 export interface ApostasEfetivadas {
-  readonly concurso: number;
+  readonly concursos: { readonly jogo: string; readonly concurso: number }[];
   readonly ids: number[];
   readonly valorTotal: number | null;
 }
@@ -38,10 +42,8 @@ export interface ApostasEfetivadas {
 export const useEfetivarApostas = () => {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: (efetivacao: {
-      readonly jogo: string;
-      readonly itens: readonly ItemEfetivacao[];
-    }) => api.post<ApostasEfetivadas>('/apostas', efetivacao),
+    mutationFn: (itens: readonly ItemEfetivacaoJogo[]) =>
+      api.post<ApostasEfetivadas>('/apostas', { itens }),
     onSuccess: () => queryClient.invalidateQueries({ queryKey: CHAVE_APOSTAS }),
   });
 };

@@ -5,6 +5,7 @@ import {
   obterRegraJogo,
   validarAposta,
   type PremioAposta,
+  type RegraJogo,
 } from '@mega/domain';
 import type { ValorJogoRepository } from '../data/repositories/valor-jogo-repository.ts';
 import type {
@@ -62,19 +63,27 @@ export interface ResumoApostas {
   } | null;
 }
 
-export interface EfetivacaoApostas {
+interface ItemEfetivacao {
   readonly jogo: string;
-  readonly itens: readonly {
-    readonly dezenas: readonly number[];
-    readonly nome?: string | null | undefined;
-    readonly favoritoId?: number | null | undefined;
-  }[];
+  readonly dezenas: readonly number[];
+  readonly nome?: string | null | undefined;
+  readonly favoritoId?: number | null | undefined;
+}
+
+export interface EfetivacaoApostas {
+  readonly itens: readonly ItemEfetivacao[];
 }
 
 export interface ApostasEfetivadas {
-  readonly concurso: number;
+  readonly concursos: { jogo: string; concurso: number }[];
   readonly ids: number[];
   readonly valorTotal: number | null;
+}
+
+interface ContextoJogo {
+  readonly regra: RegraJogo;
+  readonly concurso: number;
+  readonly valorSimples: number | null;
 }
 
 const LIMITE_DEZENAS_FILTRO = 20;
@@ -100,44 +109,56 @@ export class ApostaService {
   }
 
   async efetivar(efetivacao: EfetivacaoApostas): Promise<ApostasEfetivadas> {
-    if (!isCodigoJogo(efetivacao.jogo)) {
-      throw entradaInvalida(`Jogo ${efetivacao.jogo} ainda não está disponível`);
-    }
-    const regra = obterRegraJogo(efetivacao.jogo);
-
     if (efetivacao.itens.length === 0 || efetivacao.itens.length > LIMITE_ITENS_EFETIVACAO) {
       throw entradaInvalida(`Informe de 1 a ${LIMITE_ITENS_EFETIVACAO} apostas`);
     }
 
-    const valorSimples = await this.#valores.obter(regra.codigo);
+    const contextos = await this.#prepararJogos(efetivacao.itens.map((item) => item.jogo));
 
     const itens: NovaApostaItem[] = efetivacao.itens.map((item, indice) => {
-      const erros = validarAposta(regra, item.dezenas);
+      const contexto = contextos.get(item.jogo);
+      if (!contexto) throw entradaInvalida(`Jogo ${item.jogo} ainda não está disponível`);
+      const erros = validarAposta(contexto.regra, item.dezenas);
       if (erros.length > 0) {
         throw entradaInvalida(`Aposta ${indice + 1} inválida: ${JSON.stringify(erros)}`);
       }
       const nome = item.nome?.trim().slice(0, TAMANHO_MAXIMO_NOME) ?? '';
       return {
+        jogo: item.jogo,
+        concurso: contexto.concurso,
         dezenas: item.dezenas,
         nome: nome.length > 0 ? nome : null,
         favoritoId: item.favoritoId ?? null,
         valor:
-          valorSimples === null
+          contexto.valorSimples === null
             ? null
-            : calcularValorAposta(regra, item.dezenas.length, valorSimples),
+            : calcularValorAposta(contexto.regra, item.dezenas.length, contexto.valorSimples),
       };
     });
 
-    const ultimo = await this.#concursos.obterNumeroUltimo(regra.codigo);
-    if (ultimo === null) throw entradaInvalida(`Não há concursos importados para ${regra.codigo}`);
+    const ids = await this.#repository.criarLote(itens);
+    const valorTotal = itens.some((item) => item.valor === null)
+      ? null
+      : Math.round(itens.reduce((soma, item) => soma + (item.valor ?? 0), 0) * 100) / 100;
+    const concursos = [...contextos.values()].map(({ regra, concurso }) => ({
+      jogo: regra.codigo,
+      concurso,
+    }));
+    return { concursos, ids, valorTotal };
+  }
 
-    const concurso = ultimo + 1;
-    const ids = await this.#repository.criarLote(regra.codigo, concurso, itens);
-    const valorTotal =
-      valorSimples === null
-        ? null
-        : Math.round(itens.reduce((soma, item) => soma + (item.valor ?? 0), 0) * 100) / 100;
-    return { concurso, ids, valorTotal };
+  async #prepararJogos(jogos: readonly string[]): Promise<Map<string, ContextoJogo>> {
+    const contextos = new Map<string, ContextoJogo>();
+    for (const jogo of new Set(jogos)) {
+      if (!isCodigoJogo(jogo)) throw entradaInvalida(`Jogo ${jogo} ainda não está disponível`);
+      const [ultimo, valorSimples] = await Promise.all([
+        this.#concursos.obterNumeroUltimo(jogo),
+        this.#valores.obter(jogo),
+      ]);
+      if (ultimo === null) throw entradaInvalida(`Não há concursos importados para ${jogo}`);
+      contextos.set(jogo, { regra: obterRegraJogo(jogo), concurso: ultimo + 1, valorSimples });
+    }
+    return contextos;
   }
 
   async listar(consulta: ConsultaApostas): Promise<PaginaApostas> {

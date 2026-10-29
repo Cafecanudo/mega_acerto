@@ -7,7 +7,7 @@ import {
   obterRegraJogo,
   type ApresentacaoJogo,
 } from '@mega/domain';
-import { IconCheck, IconPlus, IconTrash } from '@tabler/icons-react';
+import { IconCheck, IconClover, IconPlus, IconTrash } from '@tabler/icons-react';
 import { useState, type ReactNode } from 'react';
 import { LinhaDezenas } from '@/components/dezenas/linha-dezenas';
 import { SeletorDezenas } from '@/components/dezenas/seletor-dezenas';
@@ -15,7 +15,12 @@ import { Dialogo } from '@/components/ui/dialogo';
 import { Vazio } from '@/components/ui/estado';
 import { estiloCorJogo } from '@/lib/cor-jogo';
 import { formatarInteiro, formatarMoeda } from '@/lib/formatadores';
-import { useEfetivarApostas, type ApostasEfetivadas, type ItemEfetivacao } from '../api/apostas';
+import {
+  useEfetivarApostas,
+  type ApostasEfetivadas,
+  type ItemEfetivacao,
+  type ItemEfetivacaoJogo,
+} from '../api/apostas';
 
 export interface SelecaoParaAposta {
   readonly jogo: string;
@@ -34,7 +39,7 @@ interface DialogoApostarProps {
   readonly valorApostaSimples?: (jogo: string) => number | null;
 }
 
-interface ItemLista extends ItemEfetivacao {
+interface ItemLista extends ItemEfetivacaoJogo {
   readonly chave: number;
 }
 
@@ -43,11 +48,59 @@ const jogosDisponiveis: readonly ApresentacaoJogo[] = apresentacoesJogo.filter(
     apresentacao.disponibilidade === 'disponivel' && isCodigoJogo(apresentacao.codigo),
 );
 
-const chaveDezenas = (dezenas: readonly number[]): string =>
-  [...dezenas].sort((a, b) => a - b).join(',');
+const chaveItem = (jogo: string, dezenas: readonly number[]): string =>
+  `${jogo}:${[...dezenas].sort((a, b) => a - b).join(',')}`;
 
 const classeSelect =
   'rounded-lg border border-slate-300 bg-white px-2.5 py-1.5 text-sm dark:border-slate-700 dark:bg-slate-950';
+
+const ItemDaLista = ({
+  item,
+  valor,
+  aoRemover,
+}: {
+  readonly item: ItemLista;
+  readonly valor: number | null;
+  readonly aoRemover: () => void;
+}) => {
+  const apresentacao = obterApresentacaoJogo(item.jogo);
+  if (!apresentacao || !isCodigoJogo(item.jogo)) return null;
+
+  return (
+    <li
+      style={estiloCorJogo(apresentacao)}
+      className="flex items-center justify-between gap-3 rounded-lg border border-slate-100 px-3 py-2 dark:border-slate-800"
+    >
+      <div className="flex min-w-0 flex-col gap-1">
+        <span className="flex flex-wrap items-center gap-x-1.5 text-xs text-slate-500 dark:text-slate-400">
+          <span className="inline-flex items-center gap-1 rounded-full bg-jogo/15 px-2 py-0.5 font-semibold text-slate-800 dark:text-slate-100">
+            <IconClover
+              aria-hidden
+              size="0.875rem"
+              stroke={2}
+              color={apresentacao.cor}
+              className="dark:brightness-[1.8] dark:saturate-150"
+            />
+            {apresentacao.nome}
+          </span>
+          {item.nome ?? 'Aposta manual'} · {item.dezenas.length} dezenas ·
+          <strong className="font-semibold text-slate-700 dark:text-slate-200">
+            {formatarMoeda(valor)}
+          </strong>
+        </span>
+        <LinhaDezenas regra={obterRegraJogo(item.jogo)} dezenas={item.dezenas} tamanho="sm" />
+      </div>
+      <button
+        type="button"
+        aria-label="Remover da lista"
+        onClick={aoRemover}
+        className="rounded-md p-1.5 text-slate-500 transition hover:bg-slate-100 hover:text-rose-600 dark:hover:bg-slate-800"
+      >
+        <IconTrash aria-hidden size="1rem" />
+      </button>
+    </li>
+  );
+};
 
 const Conteudo = ({
   aoEfetivar,
@@ -67,20 +120,24 @@ const Conteudo = ({
   const { minimo, maximo } = regra.dezenasPorAposta;
   const quantidadeValida = dezenas.size >= minimo && dezenas.size <= maximo;
   const selecionadas = [...dezenas].sort((a, b) => a - b);
-  const valorSimples = valorApostaSimples?.(jogo) ?? null;
-  const valorDe = (quantidade: number): number | null =>
-    valorSimples === null ? null : calcularValorAposta(regra, quantidade, valorSimples);
-  const valorTotal =
-    valorSimples === null
+  const valorDe = (codigo: string, quantidade: number): number | null => {
+    const valorSimples = valorApostaSimples?.(codigo) ?? null;
+    return valorSimples === null || !isCodigoJogo(codigo)
       ? null
-      : itens.reduce((soma, item) => soma + (valorDe(item.dezenas.length) ?? 0), 0);
+      : calcularValorAposta(obterRegraJogo(codigo), quantidade, valorSimples);
+  };
+  const valoresItens = itens.map((item) => valorDe(item.jogo, item.dezenas.length));
+  const jogosSemValor = [
+    ...new Set(itens.filter((_, indice) => valoresItens[indice] === null).map((item) => item.jogo)),
+  ].map((codigo) => obterApresentacaoJogo(codigo)?.nome ?? codigo);
+  const valorTotal = valoresItens.reduce<number>((soma, valor) => soma + (valor ?? 0), 0);
 
   const adicionar = (novos: readonly ItemEfetivacao[]) => {
-    const existentes = new Set(itens.map((item) => chaveDezenas(item.dezenas)));
-    const ineditos = novos.filter((item) => !existentes.has(chaveDezenas(item.dezenas)));
+    const existentes = new Set(itens.map((item) => chaveItem(item.jogo, item.dezenas)));
+    const ineditos = novos.filter((item) => !existentes.has(chaveItem(jogo, item.dezenas)));
     setItens([
       ...itens,
-      ...ineditos.map((item, indice) => ({ ...item, chave: proximaChave + indice })),
+      ...ineditos.map((item, indice) => ({ ...item, jogo, chave: proximaChave + indice })),
     ]);
     setProximaChave(proximaChave + ineditos.length);
   };
@@ -101,19 +158,16 @@ const Conteudo = ({
   const trocarJogo = (codigo: string) => {
     setJogo(codigo);
     setDezenas(new Set());
-    setItens([]);
   };
 
   const confirmar = () => {
     efetivar.mutate(
-      {
-        jogo,
-        itens: itens.map(({ dezenas: dezenasItem, nome, favoritoId }) => ({
-          dezenas: dezenasItem,
-          nome,
-          favoritoId,
-        })),
-      },
+      itens.map(({ jogo: jogoItem, dezenas: dezenasItem, nome, favoritoId }) => ({
+        jogo: jogoItem,
+        dezenas: dezenasItem,
+        nome,
+        favoritoId,
+      })),
       { onSuccess: aoEfetivar },
     );
   };
@@ -166,7 +220,9 @@ const Conteudo = ({
                 ? 'aposta simples'
                 : 'apostas simples'}
               {' · '}
-              <strong className="font-semibold">{formatarMoeda(valorDe(dezenas.size))}</strong>
+              <strong className="font-semibold">
+                {formatarMoeda(valorDe(jogo, dezenas.size))}
+              </strong>
             </p>
           )}
           <button
@@ -203,47 +259,34 @@ const Conteudo = ({
               <Vazio>Marque dezenas ou adicione favoritos para montar suas apostas.</Vazio>
             ) : (
               <ul className="flex flex-col gap-2">
-                {itens.map((item) => (
-                  <li
+                {itens.map((item, indice) => (
+                  <ItemDaLista
                     key={item.chave}
-                    className="flex items-center justify-between gap-3 rounded-lg border border-slate-100 px-3 py-2 dark:border-slate-800"
-                  >
-                    <div className="flex min-w-0 flex-col gap-1">
-                      <span className="text-xs text-slate-500 dark:text-slate-400">
-                        {item.nome ?? 'Aposta manual'} · {item.dezenas.length} dezenas ·{' '}
-                        <strong className="font-semibold text-slate-700 dark:text-slate-200">
-                          {formatarMoeda(valorDe(item.dezenas.length))}
-                        </strong>
-                      </span>
-                      <LinhaDezenas regra={regra} dezenas={item.dezenas} tamanho="sm" />
-                    </div>
-                    <button
-                      type="button"
-                      aria-label="Remover da lista"
-                      onClick={() => {
-                        setItens(itens.filter((atual) => atual.chave !== item.chave));
-                      }}
-                      className="rounded-md p-1.5 text-slate-500 transition hover:bg-slate-100 hover:text-rose-600 dark:hover:bg-slate-800"
-                    >
-                      <IconTrash aria-hidden size="1rem" />
-                    </button>
-                  </li>
+                    item={item}
+                    valor={valoresItens[indice] ?? null}
+                    aoRemover={() => {
+                      setItens(itens.filter((atual) => atual.chave !== item.chave));
+                    }}
+                  />
                 ))}
               </ul>
             )}
           </div>
           <footer className="flex shrink-0 flex-wrap items-center justify-between gap-3 border-t border-slate-200 px-4 py-3 dark:border-slate-800">
             <span className="flex flex-col text-xs text-slate-500 dark:text-slate-400">
-              <span>As apostas valem para o próximo concurso de {apresentacao.nome}.</span>
-              {valorSimples === null ? (
+              <span>Cada aposta vale para o próximo concurso do seu jogo.</span>
+              {jogosSemValor.length > 0 && (
                 <span className="text-amber-600 dark:text-amber-400">
-                  Valor não configurado. Defina em Configurações › Valores.
-                </span>
-              ) : (
-                <span className="text-sm text-slate-700 dark:text-slate-200">
-                  Total: <strong className="font-semibold">{formatarMoeda(valorTotal)}</strong>
+                  Valor não configurado para {jogosSemValor.join(', ')}. Defina em Configurações ›
+                  Valores.
                 </span>
               )}
+              <span className="text-sm text-slate-700 dark:text-slate-200">
+                Total:{' '}
+                <strong className="font-semibold">
+                  {formatarMoeda(itens.length > 0 && jogosSemValor.length > 0 ? null : valorTotal)}
+                </strong>
+              </span>
             </span>
             <div className="flex items-center gap-3">
               {efetivar.isError && (

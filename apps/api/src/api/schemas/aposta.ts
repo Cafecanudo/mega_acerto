@@ -32,10 +32,10 @@ export const PaginaApostasSchema = Type.Object({
 
 export const EfetivacaoApostasSchema = Type.Object(
   {
-    jogo: Type.String({ minLength: 1 }),
     itens: Type.Array(
       Type.Object(
         {
+          jogo: Type.String({ minLength: 1 }),
           dezenas: Type.Array(Type.Integer({ minimum: 0, maximum: 100 }), {
             minItems: 1,
             maxItems: 30,
@@ -52,7 +52,7 @@ export const EfetivacaoApostasSchema = Type.Object(
 );
 
 export const ApostasEfetivadasSchema = Type.Object({
-  concurso: Type.Integer(),
+  concursos: Type.Array(Type.Object({ jogo: Type.String(), concurso: Type.Integer() })),
   ids: Type.Array(Type.Integer()),
   valorTotal: Nulavel(Type.Number()),
 });

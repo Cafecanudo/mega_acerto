@@ -126,11 +126,7 @@ export class ApostaRepository {
     }));
   }
 
-  async criarLote(
-    jogo: string,
-    concurso: number,
-    itens: readonly NovaApostaItem[],
-  ): Promise<number[]> {
+  async criarLote(itens: readonly NovaApostaItem[]): Promise<number[]> {
     return this.#db.transaction().execute(async (trx) => {
       const idsFavoritos = itens.flatMap((item) =>
         item.favoritoId === null ? [] : [item.favoritoId],
@@ -151,8 +147,8 @@ export class ApostaRepository {
         .insertInto('aposta')
         .values(
           itens.map((item) => ({
-            jogo,
-            concurso,
+            jogo: item.jogo,
+            concurso: item.concurso,
             nome: item.nome,
             valor: item.valor,
             dezenas: sql<number[]>`${sql.val([...item.dezenas].sort((a, b) => a - b))}::smallint[]`,
@@ -169,6 +165,8 @@ export class ApostaRepository {
 }
 
 export interface NovaApostaItem {
+  readonly jogo: string;
+  readonly concurso: number;
   readonly dezenas: readonly number[];
   readonly nome: string | null;
   readonly favoritoId: number | null;
