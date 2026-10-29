@@ -16,6 +16,7 @@ export const criarServidor = async (container: Container, logger: FastifyBaseLog
   await app.register(import('./routes/jogos.ts'), opcoes);
   await app.register(import('./routes/concursos.ts'), opcoes);
   await app.register(import('./routes/ingestao.ts'), opcoes);
+  await app.register(import('./routes/analises.ts'), opcoes);
 
   await registrarWebEstatico(app, container.config.WEB_DIST_DIR, PREFIXO_API);
 

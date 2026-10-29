@@ -25,6 +25,11 @@ const EsquemaConfig = Type.Object({
   CAIXA_TENTATIVAS: Type.Integer({ default: 4, minimum: 1 }),
   SINCRONIZACAO_INTERVALO_MIN: Type.Integer({ default: 30, minimum: 1 }),
   SINCRONIZACAO_AO_INICIAR: Type.Boolean({ default: true }),
+  CLAUDE_EXECUTAVEL: Type.String({ default: 'claude' }),
+  CLAUDE_CODE_OAUTH_TOKEN: Type.Optional(Type.String({ minLength: 1 })),
+  ANALISE_DIRETORIO_TRABALHO: Type.Optional(Type.String()),
+  ANALISE_TIMEOUT_MIN: Type.Integer({ default: 30, minimum: 1 }),
+  ANALISE_INTERVALO_FILA_MS: Type.Integer({ default: 3000, minimum: 500 }),
 });
 
 export type Config = Static<typeof EsquemaConfig>;
