@@ -1,30 +1,12 @@
 import type { RegraJogo } from '@mega/domain';
 import { keepPreviousData, queryOptions } from '@tanstack/react-query';
 import { api } from '@/lib/api-client';
+import { calcularFaixaAcertos, type ParametrosBusca } from '@/lib/busca-dezenas';
 import { chavesConsulta } from '@/lib/react-query';
 import type { Pagina } from '@/types/api';
 import type { DetalheConcurso, ResultadoBusca, ResumoConcurso } from '../types';
 
 export const TAMANHO_PAGINA = 20;
-
-export const MINIMO_ACERTOS_COMBINACOES = 3;
-
-export interface ParametrosBusca {
-  readonly dezenas: readonly number[];
-  readonly incluirCombinacoes: boolean;
-  readonly pagina: number;
-}
-
-export interface FaixaAcertos {
-  readonly minimo: number;
-  readonly maximo: number;
-}
-
-export const calcularFaixaAcertos = (regra: RegraJogo, busca: ParametrosBusca): FaixaAcertos => {
-  const maximo = Math.min(busca.dezenas.length, regra.dezenasPorSorteio);
-  const minimo = busca.incluirCombinacoes ? Math.min(MINIMO_ACERTOS_COMBINACOES, maximo) : maximo;
-  return { minimo, maximo };
-};
 
 export const listarConcursosQuery = (jogo: string, pagina: number) =>
   queryOptions({

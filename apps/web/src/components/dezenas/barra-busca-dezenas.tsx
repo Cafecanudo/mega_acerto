@@ -1,15 +1,16 @@
 import { formatarDezena, type RegraJogo } from '@mega/domain';
 import { IconGridDots, IconSearch, IconX } from '@tabler/icons-react';
-import { useState, type SyntheticEvent } from 'react';
-import { MINIMO_ACERTOS_COMBINACOES, type ParametrosBusca } from '../api/consultas';
+import { useEffect, useState, type SyntheticEvent } from 'react';
 import { SeletorDezenas } from '@/components/dezenas/seletor-dezenas';
+import { MINIMO_ACERTOS_COMBINACOES, type ParametrosBusca } from '@/lib/busca-dezenas';
 
-interface BarraBuscaProps {
+interface BarraBuscaDezenasProps {
   readonly regra: RegraJogo;
   readonly busca: ParametrosBusca;
   readonly aoBuscar: (busca: ParametrosBusca) => void;
 }
 
+const ESPERA_DIGITACAO_MS = 350;
 const SEPARADORES = /[\s,;]+/;
 
 const interpretarTexto = (regra: RegraJogo, texto: string): number[] => {
@@ -22,7 +23,7 @@ const interpretarTexto = (regra: RegraJogo, texto: string): number[] => {
         dezena >= regra.universo.minimo &&
         dezena <= regra.universo.maximo,
     );
-  return [...new Set(dezenas)].slice(0, regra.dezenasPorAposta.maximo);
+  return [...new Set(dezenas)].slice(0, regra.dezenasPorAposta.maximo).sort((a, b) => a - b);
 };
 
 const formatarLista = (regra: RegraJogo, dezenas: Iterable<number>): string =>
@@ -31,17 +32,34 @@ const formatarLista = (regra: RegraJogo, dezenas: Iterable<number>): string =>
     .map((dezena) => formatarDezena(regra, dezena))
     .join(' ');
 
+const chaveBusca = (dezenas: readonly number[], incluirCombinacoes: boolean): string =>
+  `${dezenas.join(',')}|${String(incluirCombinacoes)}`;
+
 const botao =
   'inline-flex items-center gap-2 rounded-lg border border-slate-300 px-3 py-1.5 text-sm font-medium transition hover:bg-slate-100 dark:border-slate-700 dark:hover:bg-slate-800';
 
-export const BarraBusca = ({ regra, busca, aoBuscar }: BarraBuscaProps) => {
+export const BarraBuscaDezenas = ({ regra, busca, aoBuscar }: BarraBuscaDezenasProps) => {
   const [texto, setTexto] = useState(() => formatarLista(regra, busca.dezenas));
   const [gradeAberta, setGradeAberta] = useState(false);
   const [incluirCombinacoes, setIncluirCombinacoes] = useState(busca.incluirCombinacoes);
 
   const limite = regra.dezenasPorAposta.maximo;
-  const selecionadas = new Set(interpretarTexto(regra, texto));
-  const buscaAtiva = busca.dezenas.length > 0;
+  const selecionadas = interpretarTexto(regra, texto);
+  const chaveDesejada = chaveBusca(selecionadas, incluirCombinacoes);
+  const chaveAplicada = chaveBusca(busca.dezenas, busca.incluirCombinacoes);
+
+  const aplicar = () => {
+    if (chaveDesejada === chaveAplicada) return;
+    aoBuscar({ dezenas: selecionadas, incluirCombinacoes, pagina: 1 });
+  };
+
+  useEffect(() => {
+    if (chaveDesejada === chaveAplicada) return;
+    const temporizador = setTimeout(aplicar, ESPERA_DIGITACAO_MS);
+    return () => {
+      clearTimeout(temporizador);
+    };
+  });
 
   const alternar = (dezena: number) => {
     const proximas = new Set(selecionadas);
@@ -49,25 +67,20 @@ export const BarraBusca = ({ regra, busca, aoBuscar }: BarraBuscaProps) => {
     setTexto(formatarLista(regra, proximas));
   };
 
-  const buscar = (evento?: SyntheticEvent) => {
-    evento?.preventDefault();
+  const enviar = (evento: SyntheticEvent) => {
+    evento.preventDefault();
     setGradeAberta(false);
-    aoBuscar({
-      dezenas: [...selecionadas].sort((a, b) => a - b),
-      incluirCombinacoes,
-      pagina: 1,
-    });
+    aplicar();
   };
 
   const limpar = () => {
     setTexto('');
     setGradeAberta(false);
-    aoBuscar({ dezenas: [], incluirCombinacoes, pagina: 1 });
   };
 
   return (
     <div className="relative flex flex-col gap-3">
-      <form onSubmit={buscar} className="flex flex-wrap items-center gap-2">
+      <form onSubmit={enviar} className="flex flex-wrap items-center gap-2">
         <label className="flex min-w-60 flex-1 items-center gap-2 rounded-lg border border-slate-300 bg-white px-3 py-1.5 focus-within:border-jogo focus-within:ring-2 focus-within:ring-jogo/30 dark:border-slate-700 dark:bg-slate-950">
           <IconSearch aria-hidden size="1.125rem" className="shrink-0 text-slate-400" />
           <input
@@ -81,12 +94,12 @@ export const BarraBusca = ({ regra, busca, aoBuscar }: BarraBuscaProps) => {
             className="w-full bg-transparent font-mono text-sm outline-none placeholder:font-sans placeholder:text-slate-400"
           />
           <span className="shrink-0 text-xs text-slate-400 tabular-nums">
-            {selecionadas.size}/{limite}
+            {selecionadas.length}/{limite}
           </span>
         </label>
         <label
           className="flex items-center gap-2 text-sm text-slate-600 dark:text-slate-300"
-          title={`Inclui concursos com ${MINIMO_ACERTOS_COMBINACOES} ou mais acertos entre as dezenas escolhidas`}
+          title={`Inclui resultados com ${MINIMO_ACERTOS_COMBINACOES} ou mais acertos entre as dezenas escolhidas`}
         >
           <input
             type="checkbox"
@@ -109,14 +122,7 @@ export const BarraBusca = ({ regra, busca, aoBuscar }: BarraBuscaProps) => {
           <IconGridDots aria-hidden size="1.125rem" />
           Grade
         </button>
-        <button
-          type="submit"
-          disabled={selecionadas.size === 0}
-          className="rounded-lg bg-jogo px-4 py-1.5 text-sm font-semibold text-jogo-texto transition hover:brightness-110 disabled:cursor-not-allowed disabled:opacity-40"
-        >
-          Buscar
-        </button>
-        {buscaAtiva && (
+        {texto.length > 0 && (
           <button type="button" className={botao} onClick={limpar}>
             <IconX aria-hidden size="1.125rem" />
             Limpar
@@ -129,12 +135,12 @@ export const BarraBusca = ({ regra, busca, aoBuscar }: BarraBuscaProps) => {
           <div className="mb-3 flex items-center justify-between text-sm">
             <span className="font-medium">Escolha até {limite} dezenas</span>
             <span className="text-slate-500 dark:text-slate-400">
-              {selecionadas.size}/{limite}
+              {selecionadas.length}/{limite}
             </span>
           </div>
           <SeletorDezenas
             regra={regra}
-            selecionadas={selecionadas}
+            selecionadas={new Set(selecionadas)}
             limite={limite}
             aoAlternar={alternar}
           />

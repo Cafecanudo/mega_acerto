@@ -3,16 +3,11 @@ import { useQuery } from '@tanstack/react-query';
 import type { ReactNode } from 'react';
 import { Carregando, Falha, Vazio } from '@/components/ui/estado';
 import { Paginacao } from '@/components/ui/paginacao';
-
+import { BarraBuscaDezenas } from '@/components/dezenas/barra-busca-dezenas';
+import { descreverFaixa, type ParametrosBusca } from '@/lib/busca-dezenas';
 import type { Pagina } from '@/types/api';
-import {
-  buscarConcursosQuery,
-  calcularFaixaAcertos,
-  listarConcursosQuery,
-  type ParametrosBusca,
-} from '../api/consultas';
+import { buscarConcursosQuery, listarConcursosQuery } from '../api/consultas';
 import type { ResumoConcurso } from '../types';
-import { BarraBusca } from './barra-busca';
 import { TabelaConcursos } from './tabela-concursos';
 
 interface SorteiosJogoProps {
@@ -20,12 +15,6 @@ interface SorteiosJogoProps {
   readonly busca: ParametrosBusca;
   readonly aoBuscar: (busca: ParametrosBusca) => void;
 }
-
-const descreverFaixa = (regra: RegraJogo, busca: ParametrosBusca): string => {
-  const { minimo, maximo } = calcularFaixaAcertos(regra, busca);
-  const rotulo = maximo === 1 ? 'acerto' : 'acertos';
-  return minimo === maximo ? `${maximo} ${rotulo}` : `${minimo} a ${maximo} ${rotulo}`;
-};
 
 interface ConteudoProps<T extends ResumoConcurso> extends SorteiosJogoProps {
   readonly pagina: Pagina<T>;
@@ -124,12 +113,7 @@ export const SorteiosJogo = (props: SorteiosJogoProps) => {
             : 'Histórico de sorteios'}
         </h2>
         <div className="xl:w-[52rem]">
-          <BarraBusca
-            key={props.busca.dezenas.join(',')}
-            regra={props.regra}
-            busca={props.busca}
-            aoBuscar={props.aoBuscar}
-          />
+          <BarraBuscaDezenas regra={props.regra} busca={props.busca} aoBuscar={props.aoBuscar} />
         </div>
       </div>
       {buscaAtiva ? <ResultadoBusca {...props} /> : <ListaCompleta {...props} />}

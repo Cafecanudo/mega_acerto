@@ -4,23 +4,17 @@ import { useState } from 'react';
 import { Carregando, Falha, Vazio } from '@/components/ui/estado';
 import { Paginacao } from '@/components/ui/paginacao';
 import {
-  buscarConcursosQuery,
-  calcularFaixaAcertos,
+  descreverFaixa,
   MINIMO_ACERTOS_COMBINACOES,
   type ParametrosBusca,
-} from '../api/consultas';
+} from '@/lib/busca-dezenas';
+import { buscarConcursosQuery } from '../api/consultas';
 import { TabelaConcursos } from './tabela-concursos';
 
 interface ConcursosComDezenasProps {
   readonly regra: RegraJogo;
   readonly dezenas: readonly number[];
 }
-
-const descreverFaixa = (regra: RegraJogo, busca: ParametrosBusca): string => {
-  const { minimo, maximo } = calcularFaixaAcertos(regra, busca);
-  const rotulo = maximo === 1 ? 'acerto' : 'acertos';
-  return minimo === maximo ? `${maximo} ${rotulo}` : `${minimo} a ${maximo} ${rotulo}`;
-};
 
 const Resultado = ({
   regra,
