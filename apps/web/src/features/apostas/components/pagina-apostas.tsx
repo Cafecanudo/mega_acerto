@@ -1,5 +1,7 @@
+import { IconPlus } from '@tabler/icons-react';
 import { useQuery } from '@tanstack/react-query';
 import { useState, type ReactNode } from 'react';
+import { Dialogo } from '@/components/ui/dialogo';
 import { Carregando, Falha, Vazio } from '@/components/ui/estado';
 import { listarApostasQuery } from '../api/apostas';
 import type { Aposta } from '../types';
@@ -12,10 +14,21 @@ interface PaginaApostasProps {
   readonly painelDezenas?: (selecao: SelecaoDezenas) => ReactNode;
 }
 
+type EstadoDialogo =
+  | { readonly modo: 'fechado' }
+  | { readonly modo: 'nova' }
+  | {
+      readonly modo: 'edicao';
+      readonly aposta: Aposta;
+    };
+
 const Lista = ({
   somenteFavoritas,
   aoEditar,
-}: PaginaApostasProps & { readonly aoEditar: (aposta: Aposta) => void }) => {
+}: {
+  readonly somenteFavoritas: boolean;
+  readonly aoEditar: (aposta: Aposta) => void;
+}) => {
   const consulta = useQuery(listarApostasQuery(somenteFavoritas));
 
   if (consulta.isPending) return <Carregando mensagem="Carregando apostas…" />;
@@ -24,8 +37,8 @@ const Lista = ({
     return (
       <Vazio>
         {somenteFavoritas
-          ? 'Nenhuma aposta favorita. Use a estrela de uma aposta para marcá-la.'
-          : 'Nenhuma aposta ainda. Escolha as dezenas ao lado e crie a primeira.'}
+          ? 'Nenhuma aposta favorita. Crie uma ou use a estrela de uma aposta.'
+          : 'Nenhuma aposta ainda. Use o botão Nova aposta para criar a primeira.'}
       </Vazio>
     );
   }
@@ -33,7 +46,7 @@ const Lista = ({
   return (
     <div className="flex flex-col gap-3 lg:min-h-0 lg:flex-1">
       {somenteFavoritas && <ResumoFavoritas apostas={consulta.data} />}
-      <div className="grid content-start gap-3 lg:min-h-0 lg:flex-1 lg:overflow-auto 2xl:grid-cols-2">
+      <div className="grid content-start gap-3 lg:min-h-0 lg:flex-1 lg:overflow-auto xl:grid-cols-2 2xl:grid-cols-3">
         {consulta.data.map((aposta) => (
           <CartaoAposta key={aposta.id} aposta={aposta} aoEditar={aoEditar} />
         ))}
@@ -42,36 +55,86 @@ const Lista = ({
   );
 };
 
-export const PaginaApostas = ({ somenteFavoritas, painelDezenas }: PaginaApostasProps) => {
-  const [emEdicao, setEmEdicao] = useState<Aposta | null>(null);
-  const [versaoFormulario, setVersaoFormulario] = useState(0);
+const ConteudoDialogo = ({
+  emEdicao,
+  somenteFavoritas,
+  painelDezenas,
+  aoConcluir,
+}: PaginaApostasProps & {
+  readonly emEdicao: Aposta | null;
+  readonly aoConcluir: () => void;
+}) => {
   const [selecao, setSelecao] = useState<SelecaoDezenas | null>(null);
-  const exibirPainel = painelDezenas !== undefined && (selecao?.dezenas.length ?? 0) > 0;
-
-  const concluir = () => {
-    setEmEdicao(null);
-    setVersaoFormulario((versao) => versao + 1);
-  };
+  const exibirPainel =
+    painelDezenas !== undefined && selecao !== null && selecao.dezenas.length > 0;
 
   return (
-    <div className="grid gap-3 lg:min-h-0 lg:flex-1 xl:grid-cols-[24rem_minmax(0,1fr)]">
-      <div className="xl:self-start">
+    <div className="grid h-full gap-3 lg:grid-cols-[24rem_minmax(0,1fr)]">
+      <div className="lg:self-start">
         <FormularioAposta
-          key={emEdicao ? `editar-${emEdicao.id}` : `nova-${versaoFormulario}`}
           emEdicao={emEdicao}
           favoritaPadrao={somenteFavoritas}
-          aoConcluir={concluir}
+          aoConcluir={aoConcluir}
           aoAlterarSelecao={setSelecao}
         />
       </div>
-      <div className="flex flex-col gap-3 lg:min-h-0">
-        {exibirPainel && selecao && (
-          <div className="flex flex-col lg:min-h-0 lg:flex-[3]">{painelDezenas(selecao)}</div>
+      <div className="flex flex-col lg:min-h-0">
+        {exibirPainel ? (
+          painelDezenas(selecao)
+        ) : (
+          <Vazio>Marque as dezenas para ver quando elas foram sorteadas.</Vazio>
         )}
-        <div className={`flex flex-col lg:min-h-0 ${exibirPainel ? 'lg:flex-[2]' : 'lg:flex-1'}`}>
-          <Lista somenteFavoritas={somenteFavoritas} aoEditar={setEmEdicao} />
-        </div>
       </div>
+    </div>
+  );
+};
+
+export const PaginaApostas = ({ somenteFavoritas, painelDezenas }: PaginaApostasProps) => {
+  const [dialogo, setDialogo] = useState<EstadoDialogo>({ modo: 'fechado' });
+  const fechar = () => {
+    setDialogo({ modo: 'fechado' });
+  };
+  const emEdicao = dialogo.modo === 'edicao' ? dialogo.aposta : null;
+
+  return (
+    <div className="flex flex-col gap-3 lg:min-h-0 lg:flex-1">
+      <div className="flex shrink-0 justify-end">
+        <button
+          type="button"
+          onClick={() => {
+            setDialogo({ modo: 'nova' });
+          }}
+          className="inline-flex items-center gap-2 rounded-lg bg-emerald-600 px-4 py-2 text-sm font-semibold text-white transition hover:bg-emerald-700"
+        >
+          <IconPlus aria-hidden size="1rem" />
+          {somenteFavoritas ? 'Nova favorita' : 'Nova aposta'}
+        </button>
+      </div>
+      <Lista
+        somenteFavoritas={somenteFavoritas}
+        aoEditar={(aposta) => {
+          setDialogo({ modo: 'edicao', aposta });
+        }}
+      />
+      <Dialogo
+        aberto={dialogo.modo !== 'fechado'}
+        titulo={
+          emEdicao
+            ? `Editar ${emEdicao.nome ?? `aposta #${emEdicao.id}`}`
+            : somenteFavoritas
+              ? 'Nova favorita'
+              : 'Nova aposta'
+        }
+        aoFechar={fechar}
+      >
+        <ConteudoDialogo
+          key={emEdicao ? `editar-${emEdicao.id}` : 'nova'}
+          emEdicao={emEdicao}
+          somenteFavoritas={somenteFavoritas}
+          painelDezenas={painelDezenas}
+          aoConcluir={fechar}
+        />
+      </Dialogo>
     </div>
   );
 };

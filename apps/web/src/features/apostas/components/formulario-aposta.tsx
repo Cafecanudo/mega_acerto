@@ -92,9 +92,6 @@ export const FormularioAposta = ({
       style={estiloCorJogo(apresentacao)}
       className="flex flex-col gap-4 rounded-xl border border-slate-200 bg-white p-4 dark:border-slate-800 dark:bg-slate-900"
     >
-      <h2 className="text-sm font-semibold">
-        {emEdicao ? `Editar aposta #${emEdicao.id}` : 'Nova aposta'}
-      </h2>
       <div className="grid grid-cols-2 gap-3">
         <Campo rotulo="Jogo">
           <select
@@ -162,15 +159,13 @@ export const FormularioAposta = ({
         >
           {salvar.isPending ? 'Salvando…' : emEdicao ? 'Salvar alterações' : 'Criar aposta'}
         </button>
-        {emEdicao && (
-          <button
-            type="button"
-            onClick={aoConcluir}
-            className="rounded-lg border border-slate-300 px-4 py-2 text-sm font-medium transition hover:bg-slate-100 dark:border-slate-700 dark:hover:bg-slate-800"
-          >
-            Cancelar
-          </button>
-        )}
+        <button
+          type="button"
+          onClick={aoConcluir}
+          className="rounded-lg border border-slate-300 px-4 py-2 text-sm font-medium transition hover:bg-slate-100 dark:border-slate-700 dark:hover:bg-slate-800"
+        >
+          Cancelar
+        </button>
       </div>
       {salvar.isError && (
         <p className="text-sm text-rose-600 dark:text-rose-400">{salvar.error.message}</p>
