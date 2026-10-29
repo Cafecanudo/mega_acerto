@@ -1,7 +1,7 @@
 import type { RegraJogo } from '@mega/domain';
 import { useQuery } from '@tanstack/react-query';
 import type { ReactNode } from 'react';
-import { Link } from 'react-router';
+import { Link, useLocation } from 'react-router';
 import { Cartao } from '@/components/ui/cartao';
 import { Carregando, Falha } from '@/components/ui/estado';
 import { paths } from '@/config/paths';
@@ -37,17 +37,22 @@ const Navegacao = ({
   readonly regra: RegraJogo;
   readonly concurso: Detalhe;
 }) => {
+  const estado: unknown = useLocation().state;
   const classe =
     'rounded-lg border border-slate-300 px-3 py-1.5 text-sm font-medium transition hover:bg-slate-100 dark:border-slate-700 dark:hover:bg-slate-800';
   return (
     <div className="flex gap-2">
       {concurso.anterior !== null && (
-        <Link className={classe} to={paths.concurso(regra.codigo, concurso.anterior)}>
+        <Link
+          className={classe}
+          to={paths.concurso(regra.codigo, concurso.anterior)}
+          state={estado}
+        >
           ← {concurso.anterior}
         </Link>
       )}
       {concurso.proximo !== null && (
-        <Link className={classe} to={paths.concurso(regra.codigo, concurso.proximo)}>
+        <Link className={classe} to={paths.concurso(regra.codigo, concurso.proximo)} state={estado}>
           {concurso.proximo} →
         </Link>
       )}

@@ -1,8 +1,9 @@
 import type { RegraJogo } from '@mega/domain';
 import { useQuery } from '@tanstack/react-query';
 import type { ReactNode } from 'react';
-import { Link } from 'react-router';
+import { Link, useLocation } from 'react-router';
 import { paths } from '@/config/paths';
+import { estadoDeRetorno } from '@/lib/retorno';
 import { formatarData, formatarInteiro, formatarMoedaCompacta } from '@/lib/formatadores';
 import { ultimoConcursoQuery } from '../api/consultas';
 import type { DetalheConcurso } from '../types';
@@ -58,6 +59,7 @@ const Moldura = ({ children }: { readonly children: ReactNode }) => (
 
 export const DestaqueUltimoConcurso = ({ regra }: DestaqueUltimoConcursoProps) => {
   const consulta = useQuery(ultimoConcursoQuery(regra.codigo));
+  const location = useLocation();
 
   if (consulta.isPending) {
     return (
@@ -83,6 +85,7 @@ export const DestaqueUltimoConcurso = ({ regra }: DestaqueUltimoConcursoProps) =
         <Rotulo>Último sorteio</Rotulo>
         <Link
           to={paths.concurso(regra.codigo, concurso.numero)}
+          state={estadoDeRetorno(location)}
           className="text-sm font-semibold hover:text-jogo"
         >
           {concurso.numero} · {formatarData(concurso.dataApuracao)}

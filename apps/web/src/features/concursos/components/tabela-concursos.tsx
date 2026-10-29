@@ -1,7 +1,8 @@
 import type { RegraJogo } from '@mega/domain';
-import { useNavigate } from 'react-router';
+import { useLocation, useNavigate } from 'react-router';
 import { paths } from '@/config/paths';
 import { formatarData, formatarInteiro, formatarMoeda } from '@/lib/formatadores';
+import { estadoDeRetorno } from '@/lib/retorno';
 import type { ResumoConcurso } from '../types';
 import { LinhaDezenas } from '@/components/dezenas/linha-dezenas';
 
@@ -22,6 +23,7 @@ export const TabelaConcursos = <T extends ResumoConcurso>({
   colunaExtra,
 }: TabelaConcursosProps<T>) => {
   const navegar = useNavigate();
+  const location = useLocation();
 
   return (
     <div className="overflow-x-auto lg:overflow-visible">
@@ -41,7 +43,9 @@ export const TabelaConcursos = <T extends ResumoConcurso>({
             <tr
               key={concurso.numero}
               onClick={() => {
-                void navegar(paths.concurso(regra.codigo, concurso.numero));
+                void navegar(paths.concurso(regra.codigo, concurso.numero), {
+                  state: estadoDeRetorno(location),
+                });
               }}
               className="cursor-pointer border-b border-slate-100 transition last:border-0 hover:bg-slate-50 dark:border-slate-800/60 dark:hover:bg-slate-800/40"
             >
