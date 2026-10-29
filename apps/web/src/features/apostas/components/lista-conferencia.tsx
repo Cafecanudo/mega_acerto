@@ -36,8 +36,8 @@ const ItemConferencia = ({
   readonly ocupado: boolean;
 }) => {
   const apresentacao = obterApresentacaoJogo(aposta.jogo);
+  if (!apresentacao || !isCodigoJogo(aposta.jogo)) return null;
   const concurso = aposta.conferencia.concursoConferido;
-  if (!apresentacao || !concurso || !isCodigoJogo(aposta.jogo)) return null;
   const regra = obterRegraJogo(aposta.jogo);
 
   return (
@@ -60,19 +60,27 @@ const ItemConferencia = ({
               {aposta.nome ?? apresentacao.nome}
             </p>
             <p className="text-xs text-slate-500 dark:text-slate-400">
-              {apresentacao.nome} · concurso {concurso.numero} · {formatarData(concurso.data)}
+              {apresentacao.nome} · concurso {concurso?.numero ?? aposta.concurso ?? '—'}
+              {concurso && ` · ${formatarData(concurso.data)}`}
             </p>
           </div>
         </div>
         <div className="flex items-center gap-3">
-          <span className="text-sm font-semibold tabular-nums">
-            {concurso.acertos} {concurso.acertos === 1 ? 'acerto' : 'acertos'}
-          </span>
+          {concurso ? (
+            <span className="text-sm font-semibold tabular-nums">
+              {concurso.acertos} {concurso.acertos === 1 ? 'acerto' : 'acertos'}
+            </span>
+          ) : (
+            <span className="rounded-full bg-sky-100 px-2 py-0.5 text-xs font-semibold text-sky-800 dark:bg-sky-500/15 dark:text-sky-300">
+              Aguardando sorteio
+            </span>
+          )}
           <button
             type="button"
-            disabled={ocupado}
+            disabled={ocupado || !concurso}
+            title={concurso ? undefined : 'Disponível após o sorteio'}
             onClick={aoConferir}
-            className="inline-flex items-center gap-1.5 rounded-lg border border-slate-300 px-3 py-1.5 text-sm font-medium transition hover:bg-slate-100 disabled:opacity-40 dark:border-slate-700 dark:hover:bg-slate-800"
+            className="inline-flex items-center gap-1.5 rounded-lg border border-slate-300 px-3 py-1.5 text-sm font-medium transition hover:bg-slate-100 disabled:cursor-not-allowed disabled:opacity-40 dark:border-slate-700 dark:hover:bg-slate-800"
           >
             <IconSquareCheck aria-hidden size="1rem" />
             Conferido
@@ -82,7 +90,7 @@ const ItemConferencia = ({
       <LinhaDezenas
         regra={regra}
         dezenas={aposta.dezenas}
-        acertadas={new Set(concurso.dezenasAcertadas)}
+        acertadas={new Set(concurso?.dezenasAcertadas)}
         tamanho="sm"
       />
       {aposta.premios.length > 0 && <PremioAReceber aposta={aposta} />}
@@ -98,7 +106,9 @@ export const ListaConferencia = () => {
   if (consulta.isError) return <Falha erro={consulta.error} />;
 
   const apostas = consulta.data;
-  const premiadas = apostas.filter((aposta) => aposta.premios.length > 0);
+  const sorteadas = apostas.filter((aposta) => aposta.conferencia.concursoConferido !== null);
+  const aguardando = apostas.length - sorteadas.length;
+  const premiadas = sorteadas.filter((aposta) => aposta.premios.length > 0);
   const totalPremios = premiadas.reduce((soma, aposta) => soma + (aposta.premioTotal ?? 0), 0);
 
   return (
@@ -107,7 +117,7 @@ export const ListaConferencia = () => {
         <p className="text-sm text-slate-600 dark:text-slate-300">
           {apostas.length === 0
             ? 'Nenhuma aposta para conferir.'
-            : `${formatarInteiro(apostas.length)} ${apostas.length === 1 ? 'aposta sorteada' : 'apostas sorteadas'} para conferir`}
+            : `${formatarInteiro(sorteadas.length)} ${sorteadas.length === 1 ? 'sorteada' : 'sorteadas'} para conferir · ${formatarInteiro(aguardando)} aguardando sorteio`}
           {premiadas.length > 0 && (
             <strong className="ml-2 font-semibold text-emerald-700 dark:text-emerald-300">
               {premiadas.length} com prêmio · {formatarMoeda(totalPremios)}
@@ -120,9 +130,9 @@ export const ListaConferencia = () => {
           )}
           <button
             type="button"
-            disabled={apostas.length === 0 || marcar.isPending}
+            disabled={sorteadas.length === 0 || marcar.isPending}
             onClick={() => {
-              marcar.mutate(apostas.map((aposta) => aposta.id));
+              marcar.mutate(sorteadas.map((aposta) => aposta.id));
             }}
             className="inline-flex items-center gap-2 rounded-lg bg-emerald-600 px-4 py-2 text-sm font-semibold text-white transition hover:bg-emerald-700 disabled:cursor-not-allowed disabled:opacity-40"
           >
@@ -133,9 +143,7 @@ export const ListaConferencia = () => {
       </div>
       <div className="lg:min-h-0 lg:flex-1 lg:overflow-auto">
         {apostas.length === 0 ? (
-          <Vazio>
-            Quando um concurso em que você apostou for sorteado, as apostas aparecem aqui.
-          </Vazio>
+          <Vazio>Suas apostas aparecem aqui até serem conferidas depois do sorteio.</Vazio>
         ) : (
           <ul className="flex flex-col gap-3">
             {apostas.map((aposta) => (

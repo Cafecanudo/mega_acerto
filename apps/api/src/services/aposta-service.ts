@@ -86,6 +86,27 @@ interface ContextoJogo {
   readonly valorSimples: number | null;
 }
 
+const CONFERENCIA_PENDENTE: Conferencia = { concursoConferido: null, historico: [] };
+
+const somarPremios = (premios: readonly PremioConferido[]): number | null =>
+  premios.some((premio) => premio.valorUnitario === null)
+    ? null
+    : Math.round(
+        premios.reduce(
+          (soma, premio) => soma + premio.quantidade * (premio.valorUnitario ?? 0),
+          0,
+        ) * 100,
+      ) / 100;
+
+const ordenarParaConferencia = (a: ApostaAConferir, b: ApostaAConferir): number => {
+  const sorteioA = a.conferencia.concursoConferido?.numero ?? null;
+  const sorteioB = b.conferencia.concursoConferido?.numero ?? null;
+  if (sorteioA !== null && sorteioB !== null) return sorteioB - sorteioA || b.id - a.id;
+  if (sorteioA !== null) return -1;
+  if (sorteioB !== null) return 1;
+  return (a.concurso ?? 0) - (b.concurso ?? 0) || b.id - a.id;
+};
+
 const LIMITE_DEZENAS_FILTRO = 20;
 const LIMITE_ITENS_EFETIVACAO = 100;
 const TAMANHO_MAXIMO_NOME = 80;
@@ -188,16 +209,11 @@ export class ApostaService {
   async listarAConferir(): Promise<ApostaAConferir[]> {
     const apostas = await this.#repository.listarNaoConferidas();
     const conferencias = await this.#conferencia.conferir(apostas);
-    const sorteadas = apostas.flatMap((aposta) => {
-      const conferencia = conferencias.get(aposta.id);
-      return conferencia?.concursoConferido ? [{ aposta, conferencia }] : [];
-    });
-
     const premiacoes = await this.#concursos.listarPremiacoes(
-      sorteadas.map(({ aposta, conferencia }) => ({
-        jogo: aposta.jogo,
-        numero: conferencia.concursoConferido?.numero ?? 0,
-      })),
+      apostas.flatMap((aposta) => {
+        const numero = conferencias.get(aposta.id)?.concursoConferido?.numero;
+        return numero === undefined ? [] : [{ jogo: aposta.jogo, numero }];
+      }),
     );
     const valores = new Map(
       premiacoes.map((linha) => [
@@ -206,38 +222,42 @@ export class ApostaService {
       ]),
     );
 
-    return sorteadas
-      .map(({ aposta, conferencia }) => {
-        const numero = conferencia.concursoConferido?.numero ?? 0;
-        const acertos = conferencia.concursoConferido?.acertos ?? 0;
-        const premios = isCodigoJogo(aposta.jogo)
-          ? contarPremiosAposta(obterRegraJogo(aposta.jogo), aposta.dezenas.length, acertos).map(
-              (premio) => ({
-                ...premio,
-                valorUnitario:
-                  valores.get(`${aposta.jogo}:${String(numero)}:${String(premio.faixa)}`) ?? null,
-              }),
-            )
-          : [];
-        const premioTotal = premios.some((premio) => premio.valorUnitario === null)
-          ? null
-          : Math.round(
-              premios.reduce(
-                (soma, premio) => soma + premio.quantidade * (premio.valorUnitario ?? 0),
-                0,
-              ) * 100,
-            ) / 100;
-        return { ...aposta, conferencia, premios, premioTotal };
+    return apostas
+      .map((aposta) => {
+        const conferencia = conferencias.get(aposta.id) ?? CONFERENCIA_PENDENTE;
+        const premios = this.#calcularPremios(aposta, conferencia, valores);
+        return { ...aposta, conferencia, premios, premioTotal: somarPremios(premios) };
       })
-      .sort(
-        (a, b) =>
-          (b.conferencia.concursoConferido?.numero ?? 0) -
-            (a.conferencia.concursoConferido?.numero ?? 0) || b.id - a.id,
-      );
+      .sort(ordenarParaConferencia);
   }
 
   async marcarConferidas(ids: readonly number[]): Promise<{ marcadas: number }> {
-    return { marcadas: await this.#repository.marcarConferidas([...new Set(ids)]) };
+    const pendentes = await this.#repository.listarNaoConferidas();
+    const solicitados = new Set(ids);
+    const alvos = pendentes.filter((aposta) => solicitados.has(aposta.id));
+    const conferencias = await this.#conferencia.conferir(alvos);
+    const sorteadas = alvos.flatMap((aposta) =>
+      conferencias.get(aposta.id)?.concursoConferido ? [aposta.id] : [],
+    );
+    return { marcadas: await this.#repository.marcarConferidas(sorteadas) };
+  }
+
+  #calcularPremios(
+    aposta: Aposta,
+    conferencia: Conferencia,
+    valores: ReadonlyMap<string, number>,
+  ): PremioConferido[] {
+    const concurso = conferencia.concursoConferido;
+    if (!concurso || !isCodigoJogo(aposta.jogo)) return [];
+    return contarPremiosAposta(
+      obterRegraJogo(aposta.jogo),
+      aposta.dezenas.length,
+      concurso.acertos,
+    ).map((premio) => ({
+      ...premio,
+      valorUnitario:
+        valores.get(`${aposta.jogo}:${String(concurso.numero)}:${String(premio.faixa)}`) ?? null,
+    }));
   }
 
   async listarAcertosPorConcurso(): Promise<AcertosConcurso[]> {

@@ -38,6 +38,35 @@ Observações de dados para as próximas fases:
 - [x] Seletor de modelo e esforço na UI (Opus 5.5 e esforço alto como padrão) e tela de resultado com gráfico
 - [x] Teste ponta a ponta com o Opus 5.5 (29/10/2026: 5 min 24 s, custo equivalente US$ 1,07, conferência com SQL sem divergências)
 
+## Gestão de apostas — concluída
+
+Entregas fora das fases originais, feitas sobre a Fase 2:
+
+- [x] Layout com sidebar: grupos Principal, Jogos, Minha Conta e Configurações, com indicadores de acertos e legenda
+- [x] Busca no histórico com até 20 dezenas, combinações de até 3 ativas por padrão, busca ao digitar e detalhe do concurso em diálogo
+- [x] Análises em menu próprio, com seleção do jogo
+- [x] Favoritos: cadastro em diálogo com histórico das dezenas
+- [x] Apostas: botão Apostar com lista de itens de jogos diferentes, favoritos um a um ou todos, efetivação em lote para o próximo concurso de cada jogo; lista somente leitura com conferência
+- [x] Configurações › Valores: preço da aposta simples por jogo, custo por item e total no Apostar, valor gravado na aposta
+- [x] Dezenas em cor neutra; verde reservado às dezenas acertadas em apostas (último sorteio, histórico, detalhe e lista de apostas)
+- [x] Conferir Apostas: apostas não conferidas (inclusive aguardando sorteio), marcação individual ou "Todos conferidos" após o sorteio, prêmio a receber a partir da menor faixa premiada
+
+Pendências conhecidas:
+
+- [ ] Dupla Sena: a conferência não separa acertos por sorteio (aplica os mesmos acertos aos dois)
+- [ ] Aposta sem concurso definido confere contra o último sorteio; depois de marcada como conferida, não volta à lista quando sai um novo sorteio
+- [ ] Valores guarda só o preço atual; a vigência por período entra na Fase 3
+
+## Multiusuário: login
+
+Separar os dados por usuário. Hoje o sistema é monousuário.
+
+- [ ] Tela de login e sessão (escopo local; definir entre senha com hash e cookie de sessão ou provedor externo)
+- [ ] Tabela `usuario` e coluna de dono em `favorito`, `aposta` e `analise`, com migração dos dados atuais para o primeiro usuário
+- [ ] Filtro por usuário em todos os repositórios e endpoints dessas entidades
+- [ ] Decidir se `valor_jogo` continua global (preço oficial da Caixa) ou passa a ser por usuário
+- [ ] Histórico de concursos e ingestão permanecem compartilhados
+
 ## Fase 3: Backtest e valor esperado
 
 - [ ] Vigência de regras por período (preço da aposta, faixas de premiação)
