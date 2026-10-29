@@ -1,7 +1,9 @@
 import type { Kysely } from 'kysely';
 import type { Config } from '../config/config.ts';
 import type { Database } from '../data/database.ts';
+import { ConcursoLeituraRepository } from '../data/repositories/concurso-leitura-repository.ts';
 import { JogoRepository } from '../data/repositories/jogo-repository.ts';
+import { ConcursoService } from '../services/concurso-service.ts';
 import type { IngestaoService } from '../services/ingestao-service.ts';
 import { JogoService } from '../services/jogo-service.ts';
 import type { Logger } from '../shared/logger.ts';
@@ -12,6 +14,7 @@ export interface Container {
   readonly db: Kysely<Database>;
   readonly logger: Logger;
   readonly jogoService: () => JogoService;
+  readonly concursoService: () => ConcursoService;
   readonly ingestaoService: () => Promise<IngestaoService>;
 }
 
@@ -54,5 +57,6 @@ export const criarContainer = (
   db,
   logger,
   jogoService: lazy(() => new JogoService(new JogoRepository(db))),
+  concursoService: lazy(() => new ConcursoService(new ConcursoLeituraRepository(db))),
   ingestaoService: lazy(() => criarIngestaoService(config, db, logger)),
 });
