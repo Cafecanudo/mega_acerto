@@ -57,15 +57,15 @@ Pendências conhecidas:
 - [ ] Aposta sem concurso definido confere contra o último sorteio; depois de marcada como conferida, não volta à lista quando sai um novo sorteio
 - [ ] Valores guarda só o preço atual; a vigência por período entra na Fase 3
 
-## Multiusuário: login
+## Multiusuário: login — concluída
 
-Separar os dados por usuário. Hoje o sistema é monousuário.
+Dados separados por usuário.
 
-- [ ] Tela de login e sessão (escopo local; definir entre senha com hash e cookie de sessão ou provedor externo)
-- [ ] Tabela `usuario` e coluna de dono em `favorito`, `aposta` e `analise`, com migração dos dados atuais para o primeiro usuário
-- [ ] Filtro por usuário em todos os repositórios e endpoints dessas entidades
-- [ ] Decidir se `valor_jogo` continua global (preço oficial da Caixa) ou passa a ser por usuário
-- [ ] Histórico de concursos e ingestão permanecem compartilhados
+- [x] Diálogo flutuante de login e cadastro; senha com scrypt e sessão em cookie HttpOnly SameSite=Strict, renovada por 30 dias
+- [x] Tabelas `usuario` e `sessao`; dono em `favorito`, `aposta` e `analise`; o primeiro cadastro assume os dados existentes
+- [x] Filtro por usuário em todos os repositórios e endpoints dessas entidades; o restante da API exige sessão
+- [x] `valor_jogo` continua global (preço oficial da Caixa)
+- [x] Histórico de concursos e ingestão permanecem compartilhados
 
 ## Fase 3: Backtest e valor esperado
 

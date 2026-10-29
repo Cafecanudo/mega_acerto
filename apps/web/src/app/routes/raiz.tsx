@@ -2,6 +2,7 @@ import { Outlet } from 'react-router';
 import { AppShell } from '@/components/layouts/app-shell';
 import { GrupoMenu } from '@/components/layouts/grupo-menu';
 import { LegendaIndicadores } from '@/components/ui/legenda-indicadores';
+import { UsuarioLogado } from '@/features/autenticacao/components/usuario-logado';
 import { ProvedorAcertosDasApostas } from '@/features/apostas/components/provedor-acertos-apostas';
 import { IndicadoresFavoritos } from '@/features/favoritos/components/indicadores-favoritos';
 import { MenuJogos } from '@/features/jogos/components/menu-jogos';
@@ -29,7 +30,16 @@ const MenuLateral = () => (
 
 const Raiz = () => (
   <ProvedorAcertosDasApostas>
-    <AppShell menu={<MenuLateral />} acao={<BotaoApostar />} rodape={<LegendaIndicadores />}>
+    <AppShell
+      menu={<MenuLateral />}
+      acao={<BotaoApostar />}
+      rodape={
+        <>
+          <LegendaIndicadores />
+          <UsuarioLogado />
+        </>
+      }
+    >
       <Outlet />
     </AppShell>
   </ProvedorAcertosDasApostas>

@@ -61,6 +61,14 @@ docker compose up -d --build
 - A conferência é genérica (`ConferenciaService`) e atende às duas entidades.
 - Apostas são criadas pelo botão "Apostar" da sidebar: diálogo com seleção de jogo, dezenas na grade ou favoritos (um a um ou todos), lista de apostas a efetivar e botão "Efetivar", que grava o lote (`POST /api/apostas`) para o próximo concurso.
 
+## Usuários e sessão
+
+- Login e cadastro em diálogo flutuante (`features/autenticacao`), exibido enquanto não houver sessão; resposta 401 da API reabre o diálogo.
+- Senha com scrypt (`shared/senha.ts`); sessão em cookie `mega_sessao` (HttpOnly, SameSite=Strict), guardada como hash SHA-256 na tabela `sessao` e renovada por 30 dias.
+- Todo `/api` exige sessão, exceto `/api/auth/*` e `/api/saude`. Rotas obtêm o usuário com `usuarioDe(requisicao)` e repassam o id; repositórios de `favorito`, `aposta` e `analise` sempre filtram por `usuario_id`.
+- Compartilhados entre usuários: concursos, ingestão e `valor_jogo`.
+- Para testar com contas sem afetar os dados reais, clone o banco (`pg_dump` para outro database) e rode a API com outro `DATABASE_URL` e `PORT`; o primeiro cadastro assume os dados sem dono.
+
 ## Análises com Claude (Fase 2)
 
 - O container `ai-worker` roda `apps/api/src/worker.ts` (mesmo código da API, outro entrypoint). Ele reivindica análises `pendente` na tabela `analise`, exporta o dataset para uma pasta isolada e executa `claude -p` com `--json-schema`, `--model` e `--effort`.
