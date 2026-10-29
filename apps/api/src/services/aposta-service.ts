@@ -144,13 +144,16 @@ export class ApostaService {
     const apostas = await this.#repository.listarTodas();
     const conferencias = await this.#conferencia.conferir(apostas);
 
+    let total = 0;
     let comAcertos = 0;
     let melhor: ResumoApostas['melhor'] = null;
     let maiorAcerto = 0;
 
     for (const aposta of apostas) {
       const concurso = conferencias.get(aposta.id)?.concursoConferido;
-      if (!concurso || concurso.acertos === 0) continue;
+      if (!concurso) continue;
+      total++;
+      if (concurso.acertos === 0) continue;
       comAcertos++;
       if (concurso.acertos > maiorAcerto) {
         maiorAcerto = concurso.acertos;
@@ -158,6 +161,6 @@ export class ApostaService {
       }
     }
 
-    return { total: apostas.length, comAcertos, maiorAcerto, melhor };
+    return { total, comAcertos, maiorAcerto, melhor };
   }
 }

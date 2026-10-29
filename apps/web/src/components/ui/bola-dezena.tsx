@@ -15,7 +15,7 @@ export const BolaDezena = ({ rotulo, tamanho = 'md', destaque = true }: BolaDeze
   <span
     className={`inline-flex shrink-0 items-center justify-center rounded-full font-mono font-semibold tabular-nums ${tamanhos[tamanho]} ${
       destaque
-        ? 'bg-jogo text-jogo-texto shadow-sm'
+        ? 'bg-slate-700 text-white shadow-sm dark:bg-slate-200 dark:text-slate-900'
         : 'bg-slate-200 text-slate-500 dark:bg-slate-800 dark:text-slate-400'
     }`}
   >

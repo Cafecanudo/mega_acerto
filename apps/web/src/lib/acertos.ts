@@ -10,10 +10,11 @@ export const resumirAcertos = (itens: readonly ItemConferido[]): ResumoAcertos =
   itens.reduce<ResumoAcertos>(
     (resumo, item) => {
       const concurso = item.conferencia.concursoConferido;
-      if (!concurso || concurso.acertos === 0) return resumo;
+      if (!concurso) return resumo;
+      if (concurso.acertos === 0) return { ...resumo, total: resumo.total + 1 };
       const melhorou = concurso.acertos > resumo.maiorAcerto;
       return {
-        total: resumo.total,
+        total: resumo.total + 1,
         comAcertos: resumo.comAcertos + 1,
         maiorAcerto: melhorou ? concurso.acertos : resumo.maiorAcerto,
         melhor: melhorou
@@ -21,5 +22,5 @@ export const resumirAcertos = (itens: readonly ItemConferido[]): ResumoAcertos =
           : resumo.melhor,
       };
     },
-    { total: itens.length, comAcertos: 0, maiorAcerto: 0, melhor: null },
+    { total: 0, comAcertos: 0, maiorAcerto: 0, melhor: null },
   );
