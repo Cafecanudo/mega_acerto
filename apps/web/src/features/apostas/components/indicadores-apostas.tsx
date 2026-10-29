@@ -2,10 +2,11 @@ import { IconTarget, IconTrophy } from '@tabler/icons-react';
 import { useQuery } from '@tanstack/react-query';
 import type { ReactNode } from 'react';
 import { listarApostasQuery } from '../api/apostas';
-import { resumirFavoritas } from '../resumir-favoritas';
+import { resumirApostas } from '../resumir-apostas';
 
-interface IndicadoresFavoritasProps {
-  readonly jogo: string;
+interface IndicadoresApostasProps {
+  readonly somenteFavoritas: boolean;
+  readonly jogo?: string;
 }
 
 const Pilula = ({
@@ -27,24 +28,26 @@ const Pilula = ({
   </span>
 );
 
-export const IndicadoresFavoritas = ({ jogo }: IndicadoresFavoritasProps) => {
-  const { data: apostas = [] } = useQuery(listarApostasQuery(true));
-  const doJogo = apostas.filter((aposta) => aposta.jogo === jogo);
-  const { total, comAcertos, maiorAcerto } = resumirFavoritas(doJogo);
+export const IndicadoresApostas = ({ somenteFavoritas, jogo }: IndicadoresApostasProps) => {
+  const { data: apostas = [] } = useQuery(listarApostasQuery(somenteFavoritas));
+  const filtradas = jogo ? apostas.filter((aposta) => aposta.jogo === jogo) : apostas;
+  const { total, comAcertos, maiorAcerto } = resumirApostas(filtradas);
 
   if (total === 0) return null;
+
+  const grupo = somenteFavoritas ? 'favoritas' : 'apostas';
 
   return (
     <span className="ml-auto flex shrink-0 flex-col items-end gap-0.5">
       <Pilula
         icone={<IconTarget aria-hidden size="0.75rem" />}
         valor={`${comAcertos}/${total}`}
-        descricao={`${comAcertos} de ${total} favoritas acertaram no último concurso`}
+        descricao={`${comAcertos} de ${total} ${grupo} acertaram no último concurso`}
       />
       <Pilula
         icone={<IconTrophy aria-hidden size="0.75rem" />}
         valor={String(maiorAcerto)}
-        descricao={`Maior número de acertos entre as favoritas: ${maiorAcerto}`}
+        descricao={`Maior número de acertos entre as ${grupo}: ${maiorAcerto}`}
       />
     </span>
   );

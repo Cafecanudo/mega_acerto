@@ -7,7 +7,7 @@ import { listarApostasQuery } from '../api/apostas';
 import type { Aposta } from '../types';
 import { CartaoAposta } from './cartao-aposta';
 import { FormularioAposta, type SelecaoDezenas } from './formulario-aposta';
-import { ResumoFavoritas } from './resumo-favoritas';
+import { ResumoApostas } from './resumo-apostas';
 
 interface PaginaApostasProps {
   readonly somenteFavoritas: boolean;
@@ -45,7 +45,7 @@ const Lista = ({
 
   return (
     <div className="flex flex-col gap-3 lg:min-h-0 lg:flex-1">
-      {somenteFavoritas && <ResumoFavoritas apostas={consulta.data} />}
+      <ResumoApostas apostas={consulta.data} somenteFavoritas={somenteFavoritas} />
       <div className="grid content-start gap-3 lg:min-h-0 lg:flex-1 lg:overflow-auto xl:grid-cols-2 2xl:grid-cols-3">
         {consulta.data.map((aposta) => (
           <CartaoAposta key={aposta.id} aposta={aposta} aoEditar={aoEditar} />

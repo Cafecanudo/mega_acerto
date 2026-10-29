@@ -1,6 +1,6 @@
 import type { Aposta } from './types';
 
-export interface ResumoDeFavoritas {
+export interface ResumoDeApostas {
   readonly total: number;
   readonly comAcertos: number;
   readonly maiorAcerto: number;
@@ -9,7 +9,7 @@ export interface ResumoDeFavoritas {
 
 const acertosNoUltimo = (aposta: Aposta): number => aposta.conferencia.ultimoConcurso?.acertos ?? 0;
 
-export const resumirFavoritas = (apostas: readonly Aposta[]): ResumoDeFavoritas => {
+export const resumirApostas = (apostas: readonly Aposta[]): ResumoDeApostas => {
   const melhor = apostas.reduce<Aposta | null>(
     (atual, aposta) =>
       atual === null || acertosNoUltimo(aposta) > acertosNoUltimo(atual) ? aposta : atual,

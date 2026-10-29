@@ -1,11 +1,12 @@
 import { IconTarget, IconTrophy } from '@tabler/icons-react';
 import type { ReactNode } from 'react';
 import { formatarInteiro } from '@/lib/formatadores';
-import { resumirFavoritas } from '../resumir-favoritas';
+import { resumirApostas } from '../resumir-apostas';
 import type { Aposta } from '../types';
 
-interface ResumoFavoritasProps {
+interface ResumoApostasProps {
   readonly apostas: readonly Aposta[];
+  readonly somenteFavoritas: boolean;
 }
 
 const Balao = ({
@@ -31,15 +32,17 @@ const Balao = ({
   </div>
 );
 
-export const ResumoFavoritas = ({ apostas }: ResumoFavoritasProps) => {
-  const { total, comAcertos, maiorAcerto, melhor } = resumirFavoritas(apostas);
+export const ResumoApostas = ({ apostas, somenteFavoritas }: ResumoApostasProps) => {
+  const { total, comAcertos, maiorAcerto, melhor } = resumirApostas(apostas);
   if (!melhor) return null;
+
+  const grupo = somenteFavoritas ? 'favoritas' : 'apostas';
 
   return (
     <div className="grid shrink-0 gap-3 sm:grid-cols-2">
       <Balao
         icone={<IconTarget aria-hidden size="1.375rem" />}
-        rotulo="Favoritas com acertos"
+        rotulo={somenteFavoritas ? 'Favoritas com acertos' : 'Apostas com acertos'}
         valor={
           <>
             {formatarInteiro(comAcertos)}
@@ -58,7 +61,7 @@ export const ResumoFavoritas = ({ apostas }: ResumoFavoritasProps) => {
         detalhe={
           maiorAcerto > 0
             ? `${melhor.nome ?? `Aposta #${melhor.id}`} · concurso ${melhor.conferencia.ultimoConcurso?.numero ?? '—'}`
-            : 'Nenhuma favorita acertou no último concurso'
+            : `Nenhuma das ${grupo} acertou no último concurso`
         }
       />
     </div>
