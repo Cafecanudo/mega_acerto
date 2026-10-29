@@ -21,6 +21,7 @@ export const JogoDisponivelSchema = Type.Object({
   ultimoConcurso: Type.Union([Type.Integer(), Type.Null()]),
   ultimaData: Type.Union([Type.String({ format: 'date' }), Type.Null()]),
   ultimoAcumulado: Type.Union([Type.Boolean(), Type.Null()]),
+  ultimosGanhadores: Type.Union([Type.Integer(), Type.Null()]),
   ultimaSincronizacao: Type.Union([Type.String({ format: 'date-time' }), Type.Null()]),
 });
 

@@ -1,7 +1,7 @@
 import { isCodigoJogo, obterApresentacaoJogo, obterRegraJogo } from '@mega/domain';
 import { IconClover } from '@tabler/icons-react';
 import { Outlet, useParams } from 'react-router';
-import { PainelIngestao } from '@/features/ingestao/components/painel-ingestao';
+import { BarraIngestao } from '@/features/ingestao/components/barra-ingestao';
 import { estiloCorJogo } from '@/lib/cor-jogo';
 import type { ContextoJogo } from './contexto-jogo';
 import { JogoEmBreve } from './jogo-em-breve';
@@ -18,21 +18,21 @@ const RaizJogo = () => {
     : undefined;
 
   return (
-    <div style={estiloCorJogo(apresentacao)} className="mx-auto flex max-w-[110rem] flex-col gap-6">
-      <header className="flex flex-wrap items-center justify-between gap-4">
-        <div className="flex items-center gap-3">
+    <div style={estiloCorJogo(apresentacao)} className="flex flex-col lg:h-full">
+      <div className="flex flex-col gap-3 px-4 pt-4 pb-3 sm:px-5 lg:min-h-0 lg:flex-1">
+        <header className="flex shrink-0 items-center gap-2">
           <IconClover
             aria-hidden
-            size={34}
+            size={24}
             stroke={1.75}
             color={apresentacao.cor}
             className="dark:brightness-[1.8] dark:saturate-150"
           />
-          <h1 className="text-2xl font-semibold tracking-tight">{apresentacao.nome}</h1>
-        </div>
-        {contexto && <PainelIngestao jogo={contexto.regra.codigo} />}
-      </header>
-      {contexto ? <Outlet context={contexto} /> : <JogoEmBreve apresentacao={apresentacao} />}
+          <h1 className="text-lg font-semibold tracking-tight">{apresentacao.nome}</h1>
+        </header>
+        {contexto ? <Outlet context={contexto} /> : <JogoEmBreve apresentacao={apresentacao} />}
+      </div>
+      {contexto && <BarraIngestao jogo={contexto.regra.codigo} />}
     </div>
   );
 };

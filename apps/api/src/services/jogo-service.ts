@@ -7,6 +7,7 @@ export interface JogoDisponivel {
   readonly ultimoConcurso: number | null;
   readonly ultimaData: string | null;
   readonly ultimoAcumulado: boolean | null;
+  readonly ultimosGanhadores: number | null;
   readonly ultimaSincronizacao: string | null;
 }
 
@@ -16,6 +17,7 @@ const resumoVazio = (codigo: string): ResumoJogo => ({
   ultimoConcurso: null,
   ultimaData: null,
   ultimoAcumulado: null,
+  ultimosGanhadores: null,
   ultimaSincronizacao: null,
 });
 
@@ -43,6 +45,7 @@ export class JogoService {
         ultimoConcurso: resumo.ultimoConcurso,
         ultimaData: resumo.ultimaData,
         ultimoAcumulado: resumo.ultimoAcumulado,
+        ultimosGanhadores: resumo.ultimosGanhadores,
         ultimaSincronizacao: resumo.ultimaSincronizacao?.toISOString() ?? null,
       };
     });

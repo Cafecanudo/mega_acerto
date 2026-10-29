@@ -32,7 +32,7 @@ const formatarLista = (regra: RegraJogo, dezenas: Iterable<number>): string =>
     .join(' ');
 
 const botao =
-  'inline-flex items-center gap-2 rounded-xl border border-slate-300 px-3 py-2 text-sm font-medium transition hover:bg-slate-100 dark:border-slate-700 dark:hover:bg-slate-800';
+  'inline-flex items-center gap-2 rounded-lg border border-slate-300 px-3 py-1.5 text-sm font-medium transition hover:bg-slate-100 dark:border-slate-700 dark:hover:bg-slate-800';
 
 export const BarraBusca = ({ regra, busca, aoBuscar }: BarraBuscaProps) => {
   const [texto, setTexto] = useState(() => formatarLista(regra, busca.dezenas));
@@ -71,7 +71,7 @@ export const BarraBusca = ({ regra, busca, aoBuscar }: BarraBuscaProps) => {
   return (
     <div className="relative flex flex-col gap-3">
       <form onSubmit={buscar} className="flex flex-wrap items-center gap-2">
-        <label className="flex min-w-60 flex-1 items-center gap-2 rounded-xl border border-slate-300 bg-white px-3 py-2 focus-within:border-jogo focus-within:ring-2 focus-within:ring-jogo/30 dark:border-slate-700 dark:bg-slate-950">
+        <label className="flex min-w-60 flex-1 items-center gap-2 rounded-lg border border-slate-300 bg-white px-3 py-1.5 focus-within:border-jogo focus-within:ring-2 focus-within:ring-jogo/30 dark:border-slate-700 dark:bg-slate-950">
           <IconSearch aria-hidden size={18} className="shrink-0 text-slate-400" />
           <input
             value={texto}
@@ -91,7 +91,7 @@ export const BarraBusca = ({ regra, busca, aoBuscar }: BarraBuscaProps) => {
             onChange={(evento) => {
               setMinimo(Number(evento.target.value));
             }}
-            className="rounded-xl border border-slate-300 bg-transparent px-2 py-2 dark:border-slate-700"
+            className="rounded-lg border border-slate-300 bg-transparent px-2 py-1.5 dark:border-slate-700"
           >
             {Array.from({ length: Math.max(selecionadas.size, 1) }, (_, indice) => (
               <option key={indice + 1} value={indice + 1}>
@@ -114,7 +114,7 @@ export const BarraBusca = ({ regra, busca, aoBuscar }: BarraBuscaProps) => {
         <button
           type="submit"
           disabled={selecionadas.size === 0}
-          className="rounded-xl bg-jogo px-4 py-2 text-sm font-semibold text-jogo-texto transition hover:brightness-110 disabled:cursor-not-allowed disabled:opacity-40"
+          className="rounded-lg bg-jogo px-4 py-1.5 text-sm font-semibold text-jogo-texto transition hover:brightness-110 disabled:cursor-not-allowed disabled:opacity-40"
         >
           Buscar
         </button>

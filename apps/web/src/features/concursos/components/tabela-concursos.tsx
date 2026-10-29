@@ -12,7 +12,8 @@ interface TabelaConcursosProps<T extends ResumoConcurso> {
   readonly colunaExtra?: { readonly titulo: string; readonly valor: (concurso: T) => string };
 }
 
-const celula = 'px-4 py-3 align-middle';
+const celula = 'px-4 py-2 align-middle';
+const cabecalho = 'sticky top-0 z-10 bg-white px-4 py-2 dark:bg-slate-900';
 
 export const TabelaConcursos = <T extends ResumoConcurso>({
   regra,
@@ -23,16 +24,16 @@ export const TabelaConcursos = <T extends ResumoConcurso>({
   const navegar = useNavigate();
 
   return (
-    <div className="overflow-x-auto">
+    <div className="overflow-x-auto lg:overflow-visible">
       <table className="w-full min-w-[680px] text-left text-sm">
         <thead className="text-xs tracking-wide text-slate-500 uppercase dark:text-slate-400">
           <tr className="border-b border-slate-200 dark:border-slate-800">
-            <th className={celula}>Concurso</th>
-            <th className={celula}>Data</th>
-            <th className={celula}>Dezenas</th>
-            {colunaExtra && <th className={celula}>{colunaExtra.titulo}</th>}
-            <th className={`${celula} text-right`}>Ganhadores</th>
-            <th className={`${celula} text-right`}>Arrecadação</th>
+            <th className={cabecalho}>Concurso</th>
+            <th className={cabecalho}>Data</th>
+            <th className={cabecalho}>Dezenas</th>
+            {colunaExtra && <th className={cabecalho}>{colunaExtra.titulo}</th>}
+            <th className={`${cabecalho} text-right`}>Ganhadores</th>
+            <th className={`${cabecalho} text-right`}>Arrecadação</th>
           </tr>
         </thead>
         <tbody>
@@ -47,7 +48,7 @@ export const TabelaConcursos = <T extends ResumoConcurso>({
               <td className={`${celula} font-mono font-semibold text-jogo`}>{concurso.numero}</td>
               <td className={`${celula} tabular-nums`}>{formatarData(concurso.dataApuracao)}</td>
               <td className={celula}>
-                <div className="flex flex-col gap-1.5">
+                <div className="flex min-w-52 flex-col gap-1.5">
                   {concurso.sorteios.map((dezenas, indice) => (
                     <LinhaDezenas
                       key={indice}

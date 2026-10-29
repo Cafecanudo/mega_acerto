@@ -8,6 +8,7 @@ export interface ResumoJogo {
   readonly ultimoConcurso: number | null;
   readonly ultimaData: string | null;
   readonly ultimoAcumulado: boolean | null;
+  readonly ultimosGanhadores: number | null;
   readonly ultimaSincronizacao: Date | null;
 }
 
@@ -60,6 +61,11 @@ export class JogoRepository {
         sql<boolean | null>`(
           select c.acumulado from concurso c where c.jogo = j.codigo order by c.numero desc limit 1
         )`.as('ultimoAcumulado'),
+        sql<number | null>`(
+          select p.ganhadores from premiacao p
+          where p.jogo = j.codigo and p.faixa = 1
+            and p.numero = (select max(c.numero) from concurso c where c.jogo = j.codigo)
+        )`.as('ultimosGanhadores'),
         sql<Date | null>`(
           select max(e.finalizado_em) from ingestao_execucao e
           where e.jogo = j.codigo and e.status = 'concluida'

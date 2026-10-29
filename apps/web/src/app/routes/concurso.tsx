@@ -12,7 +12,7 @@ const Concurso = () => {
   if (!Number.isInteger(numero) || numero < 1) return <NaoEncontrado />;
 
   return (
-    <div className="flex flex-col gap-4">
+    <div className="flex flex-col gap-3 lg:min-h-0 lg:flex-1 lg:overflow-auto">
       <Link
         to={paths.jogo(regra.codigo)}
         className="inline-flex w-fit items-center gap-2 text-sm font-medium text-slate-600 hover:text-jogo dark:text-slate-300"

@@ -1,9 +1,12 @@
 import type { RegraJogo } from '@mega/domain';
 import { useQuery } from '@tanstack/react-query';
+import type { ReactNode } from 'react';
 import { Carregando, Falha, Vazio } from '@/components/ui/estado';
 import { Paginacao } from '@/components/ui/paginacao';
 import { formatarInteiro } from '@/lib/formatadores';
+import type { Pagina } from '@/types/api';
 import { buscarConcursosQuery, listarConcursosQuery, type ParametrosBusca } from '../api/consultas';
+import type { ResumoConcurso } from '../types';
 import { BarraBusca } from './barra-busca';
 import { TabelaConcursos } from './tabela-concursos';
 
@@ -13,61 +16,86 @@ interface SorteiosJogoProps {
   readonly aoBuscar: (busca: ParametrosBusca) => void;
 }
 
-type PropsResultado = SorteiosJogoProps;
+interface ConteudoProps<T extends ResumoConcurso> extends SorteiosJogoProps {
+  readonly pagina: Pagina<T>;
+  readonly carregandoProxima: boolean;
+  readonly tabela: ReactNode;
+}
 
-const mudarPagina = (props: PropsResultado) => (pagina: number) => {
-  props.aoBuscar({ ...props.busca, pagina });
-};
+const AreaRolavel = ({ children }: { readonly children: ReactNode }) => (
+  <div className="lg:min-h-0 lg:flex-1 lg:overflow-auto">{children}</div>
+);
 
-const ListaCompleta = (props: PropsResultado) => {
+const Conteudo = <T extends ResumoConcurso>(props: ConteudoProps<T>) => (
+  <>
+    <AreaRolavel>
+      <div className={props.carregandoProxima ? 'opacity-60' : ''}>{props.tabela}</div>
+    </AreaRolavel>
+    <div className="shrink-0 border-t border-slate-200 px-4 py-2 dark:border-slate-800">
+      <Paginacao
+        pagina={props.busca.pagina}
+        tamanho={props.pagina.tamanho}
+        total={props.pagina.total}
+        aoMudar={(pagina) => {
+          props.aoBuscar({ ...props.busca, pagina });
+        }}
+      />
+    </div>
+  </>
+);
+
+const Estado = ({ children }: { readonly children: ReactNode }) => (
+  <AreaRolavel>
+    <div className="p-4">{children}</div>
+  </AreaRolavel>
+);
+
+const ListaCompleta = (props: SorteiosJogoProps) => {
   const consulta = useQuery(listarConcursosQuery(props.regra.codigo, props.busca.pagina));
 
-  if (consulta.isPending) return <Carregando mensagem="Carregando sorteios…" />;
-  if (consulta.isError) return <Falha erro={consulta.error} />;
+  if (consulta.isPending) return <Estado>{<Carregando mensagem="Carregando sorteios…" />}</Estado>;
+  if (consulta.isError) return <Estado>{<Falha erro={consulta.error} />}</Estado>;
   if (consulta.data.itens.length === 0) {
-    return <Vazio>A sincronização inicial ainda não importou concursos.</Vazio>;
+    return <Estado>{<Vazio>A sincronização inicial ainda não importou concursos.</Vazio>}</Estado>;
   }
 
   return (
-    <div className={`flex flex-col gap-4 ${consulta.isPlaceholderData ? 'opacity-60' : ''}`}>
-      <TabelaConcursos regra={props.regra} concursos={consulta.data.itens} />
-      <Paginacao
-        pagina={props.busca.pagina}
-        tamanho={consulta.data.tamanho}
-        total={consulta.data.total}
-        aoMudar={mudarPagina(props)}
-      />
-    </div>
+    <Conteudo
+      {...props}
+      pagina={consulta.data}
+      carregandoProxima={consulta.isPlaceholderData}
+      tabela={<TabelaConcursos regra={props.regra} concursos={consulta.data.itens} />}
+    />
   );
 };
 
-const ResultadoBusca = (props: PropsResultado) => {
+const ResultadoBusca = (props: SorteiosJogoProps) => {
   const consulta = useQuery(buscarConcursosQuery(props.regra.codigo, props.busca));
-  const destacadas = new Set(props.busca.dezenas);
 
-  if (consulta.isPending) return <Carregando mensagem="Buscando concursos…" />;
-  if (consulta.isError) return <Falha erro={consulta.error} />;
+  if (consulta.isPending) return <Estado>{<Carregando mensagem="Buscando concursos…" />}</Estado>;
+  if (consulta.isError) return <Estado>{<Falha erro={consulta.error} />}</Estado>;
   if (consulta.data.itens.length === 0) {
     return (
-      <Vazio>Nenhum concurso com pelo menos {props.busca.minimoAcertos} dessas dezenas.</Vazio>
+      <Estado>
+        <Vazio>Nenhum concurso com pelo menos {props.busca.minimoAcertos} dessas dezenas.</Vazio>
+      </Estado>
     );
   }
 
   return (
-    <div className={`flex flex-col gap-4 ${consulta.isPlaceholderData ? 'opacity-60' : ''}`}>
-      <TabelaConcursos
-        regra={props.regra}
-        concursos={consulta.data.itens}
-        destacadas={destacadas}
-        colunaExtra={{ titulo: 'Acertos', valor: (concurso) => String(concurso.acertos) }}
-      />
-      <Paginacao
-        pagina={props.busca.pagina}
-        tamanho={consulta.data.tamanho}
-        total={consulta.data.total}
-        aoMudar={mudarPagina(props)}
-      />
-    </div>
+    <Conteudo
+      {...props}
+      pagina={consulta.data}
+      carregandoProxima={consulta.isPlaceholderData}
+      tabela={
+        <TabelaConcursos
+          regra={props.regra}
+          concursos={consulta.data.itens}
+          destacadas={new Set(props.busca.dezenas)}
+          colunaExtra={{ titulo: 'Acertos', valor: (concurso) => String(concurso.acertos) }}
+        />
+      }
+    />
   );
 };
 
@@ -75,14 +103,14 @@ export const SorteiosJogo = (props: SorteiosJogoProps) => {
   const buscaAtiva = props.busca.dezenas.length > 0;
 
   return (
-    <section className="flex flex-col gap-5 rounded-3xl border border-slate-200 bg-white p-5 shadow-sm lg:p-6 dark:border-slate-800 dark:bg-slate-900">
-      <div className="flex flex-col gap-4 xl:flex-row xl:items-center xl:justify-between">
-        <h2 className="text-lg font-semibold">
+    <section className="flex flex-col rounded-xl border border-slate-200 bg-white lg:min-h-0 lg:flex-1 dark:border-slate-800 dark:bg-slate-900">
+      <div className="flex shrink-0 flex-col gap-3 border-b border-slate-200 px-4 py-3 xl:flex-row xl:items-center xl:justify-between dark:border-slate-800">
+        <h2 className="text-sm font-semibold">
           {buscaAtiva
             ? `Concursos com ${formatarInteiro(props.busca.minimoAcertos)}+ acertos`
-            : 'Todos os sorteios'}
+            : 'Histórico de sorteios'}
         </h2>
-        <div className="xl:w-[44rem]">
+        <div className="xl:w-[42rem]">
           <BarraBusca
             key={props.busca.dezenas.join(',')}
             regra={props.regra}
