@@ -5,11 +5,15 @@ import type { Config } from '../config/config.ts';
 import type { Database } from '../data/database.ts';
 import { AnaliseRepository } from '../data/repositories/analise-repository.ts';
 import { ApostaRepository } from '../data/repositories/aposta-repository.ts';
+import { ConferenciaRepository } from '../data/repositories/conferencia-repository.ts';
+import { FavoritoRepository } from '../data/repositories/favorito-repository.ts';
 import { ConcursoLeituraRepository } from '../data/repositories/concurso-leitura-repository.ts';
 import { JogoRepository } from '../data/repositories/jogo-repository.ts';
 import type { ExecutorAnalise } from '../services/analises/executor-analise.ts';
 import { AnaliseService } from '../services/analise-service.ts';
 import { ApostaService } from '../services/aposta-service.ts';
+import { ConferenciaService } from '../services/conferencia-service.ts';
+import { FavoritoService } from '../services/favorito-service.ts';
 import { ConcursoService } from '../services/concurso-service.ts';
 import type { IngestaoService } from '../services/ingestao-service.ts';
 import { JogoService } from '../services/jogo-service.ts';
@@ -24,6 +28,7 @@ export interface Container {
   readonly concursoService: () => ConcursoService;
   readonly analiseService: () => AnaliseService;
   readonly apostaService: () => ApostaService;
+  readonly favoritoService: () => FavoritoService;
   readonly ingestaoService: () => Promise<IngestaoService>;
   readonly executorAnalise: () => Promise<ExecutorAnalise>;
 }
@@ -87,6 +92,7 @@ const criarExecutorAnalise = async (
 
 export const criarContainer = (config: Config, db: Kysely<Database>, logger: Logger): Container => {
   const concursosLeitura = lazy(() => new ConcursoLeituraRepository(db));
+  const conferencia = lazy(() => new ConferenciaService(new ConferenciaRepository(db)));
 
   return {
     config,
@@ -95,7 +101,8 @@ export const criarContainer = (config: Config, db: Kysely<Database>, logger: Log
     jogoService: lazy(() => new JogoService(new JogoRepository(db))),
     concursoService: lazy(() => new ConcursoService(concursosLeitura())),
     analiseService: lazy(() => new AnaliseService(new AnaliseRepository(db), concursosLeitura())),
-    apostaService: lazy(() => new ApostaService(new ApostaRepository(db))),
+    apostaService: lazy(() => new ApostaService(new ApostaRepository(db), conferencia())),
+    favoritoService: lazy(() => new FavoritoService(new FavoritoRepository(db), conferencia())),
     ingestaoService: lazy(() => criarIngestaoService(config, db, logger)),
     executorAnalise: lazy(() => criarExecutorAnalise(config, db, logger)),
   };

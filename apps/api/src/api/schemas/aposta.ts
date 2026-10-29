@@ -1,61 +1,43 @@
-import { Type } from '@fastify/type-provider-typebox';
+import { Type, type TSchema } from '@fastify/type-provider-typebox';
+import { ConferenciaSchema } from './conferencia.ts';
 
-const Dezenas = Type.Array(Type.Integer({ minimum: 0, maximum: 100 }), {
-  minItems: 1,
-  maxItems: 30,
-});
-const Nome = Type.Union([Type.String({ maxLength: 80 }), Type.Null()]);
+const Nulavel = <T extends TSchema>(schema: T) => Type.Union([schema, Type.Null()]);
 
-export const ParametrosApostaSchema = Type.Object({ id: Type.Integer({ minimum: 1 }) });
-
-export const FiltroApostasSchema = Type.Object({
-  favoritas: Type.Boolean({ default: false }),
+export const ConsultaApostasSchema = Type.Object({
+  pagina: Type.Integer({ minimum: 1, default: 1 }),
+  tamanho: Type.Integer({ minimum: 1, maximum: 100, default: 20 }),
+  dezenas: Type.Optional(Type.String({ pattern: '^\\d{1,3}(,\\d{1,3})*$' })),
+  minimoCoincidencias: Type.Optional(Type.Integer({ minimum: 1 })),
 });
 
-export const NovaApostaSchema = Type.Object(
-  {
-    jogo: Type.String({ minLength: 1 }),
-    nome: Type.Optional(Nome),
-    dezenas: Dezenas,
-    favorita: Type.Optional(Type.Boolean()),
-  },
-  { additionalProperties: false },
-);
-
-export const AlteracaoApostaSchema = Type.Object(
-  {
-    jogo: Type.Optional(Type.String({ minLength: 1 })),
-    nome: Type.Optional(Nome),
-    dezenas: Type.Optional(Dezenas),
-    favorita: Type.Optional(Type.Boolean()),
-  },
-  { additionalProperties: false, minProperties: 1 },
-);
-
-export const ApostaSchema = Type.Object({
+const ApostaSchema = Type.Object({
   id: Type.Integer(),
   jogo: Type.String(),
-  nome: Nome,
+  nome: Nulavel(Type.String()),
   dezenas: Type.Array(Type.Integer()),
-  favorita: Type.Boolean(),
+  favoritoId: Nulavel(Type.Integer()),
+  concurso: Nulavel(Type.Integer()),
   criadaEm: Type.String({ format: 'date-time' }),
-  atualizadaEm: Type.String({ format: 'date-time' }),
-  conferencia: Type.Object({
-    ultimoConcurso: Type.Union([
-      Type.Object({
-        numero: Type.Integer(),
-        data: Type.String({ format: 'date' }),
-        acertos: Type.Integer(),
-        dezenasAcertadas: Type.Array(Type.Integer()),
-      }),
-      Type.Null(),
-    ]),
-    historico: Type.Array(
-      Type.Object({
-        acertos: Type.Integer(),
-        nome: Type.String(),
-        concursos: Type.Integer(),
-      }),
-    ),
-  }),
+  coincidencias: Nulavel(Type.Integer()),
+  conferencia: ConferenciaSchema,
+});
+
+export const PaginaApostasSchema = Type.Object({
+  itens: Type.Array(ApostaSchema),
+  total: Type.Integer(),
+  pagina: Type.Integer(),
+  tamanho: Type.Integer(),
+});
+
+export const ResumoApostasSchema = Type.Object({
+  total: Type.Integer(),
+  comAcertos: Type.Integer(),
+  maiorAcerto: Type.Integer(),
+  melhor: Nulavel(
+    Type.Object({
+      id: Type.Integer(),
+      nome: Nulavel(Type.String()),
+      concurso: Type.Integer(),
+    }),
+  ),
 });

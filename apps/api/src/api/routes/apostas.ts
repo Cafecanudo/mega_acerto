@@ -1,48 +1,31 @@
-import { Type, type FastifyPluginAsyncTypebox } from '@fastify/type-provider-typebox';
+import type { FastifyPluginAsyncTypebox } from '@fastify/type-provider-typebox';
 import {
-  AlteracaoApostaSchema,
-  ApostaSchema,
-  FiltroApostasSchema,
-  NovaApostaSchema,
-  ParametrosApostaSchema,
+  ConsultaApostasSchema,
+  PaginaApostasSchema,
+  ResumoApostasSchema,
 } from '../schemas/aposta.ts';
 import type { OpcoesRotas } from '../opcoes-rotas.ts';
+
+const converterListaDezenas = (valor: string | undefined): number[] =>
+  valor ? valor.split(',').map((dezena) => Number.parseInt(dezena, 10)) : [];
 
 const rotasApostas: FastifyPluginAsyncTypebox<OpcoesRotas> = async (app, { container }) => {
   app.get(
     '/apostas',
-    { schema: { querystring: FiltroApostasSchema, response: { 200: Type.Array(ApostaSchema) } } },
-    async (requisicao) => container.apostaService().listar(requisicao.query.favoritas),
-  );
-
-  app.post(
-    '/apostas',
-    { schema: { body: NovaApostaSchema, response: { 201: ApostaSchema } } },
-    async (requisicao, resposta) => {
-      const aposta = await container.apostaService().criar(requisicao.body);
-      return resposta.status(201).send(aposta);
+    { schema: { querystring: ConsultaApostasSchema, response: { 200: PaginaApostasSchema } } },
+    async (requisicao) => {
+      const { dezenas, minimoCoincidencias, pagina, tamanho } = requisicao.query;
+      return container.apostaService().listar({
+        dezenas: converterListaDezenas(dezenas),
+        minimoCoincidencias,
+        pagina,
+        tamanho,
+      });
     },
   );
 
-  app.patch(
-    '/apostas/:id',
-    {
-      schema: {
-        params: ParametrosApostaSchema,
-        body: AlteracaoApostaSchema,
-        response: { 200: ApostaSchema },
-      },
-    },
-    async (requisicao) => container.apostaService().alterar(requisicao.params.id, requisicao.body),
-  );
-
-  app.delete(
-    '/apostas/:id',
-    { schema: { params: ParametrosApostaSchema } },
-    async (requisicao, resposta) => {
-      await container.apostaService().excluir(requisicao.params.id);
-      return resposta.status(204).send();
-    },
+  app.get('/apostas/resumo', { schema: { response: { 200: ResumoApostasSchema } } }, async () =>
+    container.apostaService().resumir(),
   );
 };
 

@@ -1,166 +1,89 @@
-import {
-  isCodigoJogo,
-  menorFaixaPremiada,
-  obterRegraJogo,
-  validarAposta,
-  type RegraJogo,
-} from '@mega/domain';
-import type {
-  AcertosPorFaixa,
-  AcertosUltimoConcurso,
-  Aposta,
-  ApostaRepository,
-  DadosAposta,
-} from '../data/repositories/aposta-repository.ts';
-import { entradaInvalida, naoEncontrado } from '../shared/erros.ts';
+import type { ApostaFiltrada, ApostaRepository } from '../data/repositories/aposta-repository.ts';
+import { entradaInvalida } from '../shared/erros.ts';
+import type { Conferencia, ConferenciaService } from './conferencia-service.ts';
 
-export interface ConferenciaAposta {
-  readonly ultimoConcurso: {
-    readonly numero: number;
-    readonly data: string;
-    readonly acertos: number;
-    readonly dezenasAcertadas: number[];
-  } | null;
-  readonly historico: {
-    readonly acertos: number;
-    readonly nome: string;
-    readonly concursos: number;
-  }[];
+export interface ApostaConferida extends ApostaFiltrada {
+  readonly conferencia: Conferencia;
 }
 
-export interface ApostaConferida extends Aposta {
-  readonly conferencia: ConferenciaAposta;
-}
-
-export interface EntradaAposta {
-  readonly jogo: string;
-  readonly nome?: string | null | undefined;
+export interface ConsultaApostas {
   readonly dezenas: readonly number[];
-  readonly favorita?: boolean | undefined;
+  readonly minimoCoincidencias?: number | undefined;
+  readonly pagina: number;
+  readonly tamanho: number;
 }
 
-export type AlteracaoAposta = Partial<EntradaAposta>;
+export interface PaginaApostas {
+  readonly itens: ApostaConferida[];
+  readonly total: number;
+  readonly pagina: number;
+  readonly tamanho: number;
+}
 
-const TAMANHO_MAXIMO_NOME = 80;
+export interface ResumoApostas {
+  readonly total: number;
+  readonly comAcertos: number;
+  readonly maiorAcerto: number;
+  readonly melhor: {
+    readonly id: number;
+    readonly nome: string | null;
+    readonly concurso: number;
+  } | null;
+}
 
-const regraDisponivel = (jogo: string): RegraJogo => {
-  if (!isCodigoJogo(jogo)) throw entradaInvalida(`Jogo ${jogo} ainda não está disponível`);
-  return obterRegraJogo(jogo);
-};
-
-const normalizarNome = (nome: string | null | undefined): string | null => {
-  const texto = nome?.trim() ?? '';
-  if (texto.length > TAMANHO_MAXIMO_NOME) {
-    throw entradaInvalida(`O nome deve ter até ${TAMANHO_MAXIMO_NOME} caracteres`);
-  }
-  return texto.length > 0 ? texto : null;
-};
-
-const prepararDados = (entrada: EntradaAposta): DadosAposta => {
-  const regra = regraDisponivel(entrada.jogo);
-  const erros = validarAposta(regra, entrada.dezenas);
-  if (erros.length > 0) throw entradaInvalida(`Aposta inválida: ${JSON.stringify(erros)}`);
-
-  return {
-    jogo: regra.codigo,
-    nome: normalizarNome(entrada.nome),
-    dezenas: entrada.dezenas,
-    favorita: entrada.favorita ?? false,
-  };
-};
-
-const montarConferencia = (
-  aposta: Aposta,
-  historico: readonly AcertosPorFaixa[],
-  ultimo: AcertosUltimoConcurso | undefined,
-): ConferenciaAposta => {
-  const regra = regraDisponivel(aposta.jogo);
-  const porAcertos = new Map(
-    historico
-      .filter((linha) => linha.apostaId === aposta.id)
-      .map((linha) => [linha.acertos, linha.concursos]),
-  );
-
-  return {
-    ultimoConcurso: ultimo
-      ? {
-          numero: ultimo.numero,
-          data: ultimo.data,
-          acertos: ultimo.dezenasAcertadas.length,
-          dezenasAcertadas: ultimo.dezenasAcertadas,
-        }
-      : null,
-    historico: regra.faixasPremiadas.map((faixa) => ({
-      acertos: faixa.acertos,
-      nome: faixa.nome,
-      concursos: porAcertos.get(faixa.acertos) ?? 0,
-    })),
-  };
-};
+const LIMITE_DEZENAS_FILTRO = 20;
 
 export class ApostaService {
   readonly #repository: ApostaRepository;
+  readonly #conferencia: ConferenciaService;
 
-  constructor(repository: ApostaRepository) {
+  constructor(repository: ApostaRepository, conferencia: ConferenciaService) {
     this.#repository = repository;
+    this.#conferencia = conferencia;
   }
 
-  async listar(somenteFavoritas: boolean): Promise<ApostaConferida[]> {
-    return this.#conferir(await this.#repository.listar(somenteFavoritas));
-  }
+  async listar(consulta: ConsultaApostas): Promise<PaginaApostas> {
+    const dezenas = [...new Set(consulta.dezenas)];
+    if (dezenas.length > LIMITE_DEZENAS_FILTRO) {
+      throw entradaInvalida(`Informe até ${LIMITE_DEZENAS_FILTRO} dezenas no filtro`);
+    }
+    const minimo = consulta.minimoCoincidencias ?? Math.min(dezenas.length, 6);
 
-  async criar(entrada: EntradaAposta): Promise<ApostaConferida> {
-    const aposta = await this.#repository.criar(prepararDados(entrada));
-    return this.#conferirUma(aposta);
-  }
-
-  async alterar(id: number, alteracao: AlteracaoAposta): Promise<ApostaConferida> {
-    const atual = await this.#obterExistente(id);
-    const dados = prepararDados({
-      jogo: alteracao.jogo ?? atual.jogo,
-      nome: alteracao.nome === undefined ? atual.nome : alteracao.nome,
-      dezenas: alteracao.dezenas ?? atual.dezenas,
-      favorita: alteracao.favorita ?? atual.favorita,
-    });
-
-    const aposta = await this.#repository.atualizar(id, dados);
-    if (!aposta) throw naoEncontrado(`Aposta ${id} não encontrada`);
-    return this.#conferirUma(aposta);
-  }
-
-  async excluir(id: number): Promise<void> {
-    const excluida = await this.#repository.excluir(id);
-    if (!excluida) throw naoEncontrado(`Aposta ${id} não encontrada`);
-  }
-
-  async #obterExistente(id: number): Promise<Aposta> {
-    const aposta = await this.#repository.obter(id);
-    if (!aposta) throw naoEncontrado(`Aposta ${id} não encontrada`);
-    return aposta;
-  }
-
-  async #conferirUma(aposta: Aposta): Promise<ApostaConferida> {
-    const [conferida] = await this.#conferir([aposta]);
-    if (!conferida) throw new Error(`Falha ao conferir a aposta ${aposta.id}`);
-    return conferida;
-  }
-
-  async #conferir(apostas: readonly Aposta[]): Promise<ApostaConferida[]> {
-    const disponiveis = apostas.filter((aposta) => isCodigoJogo(aposta.jogo));
-    const ids = disponiveis.map((aposta) => aposta.id);
-    const minimo = Math.min(
-      ...disponiveis.map((aposta) => menorFaixaPremiada(regraDisponivel(aposta.jogo))),
+    const { itens, total } = await this.#repository.listar(
+      { dezenas, minimoCoincidencias: minimo },
+      { deslocamento: (consulta.pagina - 1) * consulta.tamanho, limite: consulta.tamanho },
     );
+    const conferencias = await this.#conferencia.conferir(itens);
 
-    const [historico, ultimos] = await Promise.all([
-      this.#repository.contarAcertosHistoricos(ids, Number.isFinite(minimo) ? minimo : 1),
-      this.#repository.conferirUltimoConcurso(ids),
-    ]);
-    const ultimoPorAposta = new Map(ultimos.map((linha) => [linha.apostaId, linha]));
+    return {
+      itens: itens.flatMap((aposta) => {
+        const conferencia = conferencias.get(aposta.id);
+        return conferencia ? [{ ...aposta, conferencia }] : [];
+      }),
+      total,
+      pagina: consulta.pagina,
+      tamanho: consulta.tamanho,
+    };
+  }
 
-    return disponiveis.map((aposta) => ({
-      ...aposta,
-      conferencia: montarConferencia(aposta, historico, ultimoPorAposta.get(aposta.id)),
-    }));
+  async resumir(): Promise<ResumoApostas> {
+    const apostas = await this.#repository.listarTodas();
+    const conferencias = await this.#conferencia.conferir(apostas);
+
+    let comAcertos = 0;
+    let melhor: ResumoApostas['melhor'] = null;
+    let maiorAcerto = 0;
+
+    for (const aposta of apostas) {
+      const concurso = conferencias.get(aposta.id)?.concursoConferido;
+      if (!concurso || concurso.acertos === 0) continue;
+      comAcertos++;
+      if (concurso.acertos > maiorAcerto) {
+        maiorAcerto = concurso.acertos;
+        melhor = { id: aposta.id, nome: aposta.nome, concurso: concurso.numero };
+      }
+    }
+
+    return { total: apostas.length, comAcertos, maiorAcerto, melhor };
   }
 }

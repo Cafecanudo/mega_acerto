@@ -91,7 +91,17 @@ export interface Database {
   payload_bruto: PayloadBrutoTabela;
   ingestao_execucao: IngestaoExecucaoTabela;
   analise: AnaliseTabela;
+  favorito: FavoritoTabela;
   aposta: ApostaTabela;
+}
+
+export interface FavoritoTabela {
+  id: Generated<number>;
+  jogo: string;
+  nome: string | null;
+  dezenas: number[];
+  criado_em: Generated<Date>;
+  atualizado_em: Generated<Date>;
 }
 
 export interface ApostaTabela {
@@ -99,7 +109,7 @@ export interface ApostaTabela {
   jogo: string;
   nome: string | null;
   dezenas: number[];
-  favorita: Generated<boolean>;
+  favorito_id: number | null;
+  concurso: number | null;
   criada_em: Generated<Date>;
-  atualizada_em: Generated<Date>;
 }
