@@ -38,7 +38,7 @@ export const IndicadoresApostas = ({ somenteFavoritas, jogo }: IndicadoresAposta
   const grupo = somenteFavoritas ? 'favoritas' : 'apostas';
 
   return (
-    <span className="ml-auto flex shrink-0 flex-col items-end gap-0.5">
+    <span className="flex flex-wrap items-center gap-1">
       <Pilula
         icone={<IconTarget aria-hidden size="0.75rem" />}
         valor={`${comAcertos}/${total}`}

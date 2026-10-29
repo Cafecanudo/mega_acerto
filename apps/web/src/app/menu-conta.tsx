@@ -25,8 +25,10 @@ const Item = ({
   <li>
     <NavLink to={destino} className={classeItem}>
       {icone}
-      {children}
-      {indicadores}
+      <span className="flex min-w-0 flex-col gap-0.5">
+        {children}
+        {indicadores}
+      </span>
     </NavLink>
   </li>
 );

@@ -51,13 +51,13 @@ export const MenuJogos = ({ indicadores }: MenuJogosProps) => {
               color={apresentacao.cor}
               className="shrink-0 dark:brightness-[1.8] dark:saturate-150"
             />
-            <span className="flex min-w-0 flex-col">
+            <span className="flex min-w-0 flex-col gap-0.5">
               <span className="truncate text-sm font-medium">{apresentacao.nome}</span>
               <span className="truncate text-xs text-slate-500 dark:text-slate-400">
                 {descreverStatus(apresentacao, resumos?.get(apresentacao.codigo))}
               </span>
+              {indicadores?.(apresentacao.codigo)}
             </span>
-            {indicadores?.(apresentacao.codigo)}
           </NavLink>
         </li>
       ))}
