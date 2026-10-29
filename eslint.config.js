@@ -6,6 +6,7 @@ import importX from 'eslint-plugin-import-x';
 import reactHooks from 'eslint-plugin-react-hooks';
 import reactRefresh from 'eslint-plugin-react-refresh';
 import prettier from 'eslint-config-prettier';
+import { createTypeScriptImportResolver } from 'eslint-import-resolver-typescript';
 
 const webFeatures = (() => {
   try {
@@ -49,11 +50,16 @@ export default tseslint.config(
     },
   },
   {
-    files: ['apps/api/**/*.ts', 'packages/**/*.ts', 'eslint.config.js'],
+    files: ['apps/api/**/*.ts', 'packages/**/*.ts', 'apps/web/vite.config.ts', 'eslint.config.js'],
     languageOptions: { globals: globals.node },
   },
   {
     files: ['apps/web/**/*.{ts,tsx}'],
+    settings: {
+      'import-x/resolver-next': [
+        createTypeScriptImportResolver({ project: './apps/web/tsconfig.json' }),
+      ],
+    },
     languageOptions: { globals: globals.browser },
     plugins: {
       'react-hooks': reactHooks,
