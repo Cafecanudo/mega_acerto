@@ -89,7 +89,31 @@ export class ApostaRepository {
   }
 
   async listarTodas(): Promise<Aposta[]> {
-    const linhas = await this.#db.selectFrom('aposta').selectAll().orderBy('id', 'desc').execute();
+    return this.#listarSelecionadas(false);
+  }
+
+  async listarNaoConferidas(): Promise<Aposta[]> {
+    return this.#listarSelecionadas(true);
+  }
+
+  async marcarConferidas(ids: readonly number[]): Promise<number> {
+    if (ids.length === 0) return 0;
+    const resultado = await this.#db
+      .updateTable('aposta')
+      .set({ conferida_em: sql`now()` })
+      .where('id', 'in', [...ids])
+      .where('conferida_em', 'is', null)
+      .executeTakeFirst();
+    return Number(resultado.numUpdatedRows);
+  }
+
+  async #listarSelecionadas(somenteNaoConferidas: boolean): Promise<Aposta[]> {
+    const linhas = await this.#db
+      .selectFrom('aposta')
+      .selectAll()
+      .$if(somenteNaoConferidas, (consulta) => consulta.where('conferida_em', 'is', null))
+      .orderBy('id', 'desc')
+      .execute();
     return linhas.map((linha) => ({
       id: linha.id,
       jogo: linha.jogo,

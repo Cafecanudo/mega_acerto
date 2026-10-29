@@ -162,6 +162,23 @@ export class ConcursoLeituraRepository {
     return concurso ? { ...concurso, premiacoes } : undefined;
   }
 
+  async listarPremiacoes(
+    concursos: readonly { readonly jogo: string; readonly numero: number }[],
+  ): Promise<{ jogo: string; numero: number; faixa: number; valorPremio: number }[]> {
+    if (concursos.length === 0) return [];
+    return this.#db
+      .selectFrom('premiacao')
+      .where((eb) =>
+        eb.or(
+          concursos.map(({ jogo, numero }) =>
+            eb.and([eb('jogo', '=', jogo), eb('numero', '=', numero)]),
+          ),
+        ),
+      )
+      .select(['jogo', 'numero', 'faixa', 'valor_premio as valorPremio'])
+      .execute();
+  }
+
   async buscarPorDezenas(
     jogo: string,
     dezenas: readonly number[],

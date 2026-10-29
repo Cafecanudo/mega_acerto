@@ -1,6 +1,14 @@
-import { calcularValorAposta, isCodigoJogo, obterRegraJogo, validarAposta } from '@mega/domain';
+import {
+  calcularValorAposta,
+  contarPremiosAposta,
+  isCodigoJogo,
+  obterRegraJogo,
+  validarAposta,
+  type PremioAposta,
+} from '@mega/domain';
 import type { ValorJogoRepository } from '../data/repositories/valor-jogo-repository.ts';
 import type {
+  Aposta,
   ApostaFiltrada,
   ApostaRepository,
   NovaApostaItem,
@@ -25,6 +33,16 @@ export interface PaginaApostas {
   readonly total: number;
   readonly pagina: number;
   readonly tamanho: number;
+}
+
+export interface PremioConferido extends PremioAposta {
+  readonly valorUnitario: number | null;
+}
+
+export interface ApostaAConferir extends Aposta {
+  readonly conferencia: Conferencia;
+  readonly premios: PremioConferido[];
+  readonly premioTotal: number | null;
 }
 
 export interface AcertosConcurso {
@@ -144,6 +162,61 @@ export class ApostaService {
       pagina: consulta.pagina,
       tamanho: consulta.tamanho,
     };
+  }
+
+  async listarAConferir(): Promise<ApostaAConferir[]> {
+    const apostas = await this.#repository.listarNaoConferidas();
+    const conferencias = await this.#conferencia.conferir(apostas);
+    const sorteadas = apostas.flatMap((aposta) => {
+      const conferencia = conferencias.get(aposta.id);
+      return conferencia?.concursoConferido ? [{ aposta, conferencia }] : [];
+    });
+
+    const premiacoes = await this.#concursos.listarPremiacoes(
+      sorteadas.map(({ aposta, conferencia }) => ({
+        jogo: aposta.jogo,
+        numero: conferencia.concursoConferido?.numero ?? 0,
+      })),
+    );
+    const valores = new Map(
+      premiacoes.map((linha) => [
+        `${linha.jogo}:${String(linha.numero)}:${String(linha.faixa)}`,
+        linha.valorPremio,
+      ]),
+    );
+
+    return sorteadas
+      .map(({ aposta, conferencia }) => {
+        const numero = conferencia.concursoConferido?.numero ?? 0;
+        const acertos = conferencia.concursoConferido?.acertos ?? 0;
+        const premios = isCodigoJogo(aposta.jogo)
+          ? contarPremiosAposta(obterRegraJogo(aposta.jogo), aposta.dezenas.length, acertos).map(
+              (premio) => ({
+                ...premio,
+                valorUnitario:
+                  valores.get(`${aposta.jogo}:${String(numero)}:${String(premio.faixa)}`) ?? null,
+              }),
+            )
+          : [];
+        const premioTotal = premios.some((premio) => premio.valorUnitario === null)
+          ? null
+          : Math.round(
+              premios.reduce(
+                (soma, premio) => soma + premio.quantidade * (premio.valorUnitario ?? 0),
+                0,
+              ) * 100,
+            ) / 100;
+        return { ...aposta, conferencia, premios, premioTotal };
+      })
+      .sort(
+        (a, b) =>
+          (b.conferencia.concursoConferido?.numero ?? 0) -
+            (a.conferencia.concursoConferido?.numero ?? 0) || b.id - a.id,
+      );
+  }
+
+  async marcarConferidas(ids: readonly number[]): Promise<{ marcadas: number }> {
+    return { marcadas: await this.#repository.marcarConferidas([...new Set(ids)]) };
   }
 
   async listarAcertosPorConcurso(): Promise<AcertosConcurso[]> {

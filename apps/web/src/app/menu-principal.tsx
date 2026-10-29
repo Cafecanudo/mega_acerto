@@ -2,6 +2,7 @@ import { IconChartHistogram, IconChecklist } from '@tabler/icons-react';
 import type { ReactNode } from 'react';
 import { NavLink } from 'react-router';
 import { paths } from '@/config/paths';
+import { IndicadorConferencia } from '@/features/apostas/components/indicador-conferencia';
 
 const classeItem = ({ isActive }: { readonly isActive: boolean }) =>
   `flex min-w-40 items-center gap-2.5 rounded-lg px-2.5 py-1.5 text-sm font-medium transition lg:min-w-0 ${
@@ -42,6 +43,7 @@ export const MenuPrincipal = () => (
       icone={<IconChecklist aria-hidden size="1.375rem" stroke={1.75} className="text-slate-500" />}
     >
       Conferir Apostas
+      <IndicadorConferencia />
     </Item>
   </ul>
 );

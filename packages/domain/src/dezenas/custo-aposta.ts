@@ -1,6 +1,6 @@
 import type { RegraJogo } from '../jogos/regra-jogo.ts';
 
-const combinacoes = (total: number, escolhidos: number): number => {
+export const combinacoes = (total: number, escolhidos: number): number => {
   if (escolhidos < 0 || escolhidos > total) return 0;
   let resultado = 1;
   for (let indice = 1; indice <= escolhidos; indice++) {

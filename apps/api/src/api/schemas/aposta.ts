@@ -57,6 +57,35 @@ export const ApostasEfetivadasSchema = Type.Object({
   valorTotal: Nulavel(Type.Number()),
 });
 
+export const ApostaAConferirSchema = Type.Object({
+  id: Type.Integer(),
+  jogo: Type.String(),
+  nome: Nulavel(Type.String()),
+  dezenas: Type.Array(Type.Integer()),
+  favoritoId: Nulavel(Type.Integer()),
+  concurso: Nulavel(Type.Integer()),
+  valor: Nulavel(Type.Number()),
+  criadaEm: Type.String({ format: 'date-time' }),
+  conferencia: ConferenciaSchema,
+  premios: Type.Array(
+    Type.Object({
+      faixa: Type.Integer(),
+      acertos: Type.Integer(),
+      nome: Type.String(),
+      quantidade: Type.Integer(),
+      valorUnitario: Nulavel(Type.Number()),
+    }),
+  ),
+  premioTotal: Nulavel(Type.Number()),
+});
+
+export const MarcacaoConferidasSchema = Type.Object(
+  { ids: Type.Array(Type.Integer({ minimum: 1 }), { minItems: 1, maxItems: 1000 }) },
+  { additionalProperties: false },
+);
+
+export const ApostasMarcadasSchema = Type.Object({ marcadas: Type.Integer() });
+
 export const AcertosConcursoSchema = Type.Object({
   jogo: Type.String(),
   concurso: Type.Integer(),

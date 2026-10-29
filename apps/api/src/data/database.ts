@@ -120,4 +120,5 @@ export interface ApostaTabela {
   concurso: number | null;
   valor: number | null;
   criada_em: Generated<Date>;
+  conferida_em: Generated<Date | null>;
 }

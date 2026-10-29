@@ -10,3 +10,5 @@ export { apresentacoesJogo, obterApresentacaoJogo } from './jogos/apresentacao.t
 export type { ErroAposta } from './dezenas/validar-aposta.ts';
 export { menorFaixaPremiada, validarAposta } from './dezenas/validar-aposta.ts';
 export { calcularValorAposta, contarApostasSimples } from './dezenas/custo-aposta.ts';
+export type { PremioAposta } from './dezenas/premios-aposta.ts';
+export { contarPremiosAposta } from './dezenas/premios-aposta.ts';
