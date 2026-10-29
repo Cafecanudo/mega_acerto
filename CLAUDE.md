@@ -54,6 +54,13 @@ docker compose up -d --build
 - Não rodar a API de desenvolvimento e o container `app` ao mesmo tempo: ambos usam a porta 3000 e disparariam a ingestão em paralelo.
 - Ao testar processos em background, encerrar apenas o PID iniciado na sessão; nunca matar todos os processos `node`.
 
+## Favoritos e Apostas
+
+- **Favoritos** (tabela `favorito`, `/api/favoritos`): jogos que o usuário monta para usar quando quiser. Cadastro completo (criar, editar, excluir) pela página Favoritos, com diálogo e histórico das dezenas.
+- **Apostas** (tabela `aposta`, `/api/apostas`): apostas efetivadas, criadas a partir de um favorito ou direto num jogo. Somente leitura na interface: sem criar nem excluir pela página Apostas. A lista segue o formato do histórico (tabela, busca por dezenas, combinações, paginação). `concurso` nulo confere contra o último sorteio; concurso futuro aparece como aguardando.
+- A conferência é genérica (`ConferenciaService`) e atende às duas entidades.
+- A criação de apostas virá pelo botão "Apostar" da sidebar, cujo comportamento ainda será definido.
+
 ## Análises com Claude (Fase 2)
 
 - O container `ai-worker` roda `apps/api/src/worker.ts` (mesmo código da API, outro entrypoint). Ele reivindica análises `pendente` na tabela `analise`, exporta o dataset para uma pasta isolada e executa `claude -p` com `--json-schema`, `--model` e `--effort`.

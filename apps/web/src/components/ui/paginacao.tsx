@@ -16,8 +16,8 @@ export const Paginacao = ({ pagina, tamanho, total, aoMudar }: PaginacaoProps) =
   return (
     <nav className="flex flex-wrap items-center justify-between gap-3 text-sm">
       <span className="text-slate-500 dark:text-slate-400">
-        {formatarInteiro(total)} resultados · página {formatarInteiro(pagina)} de{' '}
-        {formatarInteiro(totalPaginas)}
+        {formatarInteiro(total)} {total === 1 ? 'resultado' : 'resultados'} · página{' '}
+        {formatarInteiro(pagina)} de {formatarInteiro(totalPaginas)}
       </span>
       <div className="flex gap-2">
         <button

@@ -1,45 +1,30 @@
-import { queryOptions, useMutation, useQueryClient } from '@tanstack/react-query';
+import type { RegraJogo } from '@mega/domain';
+import { keepPreviousData, queryOptions } from '@tanstack/react-query';
 import { api } from '@/lib/api-client';
-import type { Aposta, DadosAposta } from '../types';
+import { calcularFaixaAcertos, type ParametrosBusca } from '@/lib/busca-dezenas';
+import type { Pagina } from '@/types/api';
+import type { ResumoAcertos } from '@/types/conferencia';
+import type { Aposta } from '../types';
 
 const CHAVE_APOSTAS = ['apostas'] as const;
+const TAMANHO_PAGINA = 20;
 
-export const listarApostasQuery = (somenteFavoritas: boolean) =>
+export const listarApostasQuery = (regra: RegraJogo, busca: ParametrosBusca) =>
   queryOptions({
-    queryKey: [...CHAVE_APOSTAS, { somenteFavoritas }],
+    queryKey: [...CHAVE_APOSTAS, 'lista', busca],
     queryFn: () =>
-      api.get<Aposta[]>('/apostas', { favoritas: somenteFavoritas ? 'true' : undefined }),
+      api.get<Pagina<Aposta>>('/apostas', {
+        pagina: busca.pagina,
+        tamanho: TAMANHO_PAGINA,
+        dezenas: busca.dezenas.length > 0 ? busca.dezenas.join(',') : undefined,
+        minimoCoincidencias:
+          busca.dezenas.length > 0 ? calcularFaixaAcertos(regra, busca).minimo : undefined,
+      }),
+    placeholderData: keepPreviousData,
   });
 
-const useInvalidarApostas = () => {
-  const queryClient = useQueryClient();
-  return () => queryClient.invalidateQueries({ queryKey: CHAVE_APOSTAS });
-};
-
-export const useSalvarAposta = () => {
-  const invalidar = useInvalidarApostas();
-  return useMutation({
-    mutationFn: ({ id, dados }: { readonly id: number | null; readonly dados: DadosAposta }) =>
-      id === null
-        ? api.post<Aposta>('/apostas', dados)
-        : api.patch<Aposta>(`/apostas/${id}`, dados),
-    onSuccess: invalidar,
+export const resumoApostasQuery = () =>
+  queryOptions({
+    queryKey: [...CHAVE_APOSTAS, 'resumo'],
+    queryFn: () => api.get<ResumoAcertos>('/apostas/resumo'),
   });
-};
-
-export const useAlternarFavorita = () => {
-  const invalidar = useInvalidarApostas();
-  return useMutation({
-    mutationFn: (aposta: Aposta) =>
-      api.patch<Aposta>(`/apostas/${aposta.id}`, { favorita: !aposta.favorita }),
-    onSuccess: invalidar,
-  });
-};
-
-export const useExcluirAposta = () => {
-  const invalidar = useInvalidarApostas();
-  return useMutation({
-    mutationFn: (id: number) => api.delete(`/apostas/${id}`),
-    onSuccess: invalidar,
-  });
-};

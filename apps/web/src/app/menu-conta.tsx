@@ -3,6 +3,7 @@ import type { ReactNode } from 'react';
 import { NavLink } from 'react-router';
 import { paths } from '@/config/paths';
 import { IndicadoresApostas } from '@/features/apostas/components/indicadores-apostas';
+import { IndicadoresFavoritos } from '@/features/favoritos/components/indicadores-favoritos';
 
 const classeItem = ({ isActive }: { readonly isActive: boolean }) =>
   `flex min-w-40 items-center gap-2.5 rounded-lg px-2.5 py-1.5 text-sm font-medium transition lg:min-w-0 ${
@@ -38,14 +39,14 @@ export const MenuConta = () => (
     <Item
       destino={paths.apostas}
       icone={<IconTicket aria-hidden size="1.375rem" stroke={1.75} className="text-slate-500" />}
-      indicadores={<IndicadoresApostas somenteFavoritas={false} />}
+      indicadores={<IndicadoresApostas />}
     >
       Apostas
     </Item>
     <Item
       destino={paths.favoritos}
       icone={<IconStar aria-hidden size="1.375rem" stroke={1.75} className="text-amber-500" />}
-      indicadores={<IndicadoresApostas somenteFavoritas />}
+      indicadores={<IndicadoresFavoritos />}
     >
       Favoritos
     </Item>

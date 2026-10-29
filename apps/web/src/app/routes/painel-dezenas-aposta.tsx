@@ -1,5 +1,5 @@
 import { isCodigoJogo, obterApresentacaoJogo, obterRegraJogo } from '@mega/domain';
-import type { SelecaoDezenas } from '@/features/apostas/components/formulario-aposta';
+import type { SelecaoDezenas } from '@/features/favoritos/components/formulario-favorito';
 import { ConcursosComDezenas } from '@/features/concursos/components/concursos-com-dezenas';
 import { estiloCorJogo } from '@/lib/cor-jogo';
 

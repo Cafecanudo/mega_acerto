@@ -5,63 +5,56 @@ import {
   obterRegraJogo,
   type RegraJogo,
 } from '@mega/domain';
-import {
-  IconClover,
-  IconPencil,
-  IconSearch,
-  IconStar,
-  IconStarFilled,
-  IconTrash,
-} from '@tabler/icons-react';
+import { IconClover, IconPencil, IconSearch, IconTrash } from '@tabler/icons-react';
 import { useState } from 'react';
 import { Link } from 'react-router';
 import { LinhaDezenas } from '@/components/dezenas/linha-dezenas';
 import { paths } from '@/config/paths';
 import { estiloCorJogo } from '@/lib/cor-jogo';
 import { formatarData, formatarInteiro } from '@/lib/formatadores';
-import { useAlternarFavorita, useExcluirAposta } from '../api/apostas';
-import type { Aposta } from '../types';
+import { useExcluirFavorito } from '../api/favoritos';
+import type { Favorito } from '../types';
 
-interface CartaoApostaProps {
-  readonly aposta: Aposta;
-  readonly aoEditar: (aposta: Aposta) => void;
+interface CartaoFavoritoProps {
+  readonly favorito: Favorito;
+  readonly aoEditar: (favorito: Favorito) => void;
 }
 
 const botaoIcone =
   'rounded-md p-1.5 text-slate-500 transition hover:bg-slate-100 hover:text-slate-900 dark:text-slate-400 dark:hover:bg-slate-800 dark:hover:text-slate-100';
 
-const UltimoConcurso = ({
-  aposta,
+const ConcursoConferido = ({
+  favorito,
   regra,
 }: {
-  readonly aposta: Aposta;
+  readonly favorito: Favorito;
   readonly regra: RegraJogo;
 }) => {
-  const ultimo = aposta.conferencia.ultimoConcurso;
-  if (!ultimo) return null;
+  const concurso = favorito.conferencia.concursoConferido;
+  if (!concurso) return null;
   return (
     <span className="text-sm text-slate-600 dark:text-slate-300">
-      Concurso {ultimo.numero} ({formatarData(ultimo.data)}):{' '}
+      Concurso {concurso.numero} ({formatarData(concurso.data)}):{' '}
       <strong className="font-semibold text-slate-900 dark:text-slate-100">
-        {ultimo.acertos} {ultimo.acertos === 1 ? 'acerto' : 'acertos'}
+        {concurso.acertos} {concurso.acertos === 1 ? 'acerto' : 'acertos'}
       </strong>
-      {ultimo.acertos > 0 && (
+      {concurso.acertos > 0 && (
         <span className="font-mono text-xs">
           {' '}
-          · {ultimo.dezenasAcertadas.map((dezena) => formatarDezena(regra, dezena)).join(' ')}
+          · {concurso.dezenasAcertadas.map((dezena) => formatarDezena(regra, dezena)).join(' ')}
         </span>
       )}
     </span>
   );
 };
 
-const Historico = ({ aposta }: { readonly aposta: Aposta }) => (
+const Historico = ({ favorito }: { readonly favorito: Favorito }) => (
   <div className="flex flex-wrap items-center gap-1.5 text-xs">
     <span className="text-slate-500 dark:text-slate-400">No histórico:</span>
-    {aposta.conferencia.historico.map((faixa) => (
+    {favorito.conferencia.historico.map((faixa) => (
       <span
         key={faixa.acertos}
-        title={`Concursos com ${faixa.acertos} acertos entre as dezenas desta aposta`}
+        title={`Concursos com ${faixa.acertos} acertos entre estas dezenas`}
         className={`rounded-full px-2 py-0.5 font-medium tabular-nums ${
           faixa.concursos > 0
             ? 'bg-jogo/15 text-slate-900 dark:text-slate-100'
@@ -74,14 +67,13 @@ const Historico = ({ aposta }: { readonly aposta: Aposta }) => (
   </div>
 );
 
-export const CartaoAposta = ({ aposta, aoEditar }: CartaoApostaProps) => {
-  const favorita = useAlternarFavorita();
-  const excluir = useExcluirAposta();
+export const CartaoFavorito = ({ favorito, aoEditar }: CartaoFavoritoProps) => {
+  const excluir = useExcluirFavorito();
   const [confirmarExclusao, setConfirmarExclusao] = useState(false);
 
-  const apresentacao = obterApresentacaoJogo(aposta.jogo);
-  if (!apresentacao || !isCodigoJogo(aposta.jogo)) return null;
-  const regra = obterRegraJogo(aposta.jogo);
+  const apresentacao = obterApresentacaoJogo(favorito.jogo);
+  if (!apresentacao || !isCodigoJogo(favorito.jogo)) return null;
+  const regra = obterRegraJogo(favorito.jogo);
 
   return (
     <article
@@ -99,34 +91,19 @@ export const CartaoAposta = ({ aposta, aoEditar }: CartaoApostaProps) => {
           />
           <div className="min-w-0">
             <p className="truncate text-sm font-semibold">
-              {aposta.nome ?? `Aposta #${aposta.id}`}
+              {favorito.nome ?? `Favorito #${favorito.id}`}
             </p>
             <p className="text-xs text-slate-500 dark:text-slate-400">
-              {apresentacao.nome} · {aposta.dezenas.length} dezenas
+              {apresentacao.nome} · {favorito.dezenas.length} dezenas
             </p>
           </div>
         </div>
         <div className="flex shrink-0 items-center">
           <button
             type="button"
-            aria-label={aposta.favorita ? 'Remover dos favoritos' : 'Marcar como favorita'}
-            aria-pressed={aposta.favorita}
+            aria-label="Editar favorito"
             onClick={() => {
-              favorita.mutate(aposta);
-            }}
-            className={botaoIcone}
-          >
-            {aposta.favorita ? (
-              <IconStarFilled aria-hidden size="1.125rem" className="text-amber-500" />
-            ) : (
-              <IconStar aria-hidden size="1.125rem" />
-            )}
-          </button>
-          <button
-            type="button"
-            aria-label="Editar aposta"
-            onClick={() => {
-              aoEditar(aposta);
+              aoEditar(favorito);
             }}
             className={botaoIcone}
           >
@@ -136,7 +113,7 @@ export const CartaoAposta = ({ aposta, aoEditar }: CartaoApostaProps) => {
             <button
               type="button"
               onClick={() => {
-                excluir.mutate(aposta.id);
+                excluir.mutate(favorito.id);
               }}
               onBlur={() => {
                 setConfirmarExclusao(false);
@@ -148,7 +125,7 @@ export const CartaoAposta = ({ aposta, aoEditar }: CartaoApostaProps) => {
           ) : (
             <button
               type="button"
-              aria-label="Excluir aposta"
+              aria-label="Excluir favorito"
               onClick={() => {
                 setConfirmarExclusao(true);
               }}
@@ -159,12 +136,12 @@ export const CartaoAposta = ({ aposta, aoEditar }: CartaoApostaProps) => {
           )}
         </div>
       </header>
-      <LinhaDezenas regra={regra} dezenas={aposta.dezenas} tamanho="sm" />
+      <LinhaDezenas regra={regra} dezenas={favorito.dezenas} tamanho="sm" />
       <div className="flex flex-col gap-2 border-t border-slate-100 pt-3 dark:border-slate-800">
-        <UltimoConcurso aposta={aposta} regra={regra} />
-        <Historico aposta={aposta} />
+        <ConcursoConferido favorito={favorito} regra={regra} />
+        <Historico favorito={favorito} />
         <Link
-          to={paths.buscaNoHistorico(aposta.jogo, aposta.dezenas)}
+          to={paths.buscaNoHistorico(favorito.jogo, favorito.dezenas)}
           className="inline-flex w-fit items-center gap-1 text-xs font-medium text-slate-500 hover:text-jogo dark:text-slate-400"
         >
           <IconSearch aria-hidden size="0.875rem" />

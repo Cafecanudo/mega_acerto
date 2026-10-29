@@ -1,54 +1,43 @@
 import { IconPlus } from '@tabler/icons-react';
 import { useQuery } from '@tanstack/react-query';
 import { useState, type ReactNode } from 'react';
+import { BaloesAcertos } from '@/components/ui/baloes-acertos';
 import { Dialogo } from '@/components/ui/dialogo';
 import { Carregando, Falha, Vazio } from '@/components/ui/estado';
-import { listarApostasQuery } from '../api/apostas';
-import type { Aposta } from '../types';
-import { CartaoAposta } from './cartao-aposta';
-import { FormularioAposta, type SelecaoDezenas } from './formulario-aposta';
-import { ResumoApostas } from './resumo-apostas';
+import { resumirAcertos } from '@/lib/acertos';
+import { listarFavoritosQuery } from '../api/favoritos';
+import type { Favorito } from '../types';
+import { CartaoFavorito } from './cartao-favorito';
+import { FormularioFavorito, type SelecaoDezenas } from './formulario-favorito';
 
-interface PaginaApostasProps {
-  readonly somenteFavoritas: boolean;
+interface PaginaFavoritosProps {
   readonly painelDezenas?: (selecao: SelecaoDezenas) => ReactNode;
 }
 
 type EstadoDialogo =
   | { readonly modo: 'fechado' }
-  | { readonly modo: 'nova' }
-  | {
-      readonly modo: 'edicao';
-      readonly aposta: Aposta;
-    };
+  | { readonly modo: 'novo' }
+  | { readonly modo: 'edicao'; readonly favorito: Favorito };
 
-const Lista = ({
-  somenteFavoritas,
-  aoEditar,
-}: {
-  readonly somenteFavoritas: boolean;
-  readonly aoEditar: (aposta: Aposta) => void;
-}) => {
-  const consulta = useQuery(listarApostasQuery(somenteFavoritas));
+const Lista = ({ aoEditar }: { readonly aoEditar: (favorito: Favorito) => void }) => {
+  const consulta = useQuery(listarFavoritosQuery());
 
-  if (consulta.isPending) return <Carregando mensagem="Carregando apostas…" />;
+  if (consulta.isPending) return <Carregando mensagem="Carregando favoritos…" />;
   if (consulta.isError) return <Falha erro={consulta.error} />;
   if (consulta.data.length === 0) {
-    return (
-      <Vazio>
-        {somenteFavoritas
-          ? 'Nenhuma aposta favorita. Crie uma ou use a estrela de uma aposta.'
-          : 'Nenhuma aposta ainda. Use o botão Nova aposta para criar a primeira.'}
-      </Vazio>
-    );
+    return <Vazio>Nenhum favorito ainda. Use o botão Novo favorito para criar o primeiro.</Vazio>;
   }
 
   return (
     <div className="flex flex-col gap-3 lg:min-h-0 lg:flex-1">
-      <ResumoApostas apostas={consulta.data} somenteFavoritas={somenteFavoritas} />
+      <BaloesAcertos
+        resumo={resumirAcertos(consulta.data)}
+        rotuloComAcertos="Favoritos com acertos"
+        grupo="favoritos"
+      />
       <div className="grid content-start gap-3 lg:min-h-0 lg:flex-1 lg:overflow-auto xl:grid-cols-2 2xl:grid-cols-3">
-        {consulta.data.map((aposta) => (
-          <CartaoAposta key={aposta.id} aposta={aposta} aoEditar={aoEditar} />
+        {consulta.data.map((favorito) => (
+          <CartaoFavorito key={favorito.id} favorito={favorito} aoEditar={aoEditar} />
         ))}
       </div>
     </div>
@@ -57,11 +46,10 @@ const Lista = ({
 
 const ConteudoDialogo = ({
   emEdicao,
-  somenteFavoritas,
   painelDezenas,
   aoConcluir,
-}: PaginaApostasProps & {
-  readonly emEdicao: Aposta | null;
+}: PaginaFavoritosProps & {
+  readonly emEdicao: Favorito | null;
   readonly aoConcluir: () => void;
 }) => {
   const [selecao, setSelecao] = useState<SelecaoDezenas | null>(null);
@@ -71,9 +59,8 @@ const ConteudoDialogo = ({
   return (
     <div className="grid h-full gap-3 lg:grid-cols-[24rem_minmax(0,1fr)]">
       <div className="lg:self-start">
-        <FormularioAposta
+        <FormularioFavorito
           emEdicao={emEdicao}
-          favoritaPadrao={somenteFavoritas}
           aoConcluir={aoConcluir}
           aoAlterarSelecao={setSelecao}
         />
@@ -89,12 +76,12 @@ const ConteudoDialogo = ({
   );
 };
 
-export const PaginaApostas = ({ somenteFavoritas, painelDezenas }: PaginaApostasProps) => {
+export const PaginaFavoritos = ({ painelDezenas }: PaginaFavoritosProps) => {
   const [dialogo, setDialogo] = useState<EstadoDialogo>({ modo: 'fechado' });
   const fechar = () => {
     setDialogo({ modo: 'fechado' });
   };
-  const emEdicao = dialogo.modo === 'edicao' ? dialogo.aposta : null;
+  const emEdicao = dialogo.modo === 'edicao' ? dialogo.favorito : null;
 
   return (
     <div className="flex flex-col gap-3 lg:min-h-0 lg:flex-1">
@@ -102,35 +89,29 @@ export const PaginaApostas = ({ somenteFavoritas, painelDezenas }: PaginaApostas
         <button
           type="button"
           onClick={() => {
-            setDialogo({ modo: 'nova' });
+            setDialogo({ modo: 'novo' });
           }}
           className="inline-flex items-center gap-2 rounded-lg bg-emerald-600 px-4 py-2 text-sm font-semibold text-white transition hover:bg-emerald-700"
         >
           <IconPlus aria-hidden size="1rem" />
-          {somenteFavoritas ? 'Nova favorita' : 'Nova aposta'}
+          Novo favorito
         </button>
       </div>
       <Lista
-        somenteFavoritas={somenteFavoritas}
-        aoEditar={(aposta) => {
-          setDialogo({ modo: 'edicao', aposta });
+        aoEditar={(favorito) => {
+          setDialogo({ modo: 'edicao', favorito });
         }}
       />
       <Dialogo
         aberto={dialogo.modo !== 'fechado'}
         titulo={
-          emEdicao
-            ? `Editar ${emEdicao.nome ?? `aposta #${emEdicao.id}`}`
-            : somenteFavoritas
-              ? 'Nova favorita'
-              : 'Nova aposta'
+          emEdicao ? `Editar ${emEdicao.nome ?? `favorito #${emEdicao.id}`}` : 'Novo favorito'
         }
         aoFechar={fechar}
       >
         <ConteudoDialogo
-          key={emEdicao ? `editar-${emEdicao.id}` : 'nova'}
+          key={emEdicao ? `editar-${emEdicao.id}` : 'novo'}
           emEdicao={emEdicao}
-          somenteFavoritas={somenteFavoritas}
           painelDezenas={painelDezenas}
           aoConcluir={fechar}
         />

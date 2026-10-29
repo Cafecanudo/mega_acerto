@@ -1,12 +1,12 @@
 import { IconTarget, IconTrophy } from '@tabler/icons-react';
 import type { ReactNode } from 'react';
 import { formatarInteiro } from '@/lib/formatadores';
-import { resumirApostas } from '../resumir-apostas';
-import type { Aposta } from '../types';
+import type { ResumoAcertos } from '@/types/conferencia';
 
-interface ResumoApostasProps {
-  readonly apostas: readonly Aposta[];
-  readonly somenteFavoritas: boolean;
+interface BaloesAcertosProps {
+  readonly resumo: ResumoAcertos;
+  readonly rotuloComAcertos: string;
+  readonly grupo: string;
 }
 
 const Balao = ({
@@ -32,36 +32,34 @@ const Balao = ({
   </div>
 );
 
-export const ResumoApostas = ({ apostas, somenteFavoritas }: ResumoApostasProps) => {
-  const { total, comAcertos, maiorAcerto, melhor } = resumirApostas(apostas);
-  if (!melhor) return null;
-
-  const grupo = somenteFavoritas ? 'favoritas' : 'apostas';
+export const BaloesAcertos = ({ resumo, rotuloComAcertos, grupo }: BaloesAcertosProps) => {
+  if (resumo.total === 0) return null;
+  const { melhor } = resumo;
 
   return (
     <div className="grid shrink-0 gap-3 sm:grid-cols-2">
       <Balao
         icone={<IconTarget aria-hidden size="1.375rem" />}
-        rotulo={somenteFavoritas ? 'Favoritas com acertos' : 'Apostas com acertos'}
+        rotulo={rotuloComAcertos}
         valor={
           <>
-            {formatarInteiro(comAcertos)}
+            {formatarInteiro(resumo.comAcertos)}
             <span className="text-base font-medium text-slate-400">
               {' '}
-              de {formatarInteiro(total)}
+              de {formatarInteiro(resumo.total)}
             </span>
           </>
         }
-        detalhe="Com 1 ou mais números no último concurso"
+        detalhe="Com 1 ou mais números no concurso conferido"
       />
       <Balao
         icone={<IconTrophy aria-hidden size="1.375rem" />}
         rotulo="Maior número de acertos"
-        valor={formatarInteiro(maiorAcerto)}
+        valor={formatarInteiro(resumo.maiorAcerto)}
         detalhe={
-          maiorAcerto > 0
-            ? `${melhor.nome ?? `Aposta #${melhor.id}`} · concurso ${melhor.conferencia.ultimoConcurso?.numero ?? '—'}`
-            : `Nenhuma das ${grupo} acertou no último concurso`
+          melhor
+            ? `${melhor.nome ?? `#${melhor.id}`} · concurso ${melhor.concurso}`
+            : `Nenhuma das ${grupo} teve acertos`
         }
       />
     </div>
