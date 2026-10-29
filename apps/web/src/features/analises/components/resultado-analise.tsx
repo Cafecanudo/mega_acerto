@@ -202,7 +202,7 @@ const Concluida = ({
         </span>
         <span className="text-sm font-medium">{resultado.conclusao.resumo}</span>
       </div>
-      <p className="text-sm leading-relaxed text-slate-600 dark:text-slate-300">
+      <p className="text-sm leading-relaxed whitespace-pre-line text-slate-600 dark:text-slate-300">
         {resultado.conclusao.interpretacao}
       </p>
       <Conferencia doClaude={resultado.conferencia} doSistema={analise.conferenciaSistema} />

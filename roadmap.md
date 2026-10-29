@@ -36,7 +36,7 @@ Observações de dados para as próximas fases:
 - [x] Validação do resultado (schema, universo de dezenas, conferência contra agregados SQL)
 - [x] Persistência da análise: versão do prompt, modelo, esforço, duração, custo equivalente, scripts gerados, resultado
 - [x] Seletor de modelo e esforço na UI (Opus 5.5 e esforço alto como padrão) e tela de resultado com gráfico
-- [ ] Teste ponta a ponta com o Opus 5.5 (aguardando `CLAUDE_CODE_OAUTH_TOKEN` no `.env`)
+- [x] Teste ponta a ponta com o Opus 5.5 (29/10/2026: 5 min 24 s, custo equivalente US$ 1,07, conferência com SQL sem divergências)
 
 ## Fase 3: Backtest e valor esperado
 
