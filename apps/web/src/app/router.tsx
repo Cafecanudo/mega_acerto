@@ -21,6 +21,7 @@ export const router = createBrowserRouter([
       { path: 'conferir-apostas', lazy: carregar(() => import('./routes/conferir-apostas')) },
       { path: 'conta/apostas', lazy: carregar(() => import('./routes/apostas')) },
       { path: 'conta/favoritos', lazy: carregar(() => import('./routes/favoritos')) },
+      { path: 'configuracoes/valores', lazy: carregar(() => import('./routes/valores')) },
       {
         path: ':jogo',
         lazy: carregar(() => import('./routes/raiz-jogo')),

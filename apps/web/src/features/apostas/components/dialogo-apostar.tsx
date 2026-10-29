@@ -1,5 +1,7 @@
 import {
   apresentacoesJogo,
+  calcularValorAposta,
+  contarApostasSimples,
   isCodigoJogo,
   obterApresentacaoJogo,
   obterRegraJogo,
@@ -12,6 +14,7 @@ import { SeletorDezenas } from '@/components/dezenas/seletor-dezenas';
 import { Dialogo } from '@/components/ui/dialogo';
 import { Vazio } from '@/components/ui/estado';
 import { estiloCorJogo } from '@/lib/cor-jogo';
+import { formatarInteiro, formatarMoeda } from '@/lib/formatadores';
 import { useEfetivarApostas, type ApostasEfetivadas, type ItemEfetivacao } from '../api/apostas';
 
 export interface SelecaoParaAposta {
@@ -28,6 +31,7 @@ interface DialogoApostarProps {
     aoAdicionar: (itens: readonly ItemEfetivacao[]) => void,
   ) => ReactNode;
   readonly painelDezenas?: (selecao: SelecaoParaAposta) => ReactNode;
+  readonly valorApostaSimples?: (jogo: string) => number | null;
 }
 
 interface ItemLista extends ItemEfetivacao {
@@ -49,6 +53,7 @@ const Conteudo = ({
   aoEfetivar,
   favoritos,
   painelDezenas,
+  valorApostaSimples,
 }: Omit<DialogoApostarProps, 'aberto' | 'aoFechar'>) => {
   const [jogo, setJogo] = useState(jogosDisponiveis[0]?.codigo ?? '');
   const [dezenas, setDezenas] = useState<ReadonlySet<number>>(new Set());
@@ -62,6 +67,13 @@ const Conteudo = ({
   const { minimo, maximo } = regra.dezenasPorAposta;
   const quantidadeValida = dezenas.size >= minimo && dezenas.size <= maximo;
   const selecionadas = [...dezenas].sort((a, b) => a - b);
+  const valorSimples = valorApostaSimples?.(jogo) ?? null;
+  const valorDe = (quantidade: number): number | null =>
+    valorSimples === null ? null : calcularValorAposta(regra, quantidade, valorSimples);
+  const valorTotal =
+    valorSimples === null
+      ? null
+      : itens.reduce((soma, item) => soma + (valorDe(item.dezenas.length) ?? 0), 0);
 
   const adicionar = (novos: readonly ItemEfetivacao[]) => {
     const existentes = new Set(itens.map((item) => chaveDezenas(item.dezenas)));
@@ -147,6 +159,16 @@ const Conteudo = ({
               aoAlternar={alternar}
             />
           </div>
+          {quantidadeValida && (
+            <p className="text-xs text-slate-600 dark:text-slate-300">
+              {formatarInteiro(contarApostasSimples(regra, dezenas.size))}{' '}
+              {contarApostasSimples(regra, dezenas.size) === 1
+                ? 'aposta simples'
+                : 'apostas simples'}
+              {' · '}
+              <strong className="font-semibold">{formatarMoeda(valorDe(dezenas.size))}</strong>
+            </p>
+          )}
           <button
             type="button"
             disabled={!quantidadeValida}
@@ -188,7 +210,10 @@ const Conteudo = ({
                   >
                     <div className="flex min-w-0 flex-col gap-1">
                       <span className="text-xs text-slate-500 dark:text-slate-400">
-                        {item.nome ?? 'Aposta manual'} · {item.dezenas.length} dezenas
+                        {item.nome ?? 'Aposta manual'} · {item.dezenas.length} dezenas ·{' '}
+                        <strong className="font-semibold text-slate-700 dark:text-slate-200">
+                          {formatarMoeda(valorDe(item.dezenas.length))}
+                        </strong>
                       </span>
                       <LinhaDezenas regra={regra} dezenas={item.dezenas} tamanho="sm" />
                     </div>
@@ -208,8 +233,17 @@ const Conteudo = ({
             )}
           </div>
           <footer className="flex shrink-0 flex-wrap items-center justify-between gap-3 border-t border-slate-200 px-4 py-3 dark:border-slate-800">
-            <span className="text-xs text-slate-500 dark:text-slate-400">
-              As apostas valem para o próximo concurso de {apresentacao.nome}.
+            <span className="flex flex-col text-xs text-slate-500 dark:text-slate-400">
+              <span>As apostas valem para o próximo concurso de {apresentacao.nome}.</span>
+              {valorSimples === null ? (
+                <span className="text-amber-600 dark:text-amber-400">
+                  Valor não configurado. Defina em Configurações › Valores.
+                </span>
+              ) : (
+                <span className="text-sm text-slate-700 dark:text-slate-200">
+                  Total: <strong className="font-semibold">{formatarMoeda(valorTotal)}</strong>
+                </span>
+              )}
             </span>
             <div className="flex items-center gap-3">
               {efetivar.isError && (

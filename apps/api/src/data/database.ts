@@ -93,6 +93,13 @@ export interface Database {
   analise: AnaliseTabela;
   favorito: FavoritoTabela;
   aposta: ApostaTabela;
+  valor_jogo: ValorJogoTabela;
+}
+
+export interface ValorJogoTabela {
+  jogo: string;
+  valor_aposta: number;
+  atualizado_em: Generated<Date>;
 }
 
 export interface FavoritoTabela {
@@ -111,5 +118,6 @@ export interface ApostaTabela {
   dezenas: number[];
   favorito_id: number | null;
   concurso: number | null;
+  valor: number | null;
   criada_em: Generated<Date>;
 }

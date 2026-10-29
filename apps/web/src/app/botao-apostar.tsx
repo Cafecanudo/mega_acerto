@@ -1,14 +1,17 @@
 import { IconTicket } from '@tabler/icons-react';
+import { useQuery } from '@tanstack/react-query';
 import { useState } from 'react';
 import { useNavigate } from 'react-router';
 import { paths } from '@/config/paths';
 import { DialogoApostar } from '@/features/apostas/components/dialogo-apostar';
+import { listarValoresQuery } from '@/features/configuracoes/api/valores';
 import { FavoritosParaAposta } from '@/features/favoritos/components/favoritos-para-aposta';
 import { PainelDezenasAposta } from './routes/painel-dezenas-aposta';
 
 export const BotaoApostar = () => {
   const [aberto, setAberto] = useState(false);
   const navegar = useNavigate();
+  const valores = useQuery({ ...listarValoresQuery(), enabled: aberto });
 
   return (
     <>
@@ -35,6 +38,7 @@ export const BotaoApostar = () => {
           <FavoritosParaAposta jogo={jogo} aoAdicionar={aoAdicionar} />
         )}
         painelDezenas={(selecao) => <PainelDezenasAposta selecao={selecao} />}
+        valorApostaSimples={(jogo) => valores.data?.get(jogo)?.valorAposta ?? null}
       />
     </>
   );

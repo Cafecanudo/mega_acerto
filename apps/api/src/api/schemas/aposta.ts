@@ -17,6 +17,7 @@ const ApostaSchema = Type.Object({
   dezenas: Type.Array(Type.Integer()),
   favoritoId: Nulavel(Type.Integer()),
   concurso: Nulavel(Type.Integer()),
+  valor: Nulavel(Type.Number()),
   criadaEm: Type.String({ format: 'date-time' }),
   coincidencias: Nulavel(Type.Integer()),
   conferencia: ConferenciaSchema,
@@ -53,6 +54,7 @@ export const EfetivacaoApostasSchema = Type.Object(
 export const ApostasEfetivadasSchema = Type.Object({
   concurso: Type.Integer(),
   ids: Type.Array(Type.Integer()),
+  valorTotal: Nulavel(Type.Number()),
 });
 
 export const ResumoApostasSchema = Type.Object({

@@ -8,6 +8,7 @@ export interface Aposta {
   readonly dezenas: number[];
   readonly favoritoId: number | null;
   readonly concurso: number | null;
+  readonly valor: number | null;
   readonly criadaEm: string;
 }
 
@@ -32,6 +33,7 @@ interface LinhaAposta {
   readonly dezenas: number[];
   readonly favorito_id: number | null;
   readonly concurso: number | null;
+  readonly valor: number | null;
   readonly criada_em: Date;
   readonly coincidencias: number | null;
   readonly total: number;
@@ -44,6 +46,7 @@ const paraAposta = (linha: LinhaAposta): ApostaFiltrada => ({
   dezenas: linha.dezenas,
   favoritoId: linha.favorito_id,
   concurso: linha.concurso,
+  valor: linha.valor,
   criadaEm: linha.criada_em.toISOString(),
   coincidencias: linha.coincidencias,
 });
@@ -94,6 +97,7 @@ export class ApostaRepository {
       dezenas: linha.dezenas,
       favoritoId: linha.favorito_id,
       concurso: linha.concurso,
+      valor: linha.valor,
       criadaEm: linha.criada_em.toISOString(),
     }));
   }
@@ -126,6 +130,7 @@ export class ApostaRepository {
             jogo,
             concurso,
             nome: item.nome,
+            valor: item.valor,
             dezenas: sql<number[]>`${sql.val([...item.dezenas].sort((a, b) => a - b))}::smallint[]`,
             favorito_id:
               item.favoritoId !== null && existentes.has(item.favoritoId) ? item.favoritoId : null,
@@ -143,4 +148,5 @@ export interface NovaApostaItem {
   readonly dezenas: readonly number[];
   readonly nome: string | null;
   readonly favoritoId: number | null;
+  readonly valor: number | null;
 }

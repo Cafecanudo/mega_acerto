@@ -1,4 +1,5 @@
-import { isCodigoJogo, obterRegraJogo, validarAposta } from '@mega/domain';
+import { calcularValorAposta, isCodigoJogo, obterRegraJogo, validarAposta } from '@mega/domain';
+import type { ValorJogoRepository } from '../data/repositories/valor-jogo-repository.ts';
 import type {
   ApostaFiltrada,
   ApostaRepository,
@@ -49,6 +50,7 @@ export interface EfetivacaoApostas {
 export interface ApostasEfetivadas {
   readonly concurso: number;
   readonly ids: number[];
+  readonly valorTotal: number | null;
 }
 
 const LIMITE_DEZENAS_FILTRO = 20;
@@ -59,15 +61,18 @@ export class ApostaService {
   readonly #repository: ApostaRepository;
   readonly #conferencia: ConferenciaService;
   readonly #concursos: ConcursoLeituraRepository;
+  readonly #valores: ValorJogoRepository;
 
   constructor(
     repository: ApostaRepository,
     conferencia: ConferenciaService,
     concursos: ConcursoLeituraRepository,
+    valores: ValorJogoRepository,
   ) {
     this.#repository = repository;
     this.#conferencia = conferencia;
     this.#concursos = concursos;
+    this.#valores = valores;
   }
 
   async efetivar(efetivacao: EfetivacaoApostas): Promise<ApostasEfetivadas> {
@@ -80,6 +85,8 @@ export class ApostaService {
       throw entradaInvalida(`Informe de 1 a ${LIMITE_ITENS_EFETIVACAO} apostas`);
     }
 
+    const valorSimples = await this.#valores.obter(regra.codigo);
+
     const itens: NovaApostaItem[] = efetivacao.itens.map((item, indice) => {
       const erros = validarAposta(regra, item.dezenas);
       if (erros.length > 0) {
@@ -90,6 +97,10 @@ export class ApostaService {
         dezenas: item.dezenas,
         nome: nome.length > 0 ? nome : null,
         favoritoId: item.favoritoId ?? null,
+        valor:
+          valorSimples === null
+            ? null
+            : calcularValorAposta(regra, item.dezenas.length, valorSimples),
       };
     });
 
@@ -98,7 +109,11 @@ export class ApostaService {
 
     const concurso = ultimo + 1;
     const ids = await this.#repository.criarLote(regra.codigo, concurso, itens);
-    return { concurso, ids };
+    const valorTotal =
+      valorSimples === null
+        ? null
+        : Math.round(itens.reduce((soma, item) => soma + (item.valor ?? 0), 0) * 100) / 100;
+    return { concurso, ids, valorTotal };
   }
 
   async listar(consulta: ConsultaApostas): Promise<PaginaApostas> {

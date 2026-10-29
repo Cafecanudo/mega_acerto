@@ -2,7 +2,7 @@ import { formatarDezena, isCodigoJogo, obterApresentacaoJogo, obterRegraJogo } f
 import { IconClover } from '@tabler/icons-react';
 import { LinhaDezenas } from '@/components/dezenas/linha-dezenas';
 import { estiloCorJogo } from '@/lib/cor-jogo';
-import { formatarDataHora, formatarInteiro } from '@/lib/formatadores';
+import { formatarDataHora, formatarInteiro, formatarMoeda } from '@/lib/formatadores';
 import type { Aposta } from '../types';
 
 interface TabelaApostasProps {
@@ -67,6 +67,7 @@ export const TabelaApostas = ({ apostas, destacadas, exibirCoincidencias }: Tabe
           <th className={cabecalho}>Dezenas</th>
           {exibirCoincidencias && <th className={cabecalho}>Coincidências</th>}
           <th className={cabecalho}>Concurso</th>
+          <th className={cabecalho}>Valor</th>
           <th className={cabecalho}>Resultado</th>
           <th className={cabecalho}>No histórico</th>
         </tr>
@@ -122,6 +123,9 @@ export const TabelaApostas = ({ apostas, destacadas, exibirCoincidencias }: Tabe
                 </td>
               )}
               <td className={`${celula} font-mono tabular-nums`}>{aposta.concurso ?? 'último'}</td>
+              <td className={`${celula} whitespace-nowrap tabular-nums`}>
+                {formatarMoeda(aposta.valor)}
+              </td>
               <td className={celula}>
                 <Resultado aposta={aposta} />
               </td>

@@ -5,6 +5,7 @@ import { LegendaIndicadores } from '@/components/ui/legenda-indicadores';
 import { IndicadoresFavoritos } from '@/features/favoritos/components/indicadores-favoritos';
 import { MenuJogos } from '@/features/jogos/components/menu-jogos';
 import { BotaoApostar } from '../botao-apostar';
+import { MenuConfiguracoes } from '../menu-configuracoes';
 import { MenuConta } from '../menu-conta';
 import { MenuPrincipal } from '../menu-principal';
 
@@ -18,6 +19,9 @@ const MenuLateral = () => (
     </GrupoMenu>
     <GrupoMenu titulo="Minha Conta" chave="conta">
       <MenuConta />
+    </GrupoMenu>
+    <GrupoMenu titulo="Configurações" chave="configuracoes">
+      <MenuConfiguracoes />
     </GrupoMenu>
   </div>
 );

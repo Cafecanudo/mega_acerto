@@ -32,6 +32,7 @@ export interface ItemEfetivacao {
 export interface ApostasEfetivadas {
   readonly concurso: number;
   readonly ids: number[];
+  readonly valorTotal: number | null;
 }
 
 export const useEfetivarApostas = () => {

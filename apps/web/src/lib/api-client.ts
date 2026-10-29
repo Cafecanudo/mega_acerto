@@ -32,7 +32,7 @@ const lerCorpo = async (resposta: Response): Promise<unknown> => {
   return texto.length > 0 ? (JSON.parse(texto) as unknown) : null;
 };
 
-type Metodo = 'GET' | 'POST' | 'PATCH' | 'DELETE';
+type Metodo = 'GET' | 'POST' | 'PUT' | 'PATCH' | 'DELETE';
 
 const requisitar = async <T>(metodo: Metodo, url: string, dados?: unknown): Promise<T> => {
   const comCorpo = dados !== undefined;
@@ -62,5 +62,6 @@ export const api = {
     requisitar<T>('GET', montarUrl(caminho, parametros)),
   post: <T>(caminho: string, dados?: unknown) => requisitar<T>('POST', montarUrl(caminho), dados),
   patch: <T>(caminho: string, dados: unknown) => requisitar<T>('PATCH', montarUrl(caminho), dados),
+  put: <T>(caminho: string, dados: unknown) => requisitar<T>('PUT', montarUrl(caminho), dados),
   delete: (caminho: string) => requisitar<null>('DELETE', montarUrl(caminho)),
 };

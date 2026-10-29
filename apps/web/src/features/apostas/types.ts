@@ -7,6 +7,7 @@ export interface Aposta {
   readonly dezenas: number[];
   readonly favoritoId: number | null;
   readonly concurso: number | null;
+  readonly valor: number | null;
   readonly criadaEm: string;
   readonly coincidencias: number | null;
   readonly conferencia: Conferencia;

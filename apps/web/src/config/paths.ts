@@ -9,6 +9,7 @@ export const paths = {
   conferirApostas: '/conferir-apostas',
   apostas: '/conta/apostas',
   favoritos: '/conta/favoritos',
+  valores: '/configuracoes/valores',
   buscaNoHistorico: (jogo: string, dezenas: readonly number[]) =>
     `/${jogo}?dezenas=${dezenas.join(',')}`,
 } as const;
