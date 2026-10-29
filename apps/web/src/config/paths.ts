@@ -9,5 +9,5 @@ export const paths = {
   apostas: '/conta/apostas',
   favoritos: '/conta/favoritos',
   buscaNoHistorico: (jogo: string, dezenas: readonly number[]) =>
-    `/${jogo}?dezenas=${dezenas.join(',')}&combinacoes=1`,
+    `/${jogo}?dezenas=${dezenas.join(',')}`,
 } as const;

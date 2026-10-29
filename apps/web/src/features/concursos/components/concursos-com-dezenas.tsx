@@ -64,7 +64,7 @@ const Resultado = ({
 };
 
 export const ConcursosComDezenas = ({ regra, dezenas }: ConcursosComDezenasProps) => {
-  const [incluirCombinacoes, setIncluirCombinacoes] = useState(false);
+  const [incluirCombinacoes, setIncluirCombinacoes] = useState(true);
   const [pagina, setPagina] = useState(1);
   const chaveDezenas = dezenas.join(',');
   const [chaveAnterior, setChaveAnterior] = useState(chaveDezenas);
