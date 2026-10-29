@@ -57,6 +57,12 @@ export const ApostasEfetivadasSchema = Type.Object({
   valorTotal: Nulavel(Type.Number()),
 });
 
+export const AcertosConcursoSchema = Type.Object({
+  jogo: Type.String(),
+  concurso: Type.Integer(),
+  dezenas: Type.Array(Type.Integer()),
+});
+
 export const ResumoApostasSchema = Type.Object({
   total: Type.Integer(),
   comAcertos: Type.Integer(),

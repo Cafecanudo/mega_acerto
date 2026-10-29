@@ -2,6 +2,7 @@ import type { RegraJogo } from '@mega/domain';
 import { useState } from 'react';
 import { formatarData, formatarInteiro, formatarMoeda } from '@/lib/formatadores';
 import type { ResumoConcurso } from '../types';
+import { useAcertosApostas } from '@/components/dezenas/acertos-apostas';
 import { LinhaDezenas } from '@/components/dezenas/linha-dezenas';
 import { DialogoConcurso } from './dialogo-concurso';
 
@@ -22,6 +23,7 @@ export const TabelaConcursos = <T extends ResumoConcurso>({
   colunaExtra,
 }: TabelaConcursosProps<T>) => {
   const [selecionado, setSelecionado] = useState<number | null>(null);
+  const acertosApostas = useAcertosApostas();
 
   return (
     <div className="overflow-x-auto lg:overflow-visible">
@@ -64,6 +66,7 @@ export const TabelaConcursos = <T extends ResumoConcurso>({
                       regra={regra}
                       dezenas={dezenas}
                       destacadas={destacadas}
+                      acertadas={acertosApostas(regra.codigo, concurso.numero)}
                       tamanho="sm"
                     />
                   ))}

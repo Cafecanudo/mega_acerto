@@ -6,6 +6,7 @@ import { formatarData, formatarInteiro, formatarMoedaCompacta } from '@/lib/form
 import { ultimoConcursoQuery } from '../api/consultas';
 import type { DetalheConcurso } from '../types';
 import { DialogoConcurso } from './dialogo-concurso';
+import { useAcertosApostas } from '@/components/dezenas/acertos-apostas';
 import { LinhaDezenas } from '@/components/dezenas/linha-dezenas';
 
 interface DestaqueUltimoConcursoProps {
@@ -59,6 +60,7 @@ const Moldura = ({ children }: { readonly children: ReactNode }) => (
 export const DestaqueUltimoConcurso = ({ regra }: DestaqueUltimoConcursoProps) => {
   const consulta = useQuery(ultimoConcursoQuery(regra.codigo));
   const [aberto, setAberto] = useState(false);
+  const acertosApostas = useAcertosApostas();
 
   if (consulta.isPending) {
     return (
@@ -101,7 +103,13 @@ export const DestaqueUltimoConcurso = ({ regra }: DestaqueUltimoConcursoProps) =
           />
         )}
       </div>
-      {sorteioPrincipal && <LinhaDezenas regra={regra} dezenas={sorteioPrincipal.dezenas} />}
+      {sorteioPrincipal && (
+        <LinhaDezenas
+          regra={regra}
+          dezenas={sorteioPrincipal.dezenas}
+          acertadas={acertosApostas(regra.codigo, concurso.numero)}
+        />
+      )}
       <Resultado concurso={concurso} />
       <Bloco rotulo="Arrecadação">{formatarMoedaCompacta(concurso.valorArrecadado)}</Bloco>
       <div className="flex flex-col gap-0.5 sm:ml-auto sm:items-end">

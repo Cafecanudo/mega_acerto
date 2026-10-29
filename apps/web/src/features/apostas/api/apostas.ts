@@ -46,6 +46,33 @@ export const useEfetivarApostas = () => {
   });
 };
 
+export interface AcertosConcurso {
+  readonly jogo: string;
+  readonly concurso: number;
+  readonly dezenas: number[];
+}
+
+const chaveAcertos = (jogo: string, concurso: number): string => `${jogo}:${String(concurso)}`;
+
+export const acertosApostasQuery = () =>
+  queryOptions({
+    queryKey: [...CHAVE_APOSTAS, 'acertos'],
+    queryFn: () => api.get<AcertosConcurso[]>('/apostas/acertos'),
+    select: (acertos) =>
+      new Map(
+        acertos.map((item) => [
+          chaveAcertos(item.jogo, item.concurso),
+          new Set(item.dezenas) as ReadonlySet<number>,
+        ]),
+      ),
+  });
+
+export const buscarAcertos = (
+  acertos: ReadonlyMap<string, ReadonlySet<number>> | undefined,
+  jogo: string,
+  concurso: number,
+): ReadonlySet<number> | undefined => acertos?.get(chaveAcertos(jogo, concurso));
+
 export const resumoApostasQuery = () =>
   queryOptions({
     queryKey: [...CHAVE_APOSTAS, 'resumo'],

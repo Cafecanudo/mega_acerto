@@ -8,6 +8,7 @@ import { paths } from '@/config/paths';
 import { formatarData, formatarInteiro, formatarMoeda } from '@/lib/formatadores';
 import { obterConcursoQuery } from '../api/consultas';
 import type { DetalheConcurso as Detalhe } from '../types';
+import { useAcertosApostas } from '@/components/dezenas/acertos-apostas';
 import { LinhaDezenas } from '@/components/dezenas/linha-dezenas';
 
 interface DetalheConcursoProps {
@@ -78,26 +79,40 @@ const Sorteios = ({
 }: {
   readonly regra: RegraJogo;
   readonly concurso: Detalhe;
-}) => (
-  <div className="flex flex-col gap-6">
-    {concurso.sorteios.map((sorteio, indice) => (
-      <div key={indice} className="flex flex-col gap-4">
-        {concurso.sorteios.length > 1 && (
-          <p className="text-sm font-semibold">{indice + 1}º sorteio</p>
-        )}
-        <LinhaDezenas regra={regra} dezenas={sorteio.dezenas} tamanho="lg" />
-        {sorteio.ordemExtracao && (
-          <div className="flex flex-col gap-2">
-            <p className="text-xs font-medium tracking-wide text-slate-500 uppercase dark:text-slate-400">
-              Ordem de extração
-            </p>
-            <LinhaDezenas regra={regra} dezenas={sorteio.ordemExtracao} tamanho="sm" />
-          </div>
-        )}
-      </div>
-    ))}
-  </div>
-);
+}) => {
+  const acertadas = useAcertosApostas()(regra.codigo, concurso.numero);
+
+  return (
+    <div className="flex flex-col gap-6">
+      {concurso.sorteios.map((sorteio, indice) => (
+        <div key={indice} className="flex flex-col gap-4">
+          {concurso.sorteios.length > 1 && (
+            <p className="text-sm font-semibold">{indice + 1}º sorteio</p>
+          )}
+          <LinhaDezenas
+            regra={regra}
+            dezenas={sorteio.dezenas}
+            acertadas={acertadas}
+            tamanho="lg"
+          />
+          {sorteio.ordemExtracao && (
+            <div className="flex flex-col gap-2">
+              <p className="text-xs font-medium tracking-wide text-slate-500 uppercase dark:text-slate-400">
+                Ordem de extração
+              </p>
+              <LinhaDezenas
+                regra={regra}
+                dezenas={sorteio.ordemExtracao}
+                acertadas={acertadas}
+                tamanho="sm"
+              />
+            </div>
+          )}
+        </div>
+      ))}
+    </div>
+  );
+};
 
 const TabelaPremiacao = ({ concurso }: { readonly concurso: Detalhe }) => (
   <table className="w-full text-left text-sm">

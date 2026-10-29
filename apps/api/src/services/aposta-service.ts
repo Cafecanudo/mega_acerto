@@ -27,6 +27,12 @@ export interface PaginaApostas {
   readonly tamanho: number;
 }
 
+export interface AcertosConcurso {
+  readonly jogo: string;
+  readonly concurso: number;
+  readonly dezenas: number[];
+}
+
 export interface ResumoApostas {
   readonly total: number;
   readonly comAcertos: number;
@@ -138,6 +144,31 @@ export class ApostaService {
       pagina: consulta.pagina,
       tamanho: consulta.tamanho,
     };
+  }
+
+  async listarAcertosPorConcurso(): Promise<AcertosConcurso[]> {
+    const apostas = await this.#repository.listarTodas();
+    const conferencias = await this.#conferencia.conferir(apostas);
+    const grupos = new Map<string, { jogo: string; concurso: number; dezenas: Set<number> }>();
+
+    for (const aposta of apostas) {
+      const concurso = conferencias.get(aposta.id)?.concursoConferido;
+      if (!concurso || concurso.acertos === 0) continue;
+      const chave = `${aposta.jogo}:${String(concurso.numero)}`;
+      const grupo = grupos.get(chave) ?? {
+        jogo: aposta.jogo,
+        concurso: concurso.numero,
+        dezenas: new Set<number>(),
+      };
+      for (const dezena of concurso.dezenasAcertadas) grupo.dezenas.add(dezena);
+      grupos.set(chave, grupo);
+    }
+
+    return [...grupos.values()].map(({ jogo, concurso, dezenas }) => ({
+      jogo,
+      concurso,
+      dezenas: [...dezenas].sort((a, b) => a - b),
+    }));
   }
 
   async resumir(): Promise<ResumoApostas> {

@@ -20,6 +20,10 @@ export const LegendaIndicadores = () => (
       <Item icone={<IconTrophy aria-hidden size="0.75rem" />}>
         Maior número de acertos de um único jogo
       </Item>
+      <li className="flex items-start gap-1.5">
+        <span className="mt-0.5 size-3 shrink-0 rounded-full bg-emerald-600 ring-2 ring-emerald-400/50" />
+        <span>Dezena sorteada que você acertou em aposta</span>
+      </li>
     </ul>
   </div>
 );
