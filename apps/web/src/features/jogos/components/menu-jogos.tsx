@@ -41,7 +41,7 @@ export const MenuJogos = () => {
           <NavLink to={paths.jogo(apresentacao.codigo)} className={classeItem}>
             <IconClover
               aria-hidden
-              size={22}
+              size="1.375rem"
               stroke={1.75}
               color={apresentacao.cor}
               className="shrink-0 dark:brightness-[1.8] dark:saturate-150"

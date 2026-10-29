@@ -72,7 +72,7 @@ export const BarraBusca = ({ regra, busca, aoBuscar }: BarraBuscaProps) => {
     <div className="relative flex flex-col gap-3">
       <form onSubmit={buscar} className="flex flex-wrap items-center gap-2">
         <label className="flex min-w-60 flex-1 items-center gap-2 rounded-lg border border-slate-300 bg-white px-3 py-1.5 focus-within:border-jogo focus-within:ring-2 focus-within:ring-jogo/30 dark:border-slate-700 dark:bg-slate-950">
-          <IconSearch aria-hidden size={18} className="shrink-0 text-slate-400" />
+          <IconSearch aria-hidden size="1.125rem" className="shrink-0 text-slate-400" />
           <input
             value={texto}
             onChange={(evento) => {
@@ -108,7 +108,7 @@ export const BarraBusca = ({ regra, busca, aoBuscar }: BarraBuscaProps) => {
             setGradeAberta((aberta) => !aberta);
           }}
         >
-          <IconGridDots aria-hidden size={18} />
+          <IconGridDots aria-hidden size="1.125rem" />
           Grade
         </button>
         <button
@@ -120,7 +120,7 @@ export const BarraBusca = ({ regra, busca, aoBuscar }: BarraBuscaProps) => {
         </button>
         {buscaAtiva && (
           <button type="button" className={botao} onClick={limpar}>
-            <IconX aria-hidden size={18} />
+            <IconX aria-hidden size="1.125rem" />
             Limpar
           </button>
         )}

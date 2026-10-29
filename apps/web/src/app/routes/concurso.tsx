@@ -17,7 +17,7 @@ const Concurso = () => {
         to={paths.jogo(regra.codigo)}
         className="inline-flex w-fit items-center gap-2 text-sm font-medium text-slate-600 hover:text-jogo dark:text-slate-300"
       >
-        <IconArrowLeft aria-hidden size={16} />
+        <IconArrowLeft aria-hidden size="1rem" />
         Voltar para {apresentacao.nome}
       </Link>
       <DetalheConcurso key={numero} regra={regra} numero={numero} />

@@ -112,7 +112,7 @@ export const BarraIngestao = ({ jogo }: BarraIngestaoProps) => {
         }}
         className="flex shrink-0 items-center gap-1 rounded-md px-2 py-1 font-medium text-slate-600 transition hover:bg-slate-100 disabled:cursor-not-allowed disabled:opacity-40 dark:text-slate-300 dark:hover:bg-slate-800"
       >
-        <IconRefresh aria-hidden size={14} />
+        <IconRefresh aria-hidden size="0.875rem" />
         Sincronizar
       </button>
     </footer>

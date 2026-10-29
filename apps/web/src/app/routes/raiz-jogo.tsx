@@ -23,7 +23,7 @@ const RaizJogo = () => {
         <header className="flex shrink-0 items-center gap-2">
           <IconClover
             aria-hidden
-            size={24}
+            size="1.5rem"
             stroke={1.75}
             color={apresentacao.cor}
             className="dark:brightness-[1.8] dark:saturate-150"
