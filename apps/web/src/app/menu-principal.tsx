@@ -1,4 +1,4 @@
-import { IconChartHistogram, IconChecklist } from '@tabler/icons-react';
+import { IconBulb, IconChartHistogram, IconChecklist } from '@tabler/icons-react';
 import type { ReactNode } from 'react';
 import { NavLink } from 'react-router';
 import { paths } from '@/config/paths';
@@ -37,6 +37,12 @@ export const MenuPrincipal = () => (
       }
     >
       Análises
+    </Item>
+    <Item
+      destino={paths.palpites}
+      icone={<IconBulb aria-hidden size="1.375rem" stroke={1.75} className="text-amber-500" />}
+    >
+      Palpites
     </Item>
     <Item
       destino={paths.conferirApostas}

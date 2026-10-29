@@ -4,7 +4,7 @@ import { api } from '@/lib/api-client';
 import { calcularFaixaAcertos, type ParametrosBusca } from '@/lib/busca-dezenas';
 import { chavesConsulta } from '@/lib/react-query';
 import type { Pagina } from '@/types/api';
-import type { DetalheConcurso, ResultadoBusca, ResumoConcurso } from '../types';
+import type { DetalheConcurso, FrequenciasJogo, ResultadoBusca, ResumoConcurso } from '../types';
 
 export const TAMANHO_PAGINA = 20;
 
@@ -42,5 +42,13 @@ export const buscarConcursosQuery = (regra: RegraJogo, busca: ParametrosBusca) =
         tamanho: TAMANHO_PAGINA,
       }),
     enabled: busca.dezenas.length > 0,
+    placeholderData: keepPreviousData,
+  });
+
+export const frequenciasQuery = (jogo: string, ultimos: number | null) =>
+  queryOptions({
+    queryKey: [...chavesConsulta.concursos(jogo), 'frequencias', ultimos],
+    queryFn: () =>
+      api.get<FrequenciasJogo>(`/jogos/${jogo}/frequencias`, { ultimos: ultimos ?? undefined }),
     placeholderData: keepPreviousData,
   });

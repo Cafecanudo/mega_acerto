@@ -2,6 +2,8 @@ import type { FastifyPluginAsyncTypebox } from '@fastify/type-provider-typebox';
 import {
   BuscaQuerySchema,
   DetalheConcursoSchema,
+  FrequenciasJogoSchema,
+  FrequenciasQuerySchema,
   PaginaBuscaSchema,
   PaginaConcursosSchema,
   PaginacaoQuerySchema,
@@ -25,6 +27,21 @@ const rotasConcursos: FastifyPluginAsyncTypebox<OpcoesRotas> = async (app, { con
     },
     async (requisicao) =>
       container.concursoService().listar(requisicao.params.jogo, requisicao.query),
+  );
+
+  app.get(
+    '/jogos/:jogo/frequencias',
+    {
+      schema: {
+        params: ParametrosJogoSchema,
+        querystring: FrequenciasQuerySchema,
+        response: { 200: FrequenciasJogoSchema },
+      },
+    },
+    async (requisicao) =>
+      container
+        .concursoService()
+        .contarFrequencias(requisicao.params.jogo, requisicao.query.ultimos ?? null),
   );
 
   app.get(

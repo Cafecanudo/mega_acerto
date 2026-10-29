@@ -34,3 +34,17 @@ export interface DetalheConcurso {
   readonly anterior: number | null;
   readonly proximo: number | null;
 }
+
+export interface FrequenciaDezena {
+  readonly dezena: number;
+  readonly vezes: number;
+  readonly percentual: number;
+  readonly ultimoConcurso: number | null;
+  readonly atraso: number | null;
+}
+
+export interface FrequenciasJogo {
+  readonly concursos: number;
+  readonly ultimoConcurso: number | null;
+  readonly dezenas: FrequenciaDezena[];
+}

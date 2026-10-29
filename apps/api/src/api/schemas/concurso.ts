@@ -10,6 +10,24 @@ export const PaginacaoQuerySchema = Type.Object({
   tamanho: Type.Integer({ minimum: 1, maximum: 100, default: 20 }),
 });
 
+export const FrequenciasQuerySchema = Type.Object({
+  ultimos: Type.Optional(Type.Integer({ minimum: 1, maximum: 100000 })),
+});
+
+export const FrequenciasJogoSchema = Type.Object({
+  concursos: Type.Integer(),
+  ultimoConcurso: Type.Union([Type.Integer(), Type.Null()]),
+  dezenas: Type.Array(
+    Type.Object({
+      dezena: Type.Integer(),
+      vezes: Type.Integer(),
+      percentual: Type.Number(),
+      ultimoConcurso: Type.Union([Type.Integer(), Type.Null()]),
+      atraso: Type.Union([Type.Integer(), Type.Null()]),
+    }),
+  ),
+});
+
 export const ParametrosConcursoSchema = Type.Object({
   jogo: CodigoJogoSchema,
   numero: Type.Integer({ minimum: 1 }),

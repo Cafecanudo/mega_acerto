@@ -37,6 +37,7 @@ interface DialogoApostarProps {
   ) => ReactNode;
   readonly painelDezenas?: (selecao: SelecaoParaAposta) => ReactNode;
   readonly valorApostaSimples?: (jogo: string) => number | null;
+  readonly inicial?: SelecaoParaAposta | null;
 }
 
 interface ItemLista extends ItemEfetivacaoJogo {
@@ -107,9 +108,10 @@ const Conteudo = ({
   favoritos,
   painelDezenas,
   valorApostaSimples,
+  inicial,
 }: Omit<DialogoApostarProps, 'aberto' | 'aoFechar'>) => {
-  const [jogo, setJogo] = useState(jogosDisponiveis[0]?.codigo ?? '');
-  const [dezenas, setDezenas] = useState<ReadonlySet<number>>(new Set());
+  const [jogo, setJogo] = useState(inicial?.jogo ?? jogosDisponiveis[0]?.codigo ?? '');
+  const [dezenas, setDezenas] = useState<ReadonlySet<number>>(() => new Set(inicial?.dezenas));
   const [itens, setItens] = useState<readonly ItemLista[]>([]);
   const [proximaChave, setProximaChave] = useState(1);
   const efetivar = useEfetivarApostas();

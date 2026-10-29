@@ -5,7 +5,7 @@ import { UsuarioLogado } from '@/features/autenticacao/components/usuario-logado
 import { ProvedorAcertosDasApostas } from '@/features/apostas/components/provedor-acertos-apostas';
 import { IndicadoresFavoritos } from '@/features/favoritos/components/indicadores-favoritos';
 import { MenuJogos } from '@/features/jogos/components/menu-jogos';
-import { BotaoApostar } from '../botao-apostar';
+import { BotaoApostar, ProvedorApostar } from '../apostar';
 import { MenuConfiguracoes } from '../menu-configuracoes';
 import { MenuConta } from '../menu-conta';
 import { MenuPrincipal } from '../menu-principal';
@@ -29,9 +29,11 @@ const MenuLateral = () => (
 
 const Raiz = () => (
   <ProvedorAcertosDasApostas>
-    <AppShell menu={<MenuLateral />} acao={<BotaoApostar />} rodape={<UsuarioLogado />}>
-      <Outlet />
-    </AppShell>
+    <ProvedorApostar>
+      <AppShell menu={<MenuLateral />} acao={<BotaoApostar />} rodape={<UsuarioLogado />}>
+        <Outlet />
+      </AppShell>
+    </ProvedorApostar>
   </ProvedorAcertosDasApostas>
 );
 

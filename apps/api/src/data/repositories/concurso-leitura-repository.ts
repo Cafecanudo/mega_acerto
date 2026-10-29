@@ -162,6 +162,60 @@ export class ConcursoLeituraRepository {
     return concurso ? { ...concurso, premiacoes } : undefined;
   }
 
+  async contarFrequencias(
+    jogo: string,
+    ultimos: number | null,
+  ): Promise<{
+    readonly concursos: number;
+    readonly ultimoConcurso: number | null;
+    readonly dezenas: { dezena: number; vezes: number; ultimoConcurso: number | null }[];
+  }> {
+    const { rows } = await sql<{
+      concursos: number;
+      ultimo: number | null;
+      dezena: number | null;
+      vezes: number | null;
+      ultimo_da_dezena: number | null;
+    }>`
+      with janela as (
+        select numero from concurso
+        where jogo = ${jogo}
+        order by numero desc
+        ${ultimos === null ? sql`` : sql`limit ${ultimos}`}
+      ),
+      resumo as (
+        select count(*)::integer as concursos, max(numero) as ultimo from janela
+      )
+      select r.concursos, r.ultimo, f.dezena, f.vezes, f.ultimo_da_dezena
+      from resumo r
+      left join (
+        select d.dezena, count(distinct d.numero)::integer as vezes,
+          max(d.numero) as ultimo_da_dezena
+        from dezena_sorteada d
+        join janela j on j.numero = d.numero
+        where d.jogo = ${jogo}
+        group by d.dezena
+      ) f on true
+    `.execute(this.#db);
+
+    const [primeira] = rows;
+    return {
+      concursos: primeira?.concursos ?? 0,
+      ultimoConcurso: primeira?.ultimo ?? null,
+      dezenas: rows.flatMap((linha) =>
+        linha.dezena === null
+          ? []
+          : [
+              {
+                dezena: linha.dezena,
+                vezes: linha.vezes ?? 0,
+                ultimoConcurso: linha.ultimo_da_dezena,
+              },
+            ],
+      ),
+    };
+  }
+
   async listarPremiacoes(
     concursos: readonly { readonly jogo: string; readonly numero: number }[],
   ): Promise<{ jogo: string; numero: number; faixa: number; valorPremio: number }[]> {
