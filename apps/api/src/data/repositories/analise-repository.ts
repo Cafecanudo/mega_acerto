@@ -67,7 +67,10 @@ export interface FalhaAnalise {
 
 const iso = (data: Date | null): string | null => data?.toISOString() ?? null;
 
-type LinhaBase = Omit<Selectable<AnaliseTabela>, 'resultado' | 'scripts' | 'metadados'>;
+type LinhaBase = Omit<
+  Selectable<AnaliseTabela>,
+  'resultado' | 'scripts' | 'metadados' | 'usuario_id'
+>;
 
 const paraBase = (linha: LinhaBase): Omit<Analise, 'resultado' | 'scripts' | 'metadados'> => ({
   id: linha.id,
@@ -104,10 +107,11 @@ export class AnaliseRepository {
     this.#db = db;
   }
 
-  async criar(nova: NovaAnalise): Promise<number> {
+  async criar(usuarioId: number, nova: NovaAnalise): Promise<number> {
     const { id } = await this.#db
       .insertInto('analise')
       .values({
+        usuario_id: usuarioId,
         jogo: nova.jogo,
         tipo: nova.tipo,
         versao_prompt: nova.versaoPrompt,
@@ -121,10 +125,11 @@ export class AnaliseRepository {
     return id;
   }
 
-  async buscarEquivalente(nova: NovaAnalise): Promise<number | null> {
+  async buscarEquivalente(usuarioId: number, nova: NovaAnalise): Promise<number | null> {
     const linha = await this.#db
       .selectFrom('analise')
       .select('id')
+      .where('usuario_id', '=', usuarioId)
       .where('jogo', '=', nova.jogo)
       .where('tipo', '=', nova.tipo)
       .where('versao_prompt', '=', nova.versaoPrompt)
@@ -138,16 +143,17 @@ export class AnaliseRepository {
     return linha?.id ?? null;
   }
 
-  async obter(id: number): Promise<Analise | undefined> {
+  async obter(usuarioId: number, id: number): Promise<Analise | undefined> {
     const linha = await this.#db
       .selectFrom('analise')
       .selectAll()
+      .where('usuario_id', '=', usuarioId)
       .where('id', '=', id)
       .executeTakeFirst();
     return linha ? paraAnalise(linha) : undefined;
   }
 
-  async listar(limite: number): Promise<ResumoAnalise[]> {
+  async listar(usuarioId: number, limite: number): Promise<ResumoAnalise[]> {
     const linhas = await this.#db
       .selectFrom('analise')
       .select([
@@ -169,6 +175,7 @@ export class AnaliseRepository {
         'finalizado_em',
         sql<string | null>`resultado -> 'conclusao' ->> 'resumo'`.as('resumo_conclusao'),
       ])
+      .where('usuario_id', '=', usuarioId)
       .orderBy('id', 'desc')
       .limit(limite)
       .execute();

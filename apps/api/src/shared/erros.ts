@@ -1,4 +1,4 @@
-export type CodigoErro = 'nao-encontrado' | 'conflito' | 'entrada-invalida';
+export type CodigoErro = 'nao-encontrado' | 'conflito' | 'entrada-invalida' | 'nao-autenticado';
 
 export class ErroAplicacao extends Error {
   readonly codigo: CodigoErro;
@@ -18,3 +18,6 @@ export const conflito = (mensagem: string): ErroAplicacao =>
 
 export const entradaInvalida = (mensagem: string): ErroAplicacao =>
   new ErroAplicacao('entrada-invalida', mensagem);
+
+export const naoAutenticado = (mensagem: string): ErroAplicacao =>
+  new ErroAplicacao('nao-autenticado', mensagem);

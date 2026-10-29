@@ -63,6 +63,7 @@ export interface IngestaoExecucaoTabela {
 
 export interface AnaliseTabela {
   id: Generated<number>;
+  usuario_id: number | null;
   jogo: string;
   tipo: string;
   versao_prompt: number;
@@ -94,6 +95,8 @@ export interface Database {
   favorito: FavoritoTabela;
   aposta: ApostaTabela;
   valor_jogo: ValorJogoTabela;
+  usuario: UsuarioTabela;
+  sessao: SessaoTabela;
 }
 
 export interface ValorJogoTabela {
@@ -104,6 +107,7 @@ export interface ValorJogoTabela {
 
 export interface FavoritoTabela {
   id: Generated<number>;
+  usuario_id: number | null;
   jogo: string;
   nome: string | null;
   dezenas: number[];
@@ -113,6 +117,7 @@ export interface FavoritoTabela {
 
 export interface ApostaTabela {
   id: Generated<number>;
+  usuario_id: number | null;
   jogo: string;
   nome: string | null;
   dezenas: number[];
@@ -121,4 +126,19 @@ export interface ApostaTabela {
   valor: number | null;
   criada_em: Generated<Date>;
   conferida_em: Generated<Date | null>;
+}
+
+export interface UsuarioTabela {
+  id: Generated<number>;
+  nome: string;
+  login: string;
+  senha_hash: string;
+  criado_em: Generated<Date>;
+}
+
+export interface SessaoTabela {
+  id: string;
+  usuario_id: number;
+  criada_em: Generated<Date>;
+  expira_em: Date;
 }

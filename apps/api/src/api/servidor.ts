@@ -1,6 +1,7 @@
 import Fastify, { type FastifyBaseLogger } from 'fastify';
 import type { TypeBoxTypeProvider } from '@fastify/type-provider-typebox';
 import type { Container } from '../loaders/container.ts';
+import { registrarAutenticacao } from './autenticacao.ts';
 import { tratarErro } from './tratar-erro.ts';
 import { registrarWebEstatico } from './web-estatico.ts';
 
@@ -12,7 +13,9 @@ export const criarServidor = async (container: Container, logger: FastifyBaseLog
   app.setErrorHandler(tratarErro);
 
   const opcoes = { prefix: PREFIXO_API, container };
+  await registrarAutenticacao(app, container, PREFIXO_API);
   await app.register(import('./routes/saude.ts'), opcoes);
+  await app.register(import('./routes/autenticacao.ts'), opcoes);
   await app.register(import('./routes/jogos.ts'), opcoes);
   await app.register(import('./routes/concursos.ts'), opcoes);
   await app.register(import('./routes/ingestao.ts'), opcoes);

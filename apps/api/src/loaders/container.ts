@@ -7,12 +7,14 @@ import { AnaliseRepository } from '../data/repositories/analise-repository.ts';
 import { ApostaRepository } from '../data/repositories/aposta-repository.ts';
 import { ConferenciaRepository } from '../data/repositories/conferencia-repository.ts';
 import { FavoritoRepository } from '../data/repositories/favorito-repository.ts';
+import { UsuarioRepository } from '../data/repositories/usuario-repository.ts';
 import { ValorJogoRepository } from '../data/repositories/valor-jogo-repository.ts';
 import { ConcursoLeituraRepository } from '../data/repositories/concurso-leitura-repository.ts';
 import { JogoRepository } from '../data/repositories/jogo-repository.ts';
 import type { ExecutorAnalise } from '../services/analises/executor-analise.ts';
 import { AnaliseService } from '../services/analise-service.ts';
 import { ApostaService } from '../services/aposta-service.ts';
+import { AutenticacaoService } from '../services/autenticacao-service.ts';
 import { ConferenciaService } from '../services/conferencia-service.ts';
 import { FavoritoService } from '../services/favorito-service.ts';
 import { ValorJogoService } from '../services/valor-jogo-service.ts';
@@ -32,6 +34,7 @@ export interface Container {
   readonly apostaService: () => ApostaService;
   readonly favoritoService: () => FavoritoService;
   readonly valorJogoService: () => ValorJogoService;
+  readonly autenticacaoService: () => AutenticacaoService;
   readonly ingestaoService: () => Promise<IngestaoService>;
   readonly executorAnalise: () => Promise<ExecutorAnalise>;
 }
@@ -114,6 +117,7 @@ export const criarContainer = (config: Config, db: Kysely<Database>, logger: Log
         ),
     ),
     valorJogoService: lazy(() => new ValorJogoService(new ValorJogoRepository(db))),
+    autenticacaoService: lazy(() => new AutenticacaoService(new UsuarioRepository(db))),
     favoritoService: lazy(() => new FavoritoService(new FavoritoRepository(db), conferencia())),
     ingestaoService: lazy(() => criarIngestaoService(config, db, logger)),
     executorAnalise: lazy(() => criarExecutorAnalise(config, db, logger)),

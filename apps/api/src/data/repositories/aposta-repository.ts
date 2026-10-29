@@ -59,6 +59,7 @@ export class ApostaRepository {
   }
 
   async listar(
+    usuarioId: number,
     filtro: FiltroApostas,
     paginacao: Paginacao,
   ): Promise<{ readonly itens: ApostaFiltrada[]; readonly total: number }> {
@@ -72,6 +73,7 @@ export class ApostaRepository {
       select * from (
         select a.*, ${coincidencias} as coincidencias
         from aposta a
+        where a.usuario_id = ${usuarioId}
       ) a
       where ${filtrar ? sql`a.coincidencias >= ${filtro.minimoCoincidencias}` : sql`true`}
       order by ${filtrar ? sql`a.coincidencias desc,` : sql``} a.id desc
@@ -80,7 +82,7 @@ export class ApostaRepository {
 
     const { rows: contagem } = await sql<{ total: number }>`
       select count(*)::integer as total from (
-        select ${coincidencias} as coincidencias from aposta a
+        select ${coincidencias} as coincidencias from aposta a where a.usuario_id = ${usuarioId}
       ) a
       where ${filtrar ? sql`a.coincidencias >= ${filtro.minimoCoincidencias}` : sql`true`}
     `.execute(this.#db);
@@ -88,29 +90,31 @@ export class ApostaRepository {
     return { itens: rows.map(paraAposta), total: contagem[0]?.total ?? 0 };
   }
 
-  async listarTodas(): Promise<Aposta[]> {
-    return this.#listarSelecionadas(false);
+  async listarTodas(usuarioId: number): Promise<Aposta[]> {
+    return this.#listarSelecionadas(usuarioId, false);
   }
 
-  async listarNaoConferidas(): Promise<Aposta[]> {
-    return this.#listarSelecionadas(true);
+  async listarNaoConferidas(usuarioId: number): Promise<Aposta[]> {
+    return this.#listarSelecionadas(usuarioId, true);
   }
 
-  async marcarConferidas(ids: readonly number[]): Promise<number> {
+  async marcarConferidas(usuarioId: number, ids: readonly number[]): Promise<number> {
     if (ids.length === 0) return 0;
     const resultado = await this.#db
       .updateTable('aposta')
       .set({ conferida_em: sql`now()` })
+      .where('usuario_id', '=', usuarioId)
       .where('id', 'in', [...ids])
       .where('conferida_em', 'is', null)
       .executeTakeFirst();
     return Number(resultado.numUpdatedRows);
   }
 
-  async #listarSelecionadas(somenteNaoConferidas: boolean): Promise<Aposta[]> {
+  async #listarSelecionadas(usuarioId: number, somenteNaoConferidas: boolean): Promise<Aposta[]> {
     const linhas = await this.#db
       .selectFrom('aposta')
       .selectAll()
+      .where('usuario_id', '=', usuarioId)
       .$if(somenteNaoConferidas, (consulta) => consulta.where('conferida_em', 'is', null))
       .orderBy('id', 'desc')
       .execute();
@@ -126,7 +130,7 @@ export class ApostaRepository {
     }));
   }
 
-  async criarLote(itens: readonly NovaApostaItem[]): Promise<number[]> {
+  async criarLote(usuarioId: number, itens: readonly NovaApostaItem[]): Promise<number[]> {
     return this.#db.transaction().execute(async (trx) => {
       const idsFavoritos = itens.flatMap((item) =>
         item.favoritoId === null ? [] : [item.favoritoId],
@@ -138,6 +142,7 @@ export class ApostaRepository {
               await trx
                 .selectFrom('favorito')
                 .select('id')
+                .where('usuario_id', '=', usuarioId)
                 .where('id', 'in', idsFavoritos)
                 .execute()
             ).map((linha) => linha.id),
@@ -147,6 +152,7 @@ export class ApostaRepository {
         .insertInto('aposta')
         .values(
           itens.map((item) => ({
+            usuario_id: usuarioId,
             jogo: item.jogo,
             concurso: item.concurso,
             nome: item.nome,

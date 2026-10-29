@@ -36,7 +36,11 @@ export class AnaliseService {
     this.#concursos = concursos;
   }
 
-  async solicitar(jogo: CodigoJogo, solicitacao: SolicitacaoAnalise): Promise<AnaliseSolicitada> {
+  async solicitar(
+    usuarioId: number,
+    jogo: CodigoJogo,
+    solicitacao: SolicitacaoAnalise,
+  ): Promise<AnaliseSolicitada> {
     const ultimoConcurso = await this.#concursos.obterNumeroUltimo(jogo);
     if (ultimoConcurso === null) {
       throw entradaInvalida(`Não há concursos importados para ${jogo}`);
@@ -52,19 +56,19 @@ export class AnaliseService {
     };
 
     if (!solicitacao.forcar) {
-      const existente = await this.#analises.buscarEquivalente(nova);
+      const existente = await this.#analises.buscarEquivalente(usuarioId, nova);
       if (existente !== null) return { id: existente, reaproveitada: true };
     }
 
-    return { id: await this.#analises.criar(nova), reaproveitada: false };
+    return { id: await this.#analises.criar(usuarioId, nova), reaproveitada: false };
   }
 
-  listar(): Promise<ResumoAnalise[]> {
-    return this.#analises.listar(LIMITE_LISTAGEM);
+  listar(usuarioId: number): Promise<ResumoAnalise[]> {
+    return this.#analises.listar(usuarioId, LIMITE_LISTAGEM);
   }
 
-  async obter(id: number): Promise<Analise> {
-    const analise = await this.#analises.obter(id);
+  async obter(usuarioId: number, id: number): Promise<Analise> {
+    const analise = await this.#analises.obter(usuarioId, id);
     if (!analise) throw naoEncontrado(`Análise ${id} não encontrada`);
     return analise;
   }

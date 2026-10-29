@@ -7,19 +7,21 @@ import {
   SolicitacaoAnaliseSchema,
 } from '../schemas/analise.ts';
 import { ParametrosJogoSchema } from '../schemas/jogo.ts';
+import { usuarioDe } from '../autenticacao.ts';
 import type { OpcoesRotas } from '../opcoes-rotas.ts';
 
 const rotasAnalises: FastifyPluginAsyncTypebox<OpcoesRotas> = async (app, { container }) => {
   app.get(
     '/analises',
     { schema: { response: { 200: Type.Array(ResumoAnaliseSchema) } } },
-    async () => container.analiseService().listar(),
+    async (requisicao) => container.analiseService().listar(usuarioDe(requisicao).id),
   );
 
   app.get(
     '/analises/:id',
     { schema: { params: ParametrosAnaliseSchema, response: { 200: AnaliseSchema } } },
-    async (requisicao) => container.analiseService().obter(requisicao.params.id),
+    async (requisicao) =>
+      container.analiseService().obter(usuarioDe(requisicao).id, requisicao.params.id),
   );
 
   app.post(
@@ -34,7 +36,7 @@ const rotasAnalises: FastifyPluginAsyncTypebox<OpcoesRotas> = async (app, { cont
     async (requisicao, resposta) => {
       const solicitada = await container
         .analiseService()
-        .solicitar(requisicao.params.jogo, requisicao.body);
+        .solicitar(usuarioDe(requisicao).id, requisicao.params.jogo, requisicao.body);
       return resposta.status(solicitada.reaproveitada ? 200 : 202).send(solicitada);
     },
   );

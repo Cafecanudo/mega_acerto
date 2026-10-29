@@ -50,17 +50,21 @@ export class FavoritoService {
     this.#conferencia = conferencia;
   }
 
-  async listar(): Promise<FavoritoConferido[]> {
-    return this.#conferir(await this.#repository.listar());
+  async listar(usuarioId: number): Promise<FavoritoConferido[]> {
+    return this.#conferir(await this.#repository.listar(usuarioId));
   }
 
-  async criar(entrada: EntradaFavorito): Promise<FavoritoConferido> {
-    const favorito = await this.#repository.criar(prepararDados(entrada));
+  async criar(usuarioId: number, entrada: EntradaFavorito): Promise<FavoritoConferido> {
+    const favorito = await this.#repository.criar(usuarioId, prepararDados(entrada));
     return this.#conferirUm(favorito);
   }
 
-  async alterar(id: number, alteracao: AlteracaoFavorito): Promise<FavoritoConferido> {
-    const atual = await this.#repository.obter(id);
+  async alterar(
+    usuarioId: number,
+    id: number,
+    alteracao: AlteracaoFavorito,
+  ): Promise<FavoritoConferido> {
+    const atual = await this.#repository.obter(usuarioId, id);
     if (!atual) throw naoEncontrado(`Favorito ${id} não encontrado`);
 
     const dados = prepararDados({
@@ -69,13 +73,13 @@ export class FavoritoService {
       dezenas: alteracao.dezenas ?? atual.dezenas,
     });
 
-    const favorito = await this.#repository.atualizar(id, dados);
+    const favorito = await this.#repository.atualizar(usuarioId, id, dados);
     if (!favorito) throw naoEncontrado(`Favorito ${id} não encontrado`);
     return this.#conferirUm(favorito);
   }
 
-  async excluir(id: number): Promise<void> {
-    const excluido = await this.#repository.excluir(id);
+  async excluir(usuarioId: number, id: number): Promise<void> {
+    const excluido = await this.#repository.excluir(usuarioId, id);
     if (!excluido) throw naoEncontrado(`Favorito ${id} não encontrado`);
   }
 

@@ -11,6 +11,7 @@ import {
   PaginaApostasSchema,
   ResumoApostasSchema,
 } from '../schemas/aposta.ts';
+import { usuarioDe } from '../autenticacao.ts';
 import type { OpcoesRotas } from '../opcoes-rotas.ts';
 
 const converterListaDezenas = (valor: string | undefined): number[] =>
@@ -22,7 +23,7 @@ const rotasApostas: FastifyPluginAsyncTypebox<OpcoesRotas> = async (app, { conta
     { schema: { querystring: ConsultaApostasSchema, response: { 200: PaginaApostasSchema } } },
     async (requisicao) => {
       const { dezenas, minimoCoincidencias, pagina, tamanho } = requisicao.query;
-      return container.apostaService().listar({
+      return container.apostaService().listar(usuarioDe(requisicao).id, {
         dezenas: converterListaDezenas(dezenas),
         minimoCoincidencias,
         pagina,
@@ -35,31 +36,37 @@ const rotasApostas: FastifyPluginAsyncTypebox<OpcoesRotas> = async (app, { conta
     '/apostas',
     { schema: { body: EfetivacaoApostasSchema, response: { 201: ApostasEfetivadasSchema } } },
     async (requisicao, resposta) => {
-      const efetivadas = await container.apostaService().efetivar(requisicao.body);
+      const efetivadas = await container
+        .apostaService()
+        .efetivar(usuarioDe(requisicao).id, requisicao.body);
       return resposta.status(201).send(efetivadas);
     },
   );
 
-  app.get('/apostas/resumo', { schema: { response: { 200: ResumoApostasSchema } } }, async () =>
-    container.apostaService().resumir(),
+  app.get(
+    '/apostas/resumo',
+    { schema: { response: { 200: ResumoApostasSchema } } },
+    async (requisicao) => container.apostaService().resumir(usuarioDe(requisicao).id),
   );
 
   app.get(
     '/apostas/a-conferir',
     { schema: { response: { 200: Type.Array(ApostaAConferirSchema) } } },
-    async () => container.apostaService().listarAConferir(),
+    async (requisicao) => container.apostaService().listarAConferir(usuarioDe(requisicao).id),
   );
 
   app.post(
     '/apostas/conferidas',
     { schema: { body: MarcacaoConferidasSchema, response: { 200: ApostasMarcadasSchema } } },
-    async (requisicao) => container.apostaService().marcarConferidas(requisicao.body.ids),
+    async (requisicao) =>
+      container.apostaService().marcarConferidas(usuarioDe(requisicao).id, requisicao.body.ids),
   );
 
   app.get(
     '/apostas/acertos',
     { schema: { response: { 200: Type.Array(AcertosConcursoSchema) } } },
-    async () => container.apostaService().listarAcertosPorConcurso(),
+    async (requisicao) =>
+      container.apostaService().listarAcertosPorConcurso(usuarioDe(requisicao).id),
   );
 };
 

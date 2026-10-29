@@ -5,6 +5,7 @@ const statusPorCodigo: Record<CodigoErro, number> = {
   'nao-encontrado': 404,
   conflito: 409,
   'entrada-invalida': 400,
+  'nao-autenticado': 401,
 };
 
 export const tratarErro = async (

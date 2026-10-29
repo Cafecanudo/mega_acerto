@@ -129,7 +129,7 @@ export class ApostaService {
     this.#valores = valores;
   }
 
-  async efetivar(efetivacao: EfetivacaoApostas): Promise<ApostasEfetivadas> {
+  async efetivar(usuarioId: number, efetivacao: EfetivacaoApostas): Promise<ApostasEfetivadas> {
     if (efetivacao.itens.length === 0 || efetivacao.itens.length > LIMITE_ITENS_EFETIVACAO) {
       throw entradaInvalida(`Informe de 1 a ${LIMITE_ITENS_EFETIVACAO} apostas`);
     }
@@ -157,7 +157,7 @@ export class ApostaService {
       };
     });
 
-    const ids = await this.#repository.criarLote(itens);
+    const ids = await this.#repository.criarLote(usuarioId, itens);
     const valorTotal = itens.some((item) => item.valor === null)
       ? null
       : Math.round(itens.reduce((soma, item) => soma + (item.valor ?? 0), 0) * 100) / 100;
@@ -182,7 +182,7 @@ export class ApostaService {
     return contextos;
   }
 
-  async listar(consulta: ConsultaApostas): Promise<PaginaApostas> {
+  async listar(usuarioId: number, consulta: ConsultaApostas): Promise<PaginaApostas> {
     const dezenas = [...new Set(consulta.dezenas)];
     if (dezenas.length > LIMITE_DEZENAS_FILTRO) {
       throw entradaInvalida(`Informe até ${LIMITE_DEZENAS_FILTRO} dezenas no filtro`);
@@ -190,6 +190,7 @@ export class ApostaService {
     const minimo = consulta.minimoCoincidencias ?? Math.min(dezenas.length, 6);
 
     const { itens, total } = await this.#repository.listar(
+      usuarioId,
       { dezenas, minimoCoincidencias: minimo },
       { deslocamento: (consulta.pagina - 1) * consulta.tamanho, limite: consulta.tamanho },
     );
@@ -206,8 +207,8 @@ export class ApostaService {
     };
   }
 
-  async listarAConferir(): Promise<ApostaAConferir[]> {
-    const apostas = await this.#repository.listarNaoConferidas();
+  async listarAConferir(usuarioId: number): Promise<ApostaAConferir[]> {
+    const apostas = await this.#repository.listarNaoConferidas(usuarioId);
     const conferencias = await this.#conferencia.conferir(apostas);
     const premiacoes = await this.#concursos.listarPremiacoes(
       apostas.flatMap((aposta) => {
@@ -231,15 +232,15 @@ export class ApostaService {
       .sort(ordenarParaConferencia);
   }
 
-  async marcarConferidas(ids: readonly number[]): Promise<{ marcadas: number }> {
-    const pendentes = await this.#repository.listarNaoConferidas();
+  async marcarConferidas(usuarioId: number, ids: readonly number[]): Promise<{ marcadas: number }> {
+    const pendentes = await this.#repository.listarNaoConferidas(usuarioId);
     const solicitados = new Set(ids);
     const alvos = pendentes.filter((aposta) => solicitados.has(aposta.id));
     const conferencias = await this.#conferencia.conferir(alvos);
     const sorteadas = alvos.flatMap((aposta) =>
       conferencias.get(aposta.id)?.concursoConferido ? [aposta.id] : [],
     );
-    return { marcadas: await this.#repository.marcarConferidas(sorteadas) };
+    return { marcadas: await this.#repository.marcarConferidas(usuarioId, sorteadas) };
   }
 
   #calcularPremios(
@@ -260,8 +261,8 @@ export class ApostaService {
     }));
   }
 
-  async listarAcertosPorConcurso(): Promise<AcertosConcurso[]> {
-    const apostas = await this.#repository.listarTodas();
+  async listarAcertosPorConcurso(usuarioId: number): Promise<AcertosConcurso[]> {
+    const apostas = await this.#repository.listarTodas(usuarioId);
     const conferencias = await this.#conferencia.conferir(apostas);
     const grupos = new Map<string, { jogo: string; concurso: number; dezenas: Set<number> }>();
 
@@ -285,8 +286,8 @@ export class ApostaService {
     }));
   }
 
-  async resumir(): Promise<ResumoApostas> {
-    const apostas = await this.#repository.listarTodas();
+  async resumir(usuarioId: number): Promise<ResumoApostas> {
+    const apostas = await this.#repository.listarTodas(usuarioId);
     const conferencias = await this.#conferencia.conferir(apostas);
 
     let total = 0;

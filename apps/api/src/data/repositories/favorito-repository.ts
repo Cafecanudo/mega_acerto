@@ -35,34 +35,45 @@ export class FavoritoRepository {
     this.#db = db;
   }
 
-  async listar(): Promise<Favorito[]> {
+  async listar(usuarioId: number): Promise<Favorito[]> {
     const linhas = await this.#db
       .selectFrom('favorito')
       .selectAll()
+      .where('usuario_id', '=', usuarioId)
       .orderBy('id', 'desc')
       .execute();
     return linhas.map(paraFavorito);
   }
 
-  async obter(id: number): Promise<Favorito | undefined> {
+  async obter(usuarioId: number, id: number): Promise<Favorito | undefined> {
     const linha = await this.#db
       .selectFrom('favorito')
       .selectAll()
+      .where('usuario_id', '=', usuarioId)
       .where('id', '=', id)
       .executeTakeFirst();
     return linha ? paraFavorito(linha) : undefined;
   }
 
-  async criar(dados: DadosFavorito): Promise<Favorito> {
+  async criar(usuarioId: number, dados: DadosFavorito): Promise<Favorito> {
     const linha = await this.#db
       .insertInto('favorito')
-      .values({ jogo: dados.jogo, nome: dados.nome, dezenas: arrayDezenas(dados.dezenas) })
+      .values({
+        usuario_id: usuarioId,
+        jogo: dados.jogo,
+        nome: dados.nome,
+        dezenas: arrayDezenas(dados.dezenas),
+      })
       .returningAll()
       .executeTakeFirstOrThrow();
     return paraFavorito(linha);
   }
 
-  async atualizar(id: number, dados: DadosFavorito): Promise<Favorito | undefined> {
+  async atualizar(
+    usuarioId: number,
+    id: number,
+    dados: DadosFavorito,
+  ): Promise<Favorito | undefined> {
     const linha = await this.#db
       .updateTable('favorito')
       .set({
@@ -71,14 +82,19 @@ export class FavoritoRepository {
         dezenas: arrayDezenas(dados.dezenas),
         atualizado_em: new Date(),
       })
+      .where('usuario_id', '=', usuarioId)
       .where('id', '=', id)
       .returningAll()
       .executeTakeFirst();
     return linha ? paraFavorito(linha) : undefined;
   }
 
-  async excluir(id: number): Promise<boolean> {
-    const resultado = await this.#db.deleteFrom('favorito').where('id', '=', id).executeTakeFirst();
+  async excluir(usuarioId: number, id: number): Promise<boolean> {
+    const resultado = await this.#db
+      .deleteFrom('favorito')
+      .where('usuario_id', '=', usuarioId)
+      .where('id', '=', id)
+      .executeTakeFirst();
     return resultado.numDeletedRows > 0n;
   }
 }
