@@ -34,10 +34,17 @@ const EsquemaConfig = Type.Object({
 
 export type Config = Static<typeof EsquemaConfig>;
 
+const removerVazios = (ambiente: NodeJS.ProcessEnv): Record<string, string> =>
+  Object.fromEntries(
+    Object.entries(ambiente).filter(
+      (entrada): entrada is [string, string] => entrada[1] !== undefined && entrada[1] !== '',
+    ),
+  );
+
 export const carregarConfig = (ambiente: NodeJS.ProcessEnv = process.env): Config => {
   const valor = Value.Clean(
     EsquemaConfig,
-    Value.Convert(EsquemaConfig, Value.Default(EsquemaConfig, { ...ambiente })),
+    Value.Convert(EsquemaConfig, Value.Default(EsquemaConfig, removerVazios(ambiente))),
   );
 
   if (!Value.Check(EsquemaConfig, valor)) {

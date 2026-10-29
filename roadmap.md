@@ -28,14 +28,15 @@ Observações de dados para as próximas fases:
 
 ## Fase 2: Integração com Claude
 
-- [ ] Container `ai-worker`: Node + Claude Code CLI + Python (NumPy, SciPy, pandas, statsmodels)
-- [ ] Autenticação via `claude setup-token` (conta Max) em variável de ambiente
-- [ ] Fila de análises com pg-boss
-- [ ] Exportação do dataset (`concursos.csv`, `agregados.json`, `jogo.json`) para pasta de trabalho isolada
-- [ ] Template de prompt versionado `aleatoriedade` e schema de `resultado.json`
-- [ ] Validação do resultado (schema, regras de domínio, conferência contra agregados SQL)
-- [ ] Persistência da análise: prompt, versão, modelo, duração, scripts gerados, resultado
-- [ ] Seletor de modelo na UI (Opus 5.5 padrão, Sonnet, Haiku) e tela de resultado com gráficos
+- [x] Container `ai-worker`: Node + Claude Code CLI + Python (NumPy, SciPy, pandas, statsmodels)
+- [x] Autenticação via `claude setup-token` (conta Max) em variável de ambiente
+- [x] Fila de análises na própria tabela `analise` (`FOR UPDATE SKIP LOCKED`), em vez de pg-boss: uma única fonte de verdade para o status
+- [x] Exportação do dataset (`concursos.csv`, `agregados.json`, `jogo.json`) para pasta de trabalho isolada
+- [x] Template de prompt versionado `aleatoriedade` v1 e schema do resultado (`--json-schema`)
+- [x] Validação do resultado (schema, universo de dezenas, conferência contra agregados SQL)
+- [x] Persistência da análise: versão do prompt, modelo, esforço, duração, custo equivalente, scripts gerados, resultado
+- [x] Seletor de modelo e esforço na UI (Opus 5.5 e esforço alto como padrão) e tela de resultado com gráfico
+- [ ] Teste ponta a ponta com o Opus 5.5 (aguardando `CLAUDE_CODE_OAUTH_TOKEN` no `.env`)
 
 ## Fase 3: Backtest e valor esperado
 

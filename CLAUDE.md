@@ -54,6 +54,15 @@ docker compose up -d --build
 - Não rodar a API de desenvolvimento e o container `app` ao mesmo tempo: ambos usam a porta 3000 e disparariam a ingestão em paralelo.
 - Ao testar processos em background, encerrar apenas o PID iniciado na sessão; nunca matar todos os processos `node`.
 
+## Análises com Claude (Fase 2)
+
+- O container `ai-worker` roda `apps/api/src/worker.ts` (mesmo código da API, outro entrypoint). Ele reivindica análises `pendente` na tabela `analise`, exporta o dataset para uma pasta isolada e executa `claude -p` com `--json-schema`, `--model` e `--effort`.
+- Autenticação pela assinatura Max: rode `claude setup-token` na máquina e grave o valor em `CLAUDE_CODE_OAUTH_TOKEN` no `.env` (nunca commitar nem colar em chat).
+- O processo do Claude recebe ambiente reduzido (sem `DATABASE_URL`) e só pode usar `python3`, leitura e escrita de arquivos.
+- Prompts e schemas ficam versionados em `packages/analises`. Mudou o prompt, suba `versaoPrompt` no catálogo.
+- O projeto não calcula estatística: só exporta dados, confere as contagens do Claude contra os agregados SQL e valida o schema.
+- Para testar a interface de resultado sem gastar cota, insira um registro sintético e apague-o depois.
+
 ## API da Caixa
 
 - Base: `https://servicebus2.caixa.gov.br/portaldeloterias/api/{jogo}/{concurso?}`. Sem concurso, retorna o último.
