@@ -6,11 +6,13 @@ COPY package.json pnpm-lock.yaml pnpm-workspace.yaml ./
 COPY apps/api/package.json apps/api/
 COPY apps/web/package.json apps/web/
 COPY packages/domain/package.json packages/domain/
+COPY packages/analises/package.json packages/analises/
 
 FROM base AS build-web
 RUN pnpm install --frozen-lockfile --ignore-scripts --filter "@mega/web..."
 COPY tsconfig.base.json ./
 COPY packages/domain/src packages/domain/src
+COPY packages/analises/src packages/analises/src
 COPY apps/web apps/web
 RUN pnpm --filter @mega/web build
 
@@ -21,6 +23,7 @@ ENV NODE_ENV=production \
     WEB_DIST_DIR=/app/apps/web/dist
 RUN pnpm install --frozen-lockfile --prod --ignore-scripts --filter "@mega/api..."
 COPY packages/domain/src packages/domain/src
+COPY packages/analises/src packages/analises/src
 COPY apps/api/src apps/api/src
 COPY --from=build-web /app/apps/web/dist apps/web/dist
 USER node

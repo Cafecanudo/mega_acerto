@@ -46,5 +46,19 @@ services:
       start_period: 20s
       retries: 3
 
+  ai-worker:
+    build:
+      context: .
+      dockerfile: docker/ai-worker.Dockerfile
+    restart: unless-stopped
+    depends_on:
+      db:
+        condition: service_healthy
+    environment:
+      DATABASE_URL: postgres://mega:mega@db:5432/mega_acerto
+      LOG_LEVEL: ${LOG_LEVEL:-info}
+      CLAUDE_CODE_OAUTH_TOKEN: ${CLAUDE_CODE_OAUTH_TOKEN:-}
+      ANALISE_TIMEOUT_MIN: ${ANALISE_TIMEOUT_MIN:-30}
+
 volumes:
   dados-postgres:
