@@ -16,6 +16,8 @@ export const router = createBrowserRouter([
     ErrorBoundary: ErroRota,
     children: [
       { index: true, element: <Navigate to={paths.jogo(JOGO_PADRAO)} replace /> },
+      { path: 'conta/apostas', lazy: carregar(() => import('./routes/apostas')) },
+      { path: 'conta/favoritos', lazy: carregar(() => import('./routes/favoritos')) },
       {
         path: ':jogo',
         lazy: carregar(() => import('./routes/raiz-jogo')),

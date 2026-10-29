@@ -6,7 +6,7 @@ import { paths } from '@/config/paths';
 import { formatarData, formatarInteiro, formatarMoedaCompacta } from '@/lib/formatadores';
 import { ultimoConcursoQuery } from '../api/consultas';
 import type { DetalheConcurso } from '../types';
-import { LinhaDezenas } from './linha-dezenas';
+import { LinhaDezenas } from '@/components/dezenas/linha-dezenas';
 
 interface DestaqueUltimoConcursoProps {
   readonly regra: RegraJogo;

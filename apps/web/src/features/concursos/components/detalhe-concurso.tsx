@@ -8,7 +8,7 @@ import { paths } from '@/config/paths';
 import { formatarData, formatarInteiro, formatarMoeda } from '@/lib/formatadores';
 import { obterConcursoQuery } from '../api/consultas';
 import type { DetalheConcurso as Detalhe } from '../types';
-import { LinhaDezenas } from './linha-dezenas';
+import { LinhaDezenas } from '@/components/dezenas/linha-dezenas';
 
 interface DetalheConcursoProps {
   readonly regra: RegraJogo;

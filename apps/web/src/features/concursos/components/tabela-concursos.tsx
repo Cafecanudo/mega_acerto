@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router';
 import { paths } from '@/config/paths';
 import { formatarData, formatarInteiro, formatarMoeda } from '@/lib/formatadores';
 import type { ResumoConcurso } from '../types';
-import { LinhaDezenas } from './linha-dezenas';
+import { LinhaDezenas } from '@/components/dezenas/linha-dezenas';
 
 interface TabelaConcursosProps<T extends ResumoConcurso> {
   readonly regra: RegraJogo;

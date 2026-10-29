@@ -2,7 +2,7 @@ import { formatarDezena, type RegraJogo } from '@mega/domain';
 import { IconGridDots, IconSearch, IconX } from '@tabler/icons-react';
 import { useState, type SyntheticEvent } from 'react';
 import { MINIMO_ACERTOS_COMBINACOES, type ParametrosBusca } from '../api/consultas';
-import { SeletorDezenas } from './seletor-dezenas';
+import { SeletorDezenas } from '@/components/dezenas/seletor-dezenas';
 
 interface BarraBuscaProps {
   readonly regra: RegraJogo;
