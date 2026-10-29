@@ -1,0 +1,7 @@
+export type { IntervaloNumerico, RegraJogo } from './jogos/regra-jogo.ts';
+export type { CodigoJogo } from './jogos/catalogo.ts';
+export { codigosJogo, isCodigoJogo, listarRegrasJogo, obterRegraJogo } from './jogos/catalogo.ts';
+export { megaSena } from './jogos/mega-sena.ts';
+export type { ErroDezenas } from './dezenas/validar-dezenas.ts';
+export { validarDezenas } from './dezenas/validar-dezenas.ts';
+export { formatarDezena } from './dezenas/formatar-dezena.ts';
