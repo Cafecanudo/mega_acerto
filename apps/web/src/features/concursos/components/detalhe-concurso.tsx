@@ -1,7 +1,7 @@
 import type { RegraJogo } from '@mega/domain';
 import { useQuery } from '@tanstack/react-query';
 import type { ReactNode } from 'react';
-import { Link, useLocation } from 'react-router';
+import { Link } from 'react-router';
 import { Cartao } from '@/components/ui/cartao';
 import { Carregando, Falha } from '@/components/ui/estado';
 import { paths } from '@/config/paths';
@@ -13,6 +13,7 @@ import { LinhaDezenas } from '@/components/dezenas/linha-dezenas';
 interface DetalheConcursoProps {
   readonly regra: RegraJogo;
   readonly numero: number;
+  readonly aoNavegar?: (numero: number) => void;
 }
 
 const Informacao = ({
@@ -33,29 +34,40 @@ const Informacao = ({
 const Navegacao = ({
   regra,
   concurso,
+  aoNavegar,
 }: {
   readonly regra: RegraJogo;
   readonly concurso: Detalhe;
+  readonly aoNavegar: ((numero: number) => void) | undefined;
 }) => {
-  const estado: unknown = useLocation().state;
   const classe =
     'rounded-lg border border-slate-300 px-3 py-1.5 text-sm font-medium transition hover:bg-slate-100 dark:border-slate-700 dark:hover:bg-slate-800';
+  const destinos = [
+    { numero: concurso.anterior, rotulo: `← ${String(concurso.anterior)}` },
+    { numero: concurso.proximo, rotulo: `${String(concurso.proximo)} →` },
+  ];
+
   return (
     <div className="flex gap-2">
-      {concurso.anterior !== null && (
-        <Link
-          className={classe}
-          to={paths.concurso(regra.codigo, concurso.anterior)}
-          state={estado}
-        >
-          ← {concurso.anterior}
-        </Link>
-      )}
-      {concurso.proximo !== null && (
-        <Link className={classe} to={paths.concurso(regra.codigo, concurso.proximo)} state={estado}>
-          {concurso.proximo} →
-        </Link>
-      )}
+      {destinos.map(({ numero, rotulo }) => {
+        if (numero === null) return null;
+        return aoNavegar ? (
+          <button
+            key={rotulo}
+            type="button"
+            className={classe}
+            onClick={() => {
+              aoNavegar(numero);
+            }}
+          >
+            {rotulo}
+          </button>
+        ) : (
+          <Link key={rotulo} className={classe} to={paths.concurso(regra.codigo, numero)}>
+            {rotulo}
+          </Link>
+        );
+      })}
     </div>
   );
 };
@@ -113,7 +125,7 @@ const TabelaPremiacao = ({ concurso }: { readonly concurso: Detalhe }) => (
   </table>
 );
 
-export const DetalheConcurso = ({ regra, numero }: DetalheConcursoProps) => {
+export const DetalheConcurso = ({ regra, numero, aoNavegar }: DetalheConcursoProps) => {
   const consulta = useQuery(obterConcursoQuery(regra.codigo, numero));
 
   if (consulta.isPending) return <Carregando mensagem={`Carregando concurso ${numero}…`} />;
@@ -125,7 +137,7 @@ export const DetalheConcurso = ({ regra, numero }: DetalheConcursoProps) => {
     <div className="flex flex-col gap-6">
       <Cartao
         titulo={`Concurso ${concurso.numero} · ${formatarData(concurso.dataApuracao)}`}
-        acoes={<Navegacao regra={regra} concurso={concurso} />}
+        acoes={<Navegacao regra={regra} concurso={concurso} aoNavegar={aoNavegar} />}
       >
         <div className="flex flex-col gap-6">
           <Sorteios regra={regra} concurso={concurso} />

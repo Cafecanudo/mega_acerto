@@ -23,6 +23,7 @@ export const Dialogo = ({ aberto, titulo, aoFechar, children }: DialogoProps) =>
       ref={referencia}
       aria-label={titulo}
       onCancel={(evento) => {
+        if (evento.target !== evento.currentTarget) return;
         evento.preventDefault();
         aoFechar();
       }}

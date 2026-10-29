@@ -1,10 +1,9 @@
 import type { RegraJogo } from '@mega/domain';
-import { useLocation, useNavigate } from 'react-router';
-import { paths } from '@/config/paths';
+import { useState } from 'react';
 import { formatarData, formatarInteiro, formatarMoeda } from '@/lib/formatadores';
-import { estadoDeRetorno } from '@/lib/retorno';
 import type { ResumoConcurso } from '../types';
 import { LinhaDezenas } from '@/components/dezenas/linha-dezenas';
+import { DialogoConcurso } from './dialogo-concurso';
 
 interface TabelaConcursosProps<T extends ResumoConcurso> {
   readonly regra: RegraJogo;
@@ -22,11 +21,19 @@ export const TabelaConcursos = <T extends ResumoConcurso>({
   destacadas,
   colunaExtra,
 }: TabelaConcursosProps<T>) => {
-  const navegar = useNavigate();
-  const location = useLocation();
+  const [selecionado, setSelecionado] = useState<number | null>(null);
 
   return (
     <div className="overflow-x-auto lg:overflow-visible">
+      {selecionado !== null && (
+        <DialogoConcurso
+          regra={regra}
+          numeroInicial={selecionado}
+          aoFechar={() => {
+            setSelecionado(null);
+          }}
+        />
+      )}
       <table className="w-full min-w-[680px] text-left text-sm">
         <thead className="text-xs tracking-wide text-slate-500 uppercase dark:text-slate-400">
           <tr className="border-b border-slate-200 dark:border-slate-800">
@@ -43,9 +50,7 @@ export const TabelaConcursos = <T extends ResumoConcurso>({
             <tr
               key={concurso.numero}
               onClick={() => {
-                void navegar(paths.concurso(regra.codigo, concurso.numero), {
-                  state: estadoDeRetorno(location),
-                });
+                setSelecionado(concurso.numero);
               }}
               className="cursor-pointer border-b border-slate-100 transition last:border-0 hover:bg-slate-50 dark:border-slate-800/60 dark:hover:bg-slate-800/40"
             >

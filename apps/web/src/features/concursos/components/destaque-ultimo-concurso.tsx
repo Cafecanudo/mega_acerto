@@ -1,12 +1,11 @@
 import type { RegraJogo } from '@mega/domain';
 import { useQuery } from '@tanstack/react-query';
 import type { ReactNode } from 'react';
-import { Link, useLocation } from 'react-router';
-import { paths } from '@/config/paths';
-import { estadoDeRetorno } from '@/lib/retorno';
+import { useState } from 'react';
 import { formatarData, formatarInteiro, formatarMoedaCompacta } from '@/lib/formatadores';
 import { ultimoConcursoQuery } from '../api/consultas';
 import type { DetalheConcurso } from '../types';
+import { DialogoConcurso } from './dialogo-concurso';
 import { LinhaDezenas } from '@/components/dezenas/linha-dezenas';
 
 interface DestaqueUltimoConcursoProps {
@@ -59,7 +58,7 @@ const Moldura = ({ children }: { readonly children: ReactNode }) => (
 
 export const DestaqueUltimoConcurso = ({ regra }: DestaqueUltimoConcursoProps) => {
   const consulta = useQuery(ultimoConcursoQuery(regra.codigo));
-  const location = useLocation();
+  const [aberto, setAberto] = useState(false);
 
   if (consulta.isPending) {
     return (
@@ -83,13 +82,24 @@ export const DestaqueUltimoConcurso = ({ regra }: DestaqueUltimoConcursoProps) =
     <Moldura>
       <div className="flex flex-col gap-0.5">
         <Rotulo>Último sorteio</Rotulo>
-        <Link
-          to={paths.concurso(regra.codigo, concurso.numero)}
-          state={estadoDeRetorno(location)}
-          className="text-sm font-semibold hover:text-jogo"
+        <button
+          type="button"
+          onClick={() => {
+            setAberto(true);
+          }}
+          className="w-fit text-left text-sm font-semibold hover:text-jogo"
         >
           {concurso.numero} · {formatarData(concurso.dataApuracao)}
-        </Link>
+        </button>
+        {aberto && (
+          <DialogoConcurso
+            regra={regra}
+            numeroInicial={concurso.numero}
+            aoFechar={() => {
+              setAberto(false);
+            }}
+          />
+        )}
       </div>
       {sorteioPrincipal && <LinhaDezenas regra={regra} dezenas={sorteioPrincipal.dezenas} />}
       <Resultado concurso={concurso} />
