@@ -59,13 +59,13 @@ export class AnaliseService {
     return { id: await this.#analises.criar(nova), reaproveitada: false };
   }
 
-  listar(jogo: CodigoJogo): Promise<ResumoAnalise[]> {
-    return this.#analises.listar(jogo, LIMITE_LISTAGEM);
+  listar(): Promise<ResumoAnalise[]> {
+    return this.#analises.listar(LIMITE_LISTAGEM);
   }
 
-  async obter(jogo: CodigoJogo, id: number): Promise<Analise> {
+  async obter(id: number): Promise<Analise> {
     const analise = await this.#analises.obter(id);
-    if (analise?.jogo !== jogo) throw naoEncontrado(`Análise ${id} não encontrada`);
+    if (!analise) throw naoEncontrado(`Análise ${id} não encontrada`);
     return analise;
   }
 }

@@ -1,6 +1,5 @@
 import { Type, type TSchema } from '@fastify/type-provider-typebox';
 import { esforcosAnalise, modelosAnalise, tiposAnalise } from '@mega/analises/catalogo';
-import { CodigoJogoSchema } from './jogo.ts';
 
 const Nulavel = <T extends TSchema>(schema: T) => Type.Union([schema, Type.Null()]);
 
@@ -18,7 +17,6 @@ const StatusSchema = Type.Union([
 ]);
 
 export const ParametrosAnaliseSchema = Type.Object({
-  jogo: CodigoJogoSchema,
   id: Type.Integer({ minimum: 1 }),
 });
 

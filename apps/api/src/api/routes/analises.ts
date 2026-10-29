@@ -11,11 +11,15 @@ import type { OpcoesRotas } from '../opcoes-rotas.ts';
 
 const rotasAnalises: FastifyPluginAsyncTypebox<OpcoesRotas> = async (app, { container }) => {
   app.get(
-    '/jogos/:jogo/analises',
-    {
-      schema: { params: ParametrosJogoSchema, response: { 200: Type.Array(ResumoAnaliseSchema) } },
-    },
-    async (requisicao) => container.analiseService().listar(requisicao.params.jogo),
+    '/analises',
+    { schema: { response: { 200: Type.Array(ResumoAnaliseSchema) } } },
+    async () => container.analiseService().listar(),
+  );
+
+  app.get(
+    '/analises/:id',
+    { schema: { params: ParametrosAnaliseSchema, response: { 200: AnaliseSchema } } },
+    async (requisicao) => container.analiseService().obter(requisicao.params.id),
   );
 
   app.post(
@@ -33,13 +37,6 @@ const rotasAnalises: FastifyPluginAsyncTypebox<OpcoesRotas> = async (app, { cont
         .solicitar(requisicao.params.jogo, requisicao.body);
       return resposta.status(solicitada.reaproveitada ? 200 : 202).send(solicitada);
     },
-  );
-
-  app.get(
-    '/jogos/:jogo/analises/:id',
-    { schema: { params: ParametrosAnaliseSchema, response: { 200: AnaliseSchema } } },
-    async (requisicao) =>
-      container.analiseService().obter(requisicao.params.jogo, requisicao.params.id),
   );
 };
 

@@ -6,9 +6,13 @@ import { LegendaIndicadores } from '@/components/ui/legenda-indicadores';
 import { IndicadoresFavoritos } from '@/features/favoritos/components/indicadores-favoritos';
 import { MenuJogos } from '@/features/jogos/components/menu-jogos';
 import { MenuConta } from '../menu-conta';
+import { MenuPrincipal } from '../menu-principal';
 
 const MenuLateral = () => (
   <div className="flex gap-4 lg:flex-col">
+    <GrupoMenu titulo="Principal" chave="principal">
+      <MenuPrincipal />
+    </GrupoMenu>
     <GrupoMenu titulo="Jogos" chave="jogos">
       <MenuJogos indicadores={(codigo) => <IndicadoresFavoritos jogo={codigo} />} />
     </GrupoMenu>

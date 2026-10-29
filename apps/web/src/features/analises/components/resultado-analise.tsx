@@ -1,6 +1,12 @@
 import type { ResultadoAleatoriedade } from '@mega/analises';
 import { nomeEsforco, nomeModelo, obterTipoAnalise } from '@mega/analises/catalogo';
-import { formatarDezena, type RegraJogo } from '@mega/domain';
+import {
+  formatarDezena,
+  isCodigoJogo,
+  obterApresentacaoJogo,
+  obterRegraJogo,
+  type RegraJogo,
+} from '@mega/domain';
 import { useQuery } from '@tanstack/react-query';
 import type { ReactNode } from 'react';
 import { Carregando, Falha } from '@/components/ui/estado';
@@ -11,13 +17,13 @@ import {
   formatarDuracao,
   formatarPValor,
 } from '@/lib/formatadores';
+import { estiloCorJogo } from '@/lib/cor-jogo';
 import { obterAnaliseQuery } from '../api/analises';
 import { emAndamento, type Analise, type ConferenciaSistema } from '../types';
 import { GraficoFrequencias } from './grafico-frequencias';
 import { SeloStatus } from './selo-status';
 
 interface ResultadoAnaliseProps {
-  readonly regra: RegraJogo;
   readonly id: number;
 }
 
@@ -235,16 +241,20 @@ const Concluida = ({
   </>
 );
 
-export const ResultadoAnalise = ({ regra, id }: ResultadoAnaliseProps) => {
-  const consulta = useQuery(obterAnaliseQuery(regra.codigo, id));
+export const ResultadoAnalise = ({ id }: ResultadoAnaliseProps) => {
+  const consulta = useQuery(obterAnaliseQuery(id));
 
   if (consulta.isPending) return <Carregando mensagem="Carregando análise…" />;
   if (consulta.isError) return <Falha erro={consulta.error} />;
 
   const analise = consulta.data;
+  const apresentacao = obterApresentacaoJogo(analise.jogo);
+  if (!apresentacao || !isCodigoJogo(analise.jogo))
+    return <Falha erro={new Error(`Jogo ${analise.jogo} indisponível`)} />;
+  const regra = obterRegraJogo(analise.jogo);
 
   return (
-    <div className="flex flex-col gap-3">
+    <div style={estiloCorJogo(apresentacao)} className="flex flex-col gap-3">
       <Cabecalho analise={analise} />
       {emAndamento(analise.status) && (
         <Carregando

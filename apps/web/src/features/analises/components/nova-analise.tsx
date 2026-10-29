@@ -9,13 +9,18 @@ import {
   type ModeloAnalise,
   type TipoAnalise,
 } from '@mega/analises/catalogo';
+import { apresentacoesJogo, isCodigoJogo } from '@mega/domain';
 import { IconSparkles } from '@tabler/icons-react';
 import { useState, type ReactNode, type SyntheticEvent } from 'react';
 import { useSolicitarAnalise } from '../api/analises';
 import type { AnaliseSolicitada } from '../types';
 
+const jogosDisponiveis = apresentacoesJogo.filter(
+  (apresentacao) =>
+    apresentacao.disponibilidade === 'disponivel' && isCodigoJogo(apresentacao.codigo),
+);
+
 interface NovaAnaliseProps {
-  readonly jogo: string;
   readonly aoSolicitar: (solicitada: AnaliseSolicitada) => void;
 }
 
@@ -29,17 +34,18 @@ const Campo = ({ rotulo, children }: { readonly rotulo: string; readonly childre
 const classeSelect =
   'rounded-lg border border-slate-300 bg-white px-2.5 py-1.5 text-sm dark:border-slate-700 dark:bg-slate-950';
 
-export const NovaAnalise = ({ jogo, aoSolicitar }: NovaAnaliseProps) => {
+export const NovaAnalise = ({ aoSolicitar }: NovaAnaliseProps) => {
+  const [jogo, setJogo] = useState(jogosDisponiveis[0]?.codigo ?? '');
   const [tipo, setTipo] = useState<TipoAnalise>(tiposAnalise[0].codigo);
   const [modelo, setModelo] = useState<ModeloAnalise>(MODELO_PADRAO);
   const [esforco, setEsforco] = useState<EsforcoAnalise>(ESFORCO_PADRAO);
   const [forcar, setForcar] = useState(false);
-  const solicitar = useSolicitarAnalise(jogo);
+  const solicitar = useSolicitarAnalise();
   const definicao = obterTipoAnalise(tipo);
 
   const enviar = (evento: SyntheticEvent) => {
     evento.preventDefault();
-    solicitar.mutate({ tipo, modelo, esforco, forcar }, { onSuccess: aoSolicitar });
+    solicitar.mutate({ jogo, tipo, modelo, esforco, forcar }, { onSuccess: aoSolicitar });
   };
 
   return (
@@ -48,6 +54,21 @@ export const NovaAnalise = ({ jogo, aoSolicitar }: NovaAnaliseProps) => {
       className="flex flex-col gap-4 rounded-xl border border-slate-200 bg-white p-4 dark:border-slate-800 dark:bg-slate-900"
     >
       <h2 className="text-sm font-semibold">Nova análise</h2>
+      <Campo rotulo="Jogo">
+        <select
+          value={jogo}
+          onChange={(evento) => {
+            setJogo(evento.target.value);
+          }}
+          className={classeSelect}
+        >
+          {jogosDisponiveis.map((item) => (
+            <option key={item.codigo} value={item.codigo}>
+              {item.nome}
+            </option>
+          ))}
+        </select>
+      </Campo>
       <Campo rotulo="Tipo">
         <select
           value={tipo}

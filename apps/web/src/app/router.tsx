@@ -16,6 +16,9 @@ export const router = createBrowserRouter([
     ErrorBoundary: ErroRota,
     children: [
       { index: true, element: <Navigate to={paths.jogo(JOGO_PADRAO)} replace /> },
+      { path: 'analises', lazy: carregar(() => import('./routes/analises')) },
+      { path: 'analises/:id', lazy: carregar(() => import('./routes/analise')) },
+      { path: 'conferir-apostas', lazy: carregar(() => import('./routes/conferir-apostas')) },
       { path: 'conta/apostas', lazy: carregar(() => import('./routes/apostas')) },
       { path: 'conta/favoritos', lazy: carregar(() => import('./routes/favoritos')) },
       {
@@ -25,8 +28,6 @@ export const router = createBrowserRouter([
           { index: true, lazy: carregar(() => import('./routes/jogo')) },
           { path: 'concursos', element: <Navigate to=".." replace /> },
           { path: 'concursos/:numero', lazy: carregar(() => import('./routes/concurso')) },
-          { path: 'analises', lazy: carregar(() => import('./routes/analises')) },
-          { path: 'analises/:id', lazy: carregar(() => import('./routes/analise')) },
         ],
       },
       { path: '*', lazy: carregar(() => import('./routes/nao-encontrado')) },

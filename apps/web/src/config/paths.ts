@@ -4,8 +4,9 @@ export const paths = {
   inicio: '/',
   jogo: (jogo: string) => `/${jogo}`,
   concurso: (jogo: string, numero: number) => `/${jogo}/concursos/${numero}`,
-  analises: (jogo: string) => `/${jogo}/analises`,
-  analise: (jogo: string, id: number) => `/${jogo}/analises/${id}`,
+  analises: '/analises',
+  analise: (id: number) => `/analises/${id}`,
+  conferirApostas: '/conferir-apostas',
   apostas: '/conta/apostas',
   favoritos: '/conta/favoritos',
   buscaNoHistorico: (jogo: string, dezenas: readonly number[]) =>

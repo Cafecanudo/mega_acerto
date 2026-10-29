@@ -147,7 +147,7 @@ export class AnaliseRepository {
     return linha ? paraAnalise(linha) : undefined;
   }
 
-  async listar(jogo: string, limite: number): Promise<ResumoAnalise[]> {
+  async listar(limite: number): Promise<ResumoAnalise[]> {
     const linhas = await this.#db
       .selectFrom('analise')
       .select([
@@ -169,7 +169,6 @@ export class AnaliseRepository {
         'finalizado_em',
         sql<string | null>`resultado -> 'conclusao' ->> 'resumo'`.as('resumo_conclusao'),
       ])
-      .where('jogo', '=', jogo)
       .orderBy('id', 'desc')
       .limit(limite)
       .execute();

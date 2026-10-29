@@ -1,6 +1,5 @@
 import { queryOptions, useMutation, useQueryClient } from '@tanstack/react-query';
 import { api } from '@/lib/api-client';
-import { chavesConsulta } from '@/lib/react-query';
 import {
   emAndamento,
   type Analise,
@@ -10,34 +9,33 @@ import {
 } from '../types';
 
 const INTERVALO_ACOMPANHAMENTO_MS = 3_000;
+const CHAVE_ANALISES = ['analises'] as const;
 
-const chaveAnalises = (jogo: string) => [...chavesConsulta.jogos(), jogo, 'analises'] as const;
-
-export const listarAnalisesQuery = (jogo: string) =>
+export const listarAnalisesQuery = () =>
   queryOptions({
-    queryKey: [...chaveAnalises(jogo), 'lista'],
-    queryFn: () => api.get<ResumoAnalise[]>(`/jogos/${jogo}/analises`),
+    queryKey: [...CHAVE_ANALISES, 'lista'],
+    queryFn: () => api.get<ResumoAnalise[]>('/analises'),
     refetchInterval: (consulta) =>
       consulta.state.data?.some((analise) => emAndamento(analise.status))
         ? INTERVALO_ACOMPANHAMENTO_MS
         : false,
   });
 
-export const obterAnaliseQuery = (jogo: string, id: number) =>
+export const obterAnaliseQuery = (id: number) =>
   queryOptions({
-    queryKey: [...chaveAnalises(jogo), 'detalhe', id],
-    queryFn: () => api.get<Analise>(`/jogos/${jogo}/analises/${id}`),
+    queryKey: [...CHAVE_ANALISES, 'detalhe', id],
+    queryFn: () => api.get<Analise>(`/analises/${id}`),
     refetchInterval: (consulta) =>
       consulta.state.data && emAndamento(consulta.state.data.status)
         ? INTERVALO_ACOMPANHAMENTO_MS
         : false,
   });
 
-export const useSolicitarAnalise = (jogo: string) => {
+export const useSolicitarAnalise = () => {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: (solicitacao: SolicitacaoAnalise) =>
+    mutationFn: ({ jogo, ...solicitacao }: SolicitacaoAnalise & { readonly jogo: string }) =>
       api.post<AnaliseSolicitada>(`/jogos/${jogo}/analises`, solicitacao),
-    onSuccess: () => queryClient.invalidateQueries({ queryKey: chaveAnalises(jogo) }),
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: CHAVE_ANALISES }),
   });
 };
