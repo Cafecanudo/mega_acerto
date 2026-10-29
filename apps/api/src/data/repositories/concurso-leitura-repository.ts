@@ -116,6 +116,15 @@ export class ConcursoLeituraRepository {
     return { itens, total: contagem.total };
   }
 
+  async obterNumeroUltimo(jogo: string): Promise<number | null> {
+    const { ultimo } = await this.#db
+      .selectFrom('concurso')
+      .where('jogo', '=', jogo)
+      .select((eb) => eb.fn.max('numero').as('ultimo'))
+      .executeTakeFirstOrThrow();
+    return ultimo;
+  }
+
   async obter(jogo: string, numero: number): Promise<DetalheConcurso | undefined> {
     const [concurso, premiacoes] = await Promise.all([
       this.#db

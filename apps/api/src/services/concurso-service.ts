@@ -45,6 +45,12 @@ export class ConcursoService {
     return concurso;
   }
 
+  async obterUltimo(jogo: CodigoJogo): Promise<DetalheConcurso> {
+    const numero = await this.#repository.obterNumeroUltimo(jogo);
+    if (numero === null) throw naoEncontrado(`Nenhum concurso importado para ${jogo}`);
+    return this.obter(jogo, numero);
+  }
+
   async buscarPorDezenas(
     jogo: CodigoJogo,
     busca: BuscaPorDezenas,

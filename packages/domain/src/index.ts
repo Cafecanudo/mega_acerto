@@ -5,3 +5,5 @@ export { megaSena } from './jogos/mega-sena.ts';
 export type { ErroDezenas } from './dezenas/validar-dezenas.ts';
 export { validarDezenas } from './dezenas/validar-dezenas.ts';
 export { formatarDezena } from './dezenas/formatar-dezena.ts';
+export type { ApresentacaoJogo, DisponibilidadeJogo } from './jogos/apresentacao.ts';
+export { apresentacoesJogo, obterApresentacaoJogo } from './jogos/apresentacao.ts';

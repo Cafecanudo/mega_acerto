@@ -20,6 +20,8 @@ export const JogoDisponivelSchema = Type.Object({
   totalConcursos: Type.Integer(),
   ultimoConcurso: Type.Union([Type.Integer(), Type.Null()]),
   ultimaData: Type.Union([Type.String({ format: 'date' }), Type.Null()]),
+  ultimoAcumulado: Type.Union([Type.Boolean(), Type.Null()]),
+  ultimaSincronizacao: Type.Union([Type.String({ format: 'date-time' }), Type.Null()]),
 });
 
 export const ParametrosJogoSchema = Type.Object({ jogo: CodigoJogoSchema });

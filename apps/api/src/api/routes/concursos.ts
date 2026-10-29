@@ -48,6 +48,12 @@ const rotasConcursos: FastifyPluginAsyncTypebox<OpcoesRotas> = async (app, { con
   );
 
   app.get(
+    '/jogos/:jogo/concursos/ultimo',
+    { schema: { params: ParametrosJogoSchema, response: { 200: DetalheConcursoSchema } } },
+    async (requisicao) => container.concursoService().obterUltimo(requisicao.params.jogo),
+  );
+
+  app.get(
     '/jogos/:jogo/concursos/:numero',
     { schema: { params: ParametrosConcursoSchema, response: { 200: DetalheConcursoSchema } } },
     async (requisicao) =>

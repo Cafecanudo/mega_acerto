@@ -1,4 +1,4 @@
-import type { Kysely } from 'kysely';
+import { sql, type Kysely } from 'kysely';
 import type { RegraJogo } from '@mega/domain';
 import type { Database } from '../database.ts';
 
@@ -7,6 +7,8 @@ export interface ResumoJogo {
   readonly totalConcursos: number;
   readonly ultimoConcurso: number | null;
   readonly ultimaData: string | null;
+  readonly ultimoAcumulado: boolean | null;
+  readonly ultimaSincronizacao: Date | null;
 }
 
 export class JogoRepository {
@@ -44,23 +46,25 @@ export class JogoRepository {
   }
 
   async listarResumos(): Promise<readonly ResumoJogo[]> {
-    const linhas = await this.#db
-      .selectFrom('jogo')
-      .leftJoin('concurso', 'concurso.jogo', 'jogo.codigo')
-      .select((eb) => [
-        'jogo.codigo',
-        eb.fn.count<number>('concurso.numero').as('totalConcursos'),
-        eb.fn.max('concurso.numero').as('ultimoConcurso'),
-        eb.fn.max('concurso.data_apuracao').as('ultimaData'),
+    return this.#db
+      .selectFrom('jogo as j')
+      .select([
+        'j.codigo',
+        sql<number>`(select count(*) from concurso c where c.jogo = j.codigo)`.as('totalConcursos'),
+        sql<number | null>`(select max(c.numero) from concurso c where c.jogo = j.codigo)`.as(
+          'ultimoConcurso',
+        ),
+        sql<
+          string | null
+        >`(select max(c.data_apuracao) from concurso c where c.jogo = j.codigo)`.as('ultimaData'),
+        sql<boolean | null>`(
+          select c.acumulado from concurso c where c.jogo = j.codigo order by c.numero desc limit 1
+        )`.as('ultimoAcumulado'),
+        sql<Date | null>`(
+          select max(e.finalizado_em) from ingestao_execucao e
+          where e.jogo = j.codigo and e.status = 'concluida'
+        )`.as('ultimaSincronizacao'),
       ])
-      .groupBy('jogo.codigo')
       .execute();
-
-    return linhas.map((linha) => ({
-      codigo: linha.codigo,
-      totalConcursos: linha.totalConcursos,
-      ultimoConcurso: linha.ultimoConcurso,
-      ultimaData: linha.ultimaData,
-    }));
   }
 }
