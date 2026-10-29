@@ -2,6 +2,7 @@ import { IconTicket } from '@tabler/icons-react';
 import { Outlet } from 'react-router';
 import { AppShell } from '@/components/layouts/app-shell';
 import { GrupoMenu } from '@/components/layouts/grupo-menu';
+import { LegendaIndicadores } from '@/components/ui/legenda-indicadores';
 import { IndicadoresFavoritos } from '@/features/favoritos/components/indicadores-favoritos';
 import { MenuJogos } from '@/features/jogos/components/menu-jogos';
 import { MenuConta } from '../menu-conta';
@@ -28,7 +29,7 @@ const BotaoApostar = () => (
 );
 
 const Raiz = () => (
-  <AppShell menu={<MenuLateral />} acao={<BotaoApostar />}>
+  <AppShell menu={<MenuLateral />} acao={<BotaoApostar />} rodape={<LegendaIndicadores />}>
     <Outlet />
   </AppShell>
 );
