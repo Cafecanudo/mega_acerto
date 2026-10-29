@@ -56,6 +56,9 @@ importers:
       '@fastify/type-provider-typebox':
         specifier: ^6.3.0
         version: 6.3.0(ajv-formats@3.0.1(ajv@8.20.0))(typebox@1.4.3)
+      '@mega/analises':
+        specifier: workspace:*
+        version: link:../../packages/analises
       '@mega/domain':
         specifier: workspace:*
         version: link:../../packages/domain
@@ -87,6 +90,9 @@ importers:
 
   apps/web:
     dependencies:
+      '@mega/analises':
+        specifier: workspace:*
+        version: link:../../packages/analises
       '@mega/domain':
         specifier: workspace:*
         version: link:../../packages/domain
@@ -127,6 +133,19 @@ importers:
       vite:
         specifier: ^8.3.5
         version: 8.3.5(@types/node@26.6.6)(jiti@2.7.0)
+
+  packages/analises:
+    dependencies:
+      '@mega/domain':
+        specifier: workspace:*
+        version: link:../domain
+      typebox:
+        specifier: ^1.4.3
+        version: 1.4.3
+    devDependencies:
+      typescript:
+        specifier: ^6.0.3
+        version: 6.0.3
 
   packages/domain:
     devDependencies:

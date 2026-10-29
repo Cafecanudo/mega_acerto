@@ -61,6 +61,28 @@ export interface IngestaoExecucaoTabela {
   erro: string | null;
 }
 
+export interface AnaliseTabela {
+  id: Generated<number>;
+  jogo: string;
+  tipo: string;
+  versao_prompt: number;
+  modelo: string;
+  esforco: string;
+  status: string;
+  ultimo_concurso: number;
+  hash_dataset: string | null;
+  resultado: unknown;
+  conferencia_sistema: unknown;
+  scripts: unknown;
+  metadados: unknown;
+  custo_usd: number | null;
+  duracao_ms: number | null;
+  erro: string | null;
+  criado_em: Generated<Date>;
+  iniciado_em: Date | null;
+  finalizado_em: Date | null;
+}
+
 export interface Database {
   jogo: JogoTabela;
   concurso: ConcursoTabela;
@@ -68,4 +90,5 @@ export interface Database {
   premiacao: PremiacaoTabela;
   payload_bruto: PayloadBrutoTabela;
   ingestao_execucao: IngestaoExecucaoTabela;
+  analise: AnaliseTabela;
 }

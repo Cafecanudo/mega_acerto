@@ -9,6 +9,7 @@
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {
+    "@mega/analises": "workspace:*",
     "@mega/domain": "workspace:*",
     "@tabler/icons-react": "^3.50.0",
     "@tanstack/react-query": "^5.105.0",
