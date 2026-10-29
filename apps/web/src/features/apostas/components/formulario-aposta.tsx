@@ -5,16 +5,22 @@ import {
   obterRegraJogo,
   type ApresentacaoJogo,
 } from '@mega/domain';
-import { useState, type ReactNode, type SyntheticEvent } from 'react';
+import { useEffect, useState, type ReactNode, type SyntheticEvent } from 'react';
 import { SeletorDezenas } from '@/components/dezenas/seletor-dezenas';
 import { estiloCorJogo } from '@/lib/cor-jogo';
 import { useSalvarAposta } from '../api/apostas';
 import type { Aposta } from '../types';
 
+export interface SelecaoDezenas {
+  readonly jogo: string;
+  readonly dezenas: readonly number[];
+}
+
 interface FormularioApostaProps {
   readonly emEdicao: Aposta | null;
   readonly favoritaPadrao: boolean;
   readonly aoConcluir: () => void;
+  readonly aoAlterarSelecao: (selecao: SelecaoDezenas) => void;
 }
 
 const jogosDisponiveis: readonly ApresentacaoJogo[] = apresentacoesJogo.filter(
@@ -36,6 +42,7 @@ export const FormularioAposta = ({
   emEdicao,
   favoritaPadrao,
   aoConcluir,
+  aoAlterarSelecao,
 }: FormularioApostaProps) => {
   const [jogo, setJogo] = useState(emEdicao?.jogo ?? jogosDisponiveis[0]?.codigo ?? '');
   const [nome, setNome] = useState(emEdicao?.nome ?? '');
@@ -44,6 +51,10 @@ export const FormularioAposta = ({
   );
   const [favorita, setFavorita] = useState(emEdicao?.favorita ?? favoritaPadrao);
   const salvar = useSalvarAposta();
+
+  useEffect(() => {
+    aoAlterarSelecao({ jogo, dezenas: [...dezenas].sort((a, b) => a - b) });
+  }, [jogo, dezenas, aoAlterarSelecao]);
 
   const apresentacao = obterApresentacaoJogo(jogo);
   if (!apresentacao || !isCodigoJogo(jogo)) return null;

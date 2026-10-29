@@ -1,14 +1,15 @@
 import { useQuery } from '@tanstack/react-query';
-import { useState } from 'react';
+import { useState, type ReactNode } from 'react';
 import { Carregando, Falha, Vazio } from '@/components/ui/estado';
 import { listarApostasQuery } from '../api/apostas';
 import type { Aposta } from '../types';
 import { CartaoAposta } from './cartao-aposta';
-import { FormularioAposta } from './formulario-aposta';
+import { FormularioAposta, type SelecaoDezenas } from './formulario-aposta';
 import { ResumoFavoritas } from './resumo-favoritas';
 
 interface PaginaApostasProps {
   readonly somenteFavoritas: boolean;
+  readonly painelDezenas?: (selecao: SelecaoDezenas) => ReactNode;
 }
 
 const Lista = ({
@@ -41,9 +42,11 @@ const Lista = ({
   );
 };
 
-export const PaginaApostas = ({ somenteFavoritas }: PaginaApostasProps) => {
+export const PaginaApostas = ({ somenteFavoritas, painelDezenas }: PaginaApostasProps) => {
   const [emEdicao, setEmEdicao] = useState<Aposta | null>(null);
   const [versaoFormulario, setVersaoFormulario] = useState(0);
+  const [selecao, setSelecao] = useState<SelecaoDezenas | null>(null);
+  const exibirPainel = painelDezenas !== undefined && (selecao?.dezenas.length ?? 0) > 0;
 
   const concluir = () => {
     setEmEdicao(null);
@@ -58,10 +61,16 @@ export const PaginaApostas = ({ somenteFavoritas }: PaginaApostasProps) => {
           emEdicao={emEdicao}
           favoritaPadrao={somenteFavoritas}
           aoConcluir={concluir}
+          aoAlterarSelecao={setSelecao}
         />
       </div>
-      <div className="flex flex-col lg:min-h-0">
-        <Lista somenteFavoritas={somenteFavoritas} aoEditar={setEmEdicao} />
+      <div className="flex flex-col gap-3 lg:min-h-0">
+        {exibirPainel && selecao && (
+          <div className="flex flex-col lg:min-h-0 lg:flex-[3]">{painelDezenas(selecao)}</div>
+        )}
+        <div className={`flex flex-col lg:min-h-0 ${exibirPainel ? 'lg:flex-[2]' : 'lg:flex-1'}`}>
+          <Lista somenteFavoritas={somenteFavoritas} aoEditar={setEmEdicao} />
+        </div>
       </div>
     </div>
   );

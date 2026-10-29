@@ -1,6 +1,7 @@
 import { IconTicket } from '@tabler/icons-react';
 import { PaginaApostas } from '@/features/apostas/components/pagina-apostas';
 import { PaginaConta } from './pagina-conta';
+import { PainelDezenasAposta } from './painel-dezenas-aposta';
 
 const Apostas = () => (
   <PaginaConta
@@ -8,7 +9,10 @@ const Apostas = () => (
     descricao="Suas apostas de qualquer jogo, conferidas contra o último concurso e o histórico."
     icone={<IconTicket aria-hidden size="1.5rem" stroke={1.75} className="text-slate-500" />}
   >
-    <PaginaApostas somenteFavoritas={false} />
+    <PaginaApostas
+      somenteFavoritas={false}
+      painelDezenas={(selecao) => <PainelDezenasAposta selecao={selecao} />}
+    />
   </PaginaConta>
 );
 
