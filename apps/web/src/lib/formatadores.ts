@@ -14,6 +14,33 @@ const dataHoraCurta = new Intl.DateTimeFormat('pt-BR', {
   minute: '2-digit',
 });
 
+const dolar = new Intl.NumberFormat('pt-BR', {
+  style: 'currency',
+  currency: 'USD',
+  maximumFractionDigits: 2,
+});
+const decimal = new Intl.NumberFormat('pt-BR', { maximumFractionDigits: 2 });
+
+export const formatarDolar = (valor: number | null): string =>
+  valor === null ? '—' : dolar.format(valor);
+
+export const formatarDecimal = (valor: number, casas = 2): string =>
+  casas === 2
+    ? decimal.format(valor)
+    : new Intl.NumberFormat('pt-BR', { maximumFractionDigits: casas }).format(valor);
+
+export const formatarPValor = (valor: number | null): string => {
+  if (valor === null) return '—';
+  return valor < 0.0001 ? '< 0,0001' : formatarDecimal(valor, 4);
+};
+
+export const formatarDuracao = (milissegundos: number | null): string => {
+  if (milissegundos === null) return '—';
+  const segundos = Math.round(milissegundos / 1000);
+  const minutos = Math.floor(segundos / 60);
+  return minutos > 0 ? `${minutos} min ${segundos % 60} s` : `${segundos} s`;
+};
+
 export const formatarMoeda = (valor: number | null): string =>
   valor === null ? '—' : moeda.format(valor);
 

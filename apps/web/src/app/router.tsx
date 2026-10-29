@@ -23,6 +23,8 @@ export const router = createBrowserRouter([
           { index: true, lazy: carregar(() => import('./routes/jogo')) },
           { path: 'concursos', element: <Navigate to=".." replace /> },
           { path: 'concursos/:numero', lazy: carregar(() => import('./routes/concurso')) },
+          { path: 'analises', lazy: carregar(() => import('./routes/analises')) },
+          { path: 'analises/:id', lazy: carregar(() => import('./routes/analise')) },
         ],
       },
       { path: '*', lazy: carregar(() => import('./routes/nao-encontrado')) },

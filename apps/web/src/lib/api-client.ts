@@ -32,8 +32,15 @@ const lerCorpo = async (resposta: Response): Promise<unknown> => {
   return texto.length > 0 ? (JSON.parse(texto) as unknown) : null;
 };
 
-const requisitar = async <T>(metodo: 'GET' | 'POST', url: string): Promise<T> => {
-  const resposta = await fetch(url, { method: metodo, headers: { accept: 'application/json' } });
+const requisitar = async <T>(metodo: 'GET' | 'POST', url: string, dados?: unknown): Promise<T> => {
+  const comCorpo = dados !== undefined;
+  const resposta = await fetch(url, {
+    method: metodo,
+    headers: comCorpo
+      ? { accept: 'application/json', 'content-type': 'application/json' }
+      : { accept: 'application/json' },
+    body: comCorpo ? JSON.stringify(dados) : null,
+  });
   const corpo = await lerCorpo(resposta);
 
   if (!resposta.ok) {
@@ -51,5 +58,5 @@ const requisitar = async <T>(metodo: 'GET' | 'POST', url: string): Promise<T> =>
 export const api = {
   get: <T>(caminho: string, parametros?: Parametros) =>
     requisitar<T>('GET', montarUrl(caminho, parametros)),
-  post: <T>(caminho: string) => requisitar<T>('POST', montarUrl(caminho)),
+  post: <T>(caminho: string, dados?: unknown) => requisitar<T>('POST', montarUrl(caminho), dados),
 };
