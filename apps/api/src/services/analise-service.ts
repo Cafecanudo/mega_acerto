@@ -1,10 +1,11 @@
 import {
   obterTipoAnalise,
   type EsforcoAnalise,
+  type ParametrosEstrategia,
   type ModeloAnalise,
   type TipoAnalise,
 } from '@mega/analises';
-import type { CodigoJogo } from '@mega/domain';
+import { obterRegraJogo, type CodigoJogo } from '@mega/domain';
 import type {
   Analise,
   AnaliseRepository,
@@ -18,6 +19,7 @@ export interface SolicitacaoAnalise {
   readonly modelo: ModeloAnalise;
   readonly esforco: EsforcoAnalise;
   readonly forcar: boolean;
+  readonly parametros?: ParametrosEstrategia | null | undefined;
 }
 
 export interface AnaliseSolicitada {
@@ -26,6 +28,32 @@ export interface AnaliseSolicitada {
 }
 
 const LIMITE_LISTAGEM = 50;
+
+const prepararParametros = (
+  jogo: CodigoJogo,
+  solicitacao: SolicitacaoAnalise,
+): ParametrosEstrategia | null => {
+  if (solicitacao.tipo !== 'estrategia') return null;
+  const parametros = solicitacao.parametros;
+  if (!parametros) throw entradaInvalida('Informe os parâmetros da estratégia');
+
+  const { minimo, maximo } = obterRegraJogo(jogo).dezenasPorAposta;
+  if (parametros.quantidadeDezenas < minimo || parametros.quantidadeDezenas > maximo) {
+    throw entradaInvalida(`A quantidade de dezenas deve ficar entre ${minimo} e ${maximo}`);
+  }
+
+  const descricao = parametros.descricao?.trim() ?? '';
+  if (parametros.estrategia === 'personalizada' && descricao.length === 0) {
+    throw entradaInvalida('Descreva a regra da estratégia personalizada');
+  }
+
+  return {
+    estrategia: parametros.estrategia,
+    descricao: parametros.estrategia === 'personalizada' ? descricao : null,
+    quantidadeDezenas: parametros.quantidadeDezenas,
+    janela: parametros.janela,
+  };
+};
 
 export class AnaliseService {
   readonly #analises: AnaliseRepository;
@@ -53,6 +81,7 @@ export class AnaliseService {
       modelo: solicitacao.modelo,
       esforco: solicitacao.esforco,
       ultimoConcurso,
+      parametros: prepararParametros(jogo, solicitacao),
     };
 
     if (!solicitacao.forcar) {

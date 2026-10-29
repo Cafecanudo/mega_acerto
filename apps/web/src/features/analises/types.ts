@@ -1,7 +1,9 @@
 import type {
   EsforcoAnalise,
   ModeloAnalise,
+  ParametrosEstrategia,
   ResultadoAleatoriedade,
+  ResultadoEstrategia,
   StatusAnalise,
   TipoAnalise,
 } from '@mega/analises';
@@ -20,6 +22,7 @@ interface CamposAnalise {
   readonly esforco: EsforcoAnalise;
   readonly status: StatusAnalise;
   readonly ultimoConcurso: number;
+  readonly parametros: ParametrosEstrategia | null;
   readonly hashDataset: string | null;
   readonly conferenciaSistema: ConferenciaSistema | null;
   readonly custoUsd: number | null;
@@ -34,16 +37,28 @@ export interface ResumoAnalise extends CamposAnalise {
   readonly resumoConclusao: string | null;
 }
 
-export interface Analise extends CamposAnalise {
-  readonly resultado: ResultadoAleatoriedade | null;
+interface CamposDetalhe extends CamposAnalise {
   readonly scripts: { readonly nome: string; readonly conteudo: string }[];
 }
+
+export interface AnaliseAleatoriedade extends CamposDetalhe {
+  readonly tipo: 'aleatoriedade';
+  readonly resultado: ResultadoAleatoriedade | null;
+}
+
+export interface AnaliseEstrategia extends CamposDetalhe {
+  readonly tipo: 'estrategia';
+  readonly resultado: ResultadoEstrategia | null;
+}
+
+export type Analise = AnaliseAleatoriedade | AnaliseEstrategia;
 
 export interface SolicitacaoAnalise {
   readonly tipo: TipoAnalise;
   readonly modelo: ModeloAnalise;
   readonly esforco: EsforcoAnalise;
   readonly forcar: boolean;
+  readonly parametros: ParametrosEstrategia | null;
 }
 
 export interface AnaliseSolicitada {

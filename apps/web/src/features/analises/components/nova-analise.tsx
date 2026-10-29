@@ -3,13 +3,18 @@ import {
   esforcosAnalise,
   MODELO_PADRAO,
   modelosAnalise,
+  estrategiasDisponiveis,
+  obterEstrategia,
   obterTipoAnalise,
+  TAMANHO_MAXIMO_DESCRICAO,
   tiposAnalise,
+  type CodigoEstrategia,
   type EsforcoAnalise,
   type ModeloAnalise,
+  type ParametrosEstrategia,
   type TipoAnalise,
 } from '@mega/analises/catalogo';
-import { apresentacoesJogo, isCodigoJogo } from '@mega/domain';
+import { apresentacoesJogo, isCodigoJogo, obterRegraJogo, type RegraJogo } from '@mega/domain';
 import { IconSparkles } from '@tabler/icons-react';
 import { useState, type ReactNode, type SyntheticEvent } from 'react';
 import { useSolicitarAnalise } from '../api/analises';
@@ -34,18 +39,124 @@ const Campo = ({ rotulo, children }: { readonly rotulo: string; readonly childre
 const classeSelect =
   'rounded-lg border border-slate-300 bg-white px-2.5 py-1.5 text-sm dark:border-slate-700 dark:bg-slate-950';
 
+const PARAMETROS_INICIAIS: ParametrosEstrategia = {
+  estrategia: 'mais-sorteadas',
+  descricao: null,
+  quantidadeDezenas: 6,
+  janela: null,
+};
+
+const JANELAS = [null, 500, 100, 50, 20] as const;
+
+const CamposEstrategia = ({
+  regra,
+  parametros,
+  aoAlterar,
+}: {
+  readonly regra: RegraJogo;
+  readonly parametros: ParametrosEstrategia;
+  readonly aoAlterar: (parametros: ParametrosEstrategia) => void;
+}) => {
+  const { minimo, maximo } = regra.dezenasPorAposta;
+  const definicao = obterEstrategia(parametros.estrategia);
+  const quantidades = Array.from({ length: maximo - minimo + 1 }, (_, indice) => minimo + indice);
+
+  return (
+    <div className="flex flex-col gap-3 rounded-lg border border-slate-200 p-3 dark:border-slate-800">
+      <Campo rotulo="Estratégia">
+        <select
+          value={parametros.estrategia}
+          onChange={(evento) => {
+            aoAlterar({ ...parametros, estrategia: evento.target.value as CodigoEstrategia });
+          }}
+          className={classeSelect}
+        >
+          {estrategiasDisponiveis.map((item) => (
+            <option key={item.codigo} value={item.codigo}>
+              {item.nome}
+            </option>
+          ))}
+        </select>
+      </Campo>
+      {parametros.estrategia === 'personalizada' ? (
+        <Campo rotulo="Descreva a regra">
+          <textarea
+            value={parametros.descricao ?? ''}
+            onChange={(evento) => {
+              aoAlterar({ ...parametros, descricao: evento.target.value });
+            }}
+            maxLength={TAMANHO_MAXIMO_DESCRICAO}
+            rows={4}
+            required
+            placeholder="Ex.: as dezenas que mais saíram junto com a dezena 10 nos últimos 200 concursos"
+            className={`${classeSelect} resize-y`}
+          />
+        </Campo>
+      ) : (
+        <p className="text-xs text-slate-500 dark:text-slate-400">{definicao.regra}</p>
+      )}
+      <div className="grid grid-cols-2 gap-3">
+        <Campo rotulo="Dezenas por palpite">
+          <select
+            value={parametros.quantidadeDezenas}
+            onChange={(evento) => {
+              aoAlterar({ ...parametros, quantidadeDezenas: Number(evento.target.value) });
+            }}
+            className={classeSelect}
+          >
+            {quantidades.map((quantidade) => (
+              <option key={quantidade} value={quantidade}>
+                {quantidade}
+              </option>
+            ))}
+          </select>
+        </Campo>
+        <Campo rotulo="Período usado">
+          <select
+            value={parametros.janela ?? ''}
+            onChange={(evento) => {
+              aoAlterar({
+                ...parametros,
+                janela: evento.target.value === '' ? null : Number(evento.target.value),
+              });
+            }}
+            className={classeSelect}
+          >
+            {JANELAS.map((janela) => (
+              <option key={janela ?? 'todos'} value={janela ?? ''}>
+                {janela === null ? 'Todo o histórico' : `Últimos ${janela}`}
+              </option>
+            ))}
+          </select>
+        </Campo>
+      </div>
+    </div>
+  );
+};
+
 export const NovaAnalise = ({ aoSolicitar }: NovaAnaliseProps) => {
   const [jogo, setJogo] = useState(jogosDisponiveis[0]?.codigo ?? '');
   const [tipo, setTipo] = useState<TipoAnalise>(tiposAnalise[0].codigo);
   const [modelo, setModelo] = useState<ModeloAnalise>(MODELO_PADRAO);
   const [esforco, setEsforco] = useState<EsforcoAnalise>(ESFORCO_PADRAO);
   const [forcar, setForcar] = useState(false);
+  const [estrategia, setEstrategia] = useState<ParametrosEstrategia>(PARAMETROS_INICIAIS);
   const solicitar = useSolicitarAnalise();
   const definicao = obterTipoAnalise(tipo);
 
   const enviar = (evento: SyntheticEvent) => {
     evento.preventDefault();
-    solicitar.mutate({ jogo, tipo, modelo, esforco, forcar }, { onSuccess: aoSolicitar });
+    const parametros =
+      tipo === 'estrategia'
+        ? {
+            ...estrategia,
+            descricao: estrategia.estrategia === 'personalizada' ? estrategia.descricao : null,
+          }
+        : null;
+    solicitar.mutate(
+      { jogo, tipo, modelo, esforco, forcar, parametros },
+      { onSuccess: aoSolicitar },
+    );
   };
 
   return (
@@ -85,6 +196,13 @@ export const NovaAnalise = ({ aoSolicitar }: NovaAnaliseProps) => {
         </select>
       </Campo>
       <p className="text-xs text-slate-500 dark:text-slate-400">{definicao.descricao}</p>
+      {tipo === 'estrategia' && isCodigoJogo(jogo) && (
+        <CamposEstrategia
+          regra={obterRegraJogo(jogo)}
+          parametros={estrategia}
+          aoAlterar={setEstrategia}
+        />
+      )}
       <div className="grid grid-cols-2 gap-3">
         <Campo rotulo="Modelo">
           <select

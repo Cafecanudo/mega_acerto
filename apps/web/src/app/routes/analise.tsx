@@ -1,9 +1,40 @@
-import { IconArrowLeft, IconChartHistogram } from '@tabler/icons-react';
+import { IconArrowLeft, IconChartHistogram, IconTicket } from '@tabler/icons-react';
 import { Link, useParams } from 'react-router';
 import { paths } from '@/config/paths';
 import { ResultadoAnalise } from '@/features/analises/components/resultado-analise';
+import { BotaoSalvarFavorito } from '@/features/favoritos/components/botao-salvar-favorito';
+import { useAbrirApostar } from '../apostar-contexto';
 import NaoEncontrado from './nao-encontrado';
 import { PaginaConta } from './pagina-conta';
+
+const AcoesPalpite = ({
+  palpite,
+}: {
+  readonly palpite: { readonly jogo: string; readonly dezenas: readonly number[] };
+}) => {
+  const abrirApostar = useAbrirApostar();
+
+  return (
+    <div className="flex flex-wrap items-center gap-2">
+      <BotaoSalvarFavorito
+        jogo={palpite.jogo}
+        dezenas={palpite.dezenas}
+        nome="Palpite de estratégia"
+        desabilitado={false}
+      />
+      <button
+        type="button"
+        onClick={() => {
+          abrirApostar({ jogo: palpite.jogo, dezenas: palpite.dezenas });
+        }}
+        className="inline-flex items-center gap-1.5 rounded-lg bg-emerald-600 px-3 py-1.5 text-sm font-semibold text-white transition hover:bg-emerald-700"
+      >
+        <IconTicket aria-hidden size="1rem" />
+        Usar no Apostar
+      </button>
+    </div>
+  );
+};
 
 const Analise = () => {
   const id = Number.parseInt(useParams().id ?? '', 10);
@@ -26,7 +57,11 @@ const Analise = () => {
           <IconArrowLeft aria-hidden size="1rem" />
           Voltar para análises
         </Link>
-        <ResultadoAnalise key={id} id={id} />
+        <ResultadoAnalise
+          key={id}
+          id={id}
+          acoesPalpite={(palpite) => <AcoesPalpite palpite={palpite} />}
+        />
       </div>
     </PaginaConta>
   );

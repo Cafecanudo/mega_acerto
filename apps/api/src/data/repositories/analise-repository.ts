@@ -21,6 +21,7 @@ export interface Analise {
   readonly esforco: EsforcoAnalise;
   readonly status: StatusAnalise;
   readonly ultimoConcurso: number;
+  readonly parametros: unknown;
   readonly hashDataset: string | null;
   readonly resultado: unknown;
   readonly conferenciaSistema: ConferenciaSistema | null;
@@ -45,6 +46,7 @@ export interface NovaAnalise {
   readonly modelo: ModeloAnalise;
   readonly esforco: EsforcoAnalise;
   readonly ultimoConcurso: number;
+  readonly parametros: unknown;
 }
 
 export interface ConclusaoAnalise {
@@ -81,6 +83,7 @@ const paraBase = (linha: LinhaBase): Omit<Analise, 'resultado' | 'scripts' | 'me
   esforco: linha.esforco as EsforcoAnalise,
   status: linha.status as StatusAnalise,
   ultimoConcurso: linha.ultimo_concurso,
+  parametros: linha.parametros,
   hashDataset: linha.hash_dataset,
   conferenciaSistema: linha.conferencia_sistema as ConferenciaSistema | null,
   custoUsd: linha.custo_usd,
@@ -118,6 +121,7 @@ export class AnaliseRepository {
         modelo: nova.modelo,
         esforco: nova.esforco,
         ultimo_concurso: nova.ultimoConcurso,
+        parametros: nova.parametros === null ? null : json(nova.parametros),
         status: 'pendente' satisfies StatusAnalise,
       })
       .returning('id')
@@ -136,6 +140,11 @@ export class AnaliseRepository {
       .where('modelo', '=', nova.modelo)
       .where('esforco', '=', nova.esforco)
       .where('ultimo_concurso', '=', nova.ultimoConcurso)
+      .where((eb) =>
+        nova.parametros === null
+          ? eb('parametros', 'is', null)
+          : eb(sql`parametros`, '=', sql`${json(nova.parametros)}::jsonb`),
+      )
       .where('status', 'in', ['pendente', 'executando', 'concluida'] satisfies StatusAnalise[])
       .orderBy('id', 'desc')
       .limit(1)
@@ -165,6 +174,7 @@ export class AnaliseRepository {
         'esforco',
         'status',
         'ultimo_concurso',
+        'parametros',
         'hash_dataset',
         'conferencia_sistema',
         'custo_usd',

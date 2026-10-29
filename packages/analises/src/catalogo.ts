@@ -6,6 +6,13 @@ export const tiposAnalise = [
       'Testa se o histórico é compatível com sorteios uniformes e independentes e estima a probabilidade de cada dezena.',
     versaoPrompt: 1,
   },
+  {
+    codigo: 'estrategia',
+    nome: 'Estratégia de palpite',
+    descricao:
+      'Gera o palpite de uma estratégia para o próximo concurso e testa a estratégia no histórico, comparando com apostas aleatórias.',
+    versaoPrompt: 1,
+  },
 ] as const;
 
 export type TipoAnalise = (typeof tiposAnalise)[number]['codigo'];
@@ -50,3 +57,5 @@ export const nomeModelo = (codigo: string): string =>
 
 export const nomeEsforco = (codigo: string): string =>
   esforcosAnalise.find((esforco) => esforco.codigo === codigo)?.nome ?? codigo;
+
+export * from './estrategia/catalogo.ts';

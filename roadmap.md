@@ -67,6 +67,13 @@ Dados separados por usuário.
 - [x] `valor_jogo` continua global (preço oficial da Caixa)
 - [x] Histórico de concursos e ingestão permanecem compartilhados
 
+## Palpites e estratégias
+
+- [x] Página Palpites: ranking das dezenas mais sorteadas por período, seleção livre ou Top 6/10/15, envio ao Apostar, favoritos ou busca no histórico
+- [x] Análise `estrategia` pelo Claude: palpite do próximo concurso e backtest walk-forward contra apostas aleatórias (mais/menos sorteadas, mais atrasadas, equilibrada ou regra personalizada)
+- [ ] Filtro de popularidade (evitar combinações muito jogadas)
+- [ ] Fechamentos (desdobramentos com garantia)
+
 ## Fase 3: Backtest e valor esperado
 
 - [ ] Vigência de regras por período (preço da aposta, faixas de premiação)

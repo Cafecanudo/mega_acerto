@@ -1,6 +1,5 @@
 import { readdir, readFile, rm, stat } from 'node:fs/promises';
 import { join } from 'node:path';
-import { montarPromptAleatoriedade, ResultadoAleatoriedadeSchema } from '@mega/analises';
 import { isCodigoJogo, obterRegraJogo } from '@mega/domain';
 import type {
   Analise,
@@ -10,7 +9,7 @@ import type {
 import { ErroClaude, type ClaudeCli } from '../../integrations/claude/claude-cli.ts';
 import type { Logger } from '../../shared/logger.ts';
 import type { DatasetExportado, ExportadorDataset } from './exportador-dataset.ts';
-import { conferirComSistema, validarEstrutura } from './validacao-aleatoriedade.ts';
+import { execucoesPorTipo } from './tipos-analise.ts';
 
 export interface DependenciasExecutor {
   readonly analises: AnaliseRepository;
@@ -106,22 +105,30 @@ export class ExecutorAnalise {
   ): Promise<void> {
     if (!isCodigoJogo(analise.jogo)) throw new Error(`Jogo sem regras: ${analise.jogo}`);
     const regra = obterRegraJogo(analise.jogo);
+    const execucao = execucoesPorTipo[analise.tipo];
 
     const resposta = await this.#claude.executar({
-      prompt: montarPromptAleatoriedade({
-        regra,
-        totalConcursos: dataset.totalConcursos,
-        dataInicio: dataset.dataInicio,
-        dataFim: dataset.dataFim,
-      }),
-      schema: ResultadoAleatoriedadeSchema,
+      prompt: execucao.montarPrompt(
+        {
+          regra,
+          totalConcursos: dataset.totalConcursos,
+          dataInicio: dataset.dataInicio,
+          dataFim: dataset.dataFim,
+        },
+        analise,
+      ),
+      schema: execucao.schema,
       modelo: analise.modelo,
       esforco: analise.esforco,
       diretorio,
     });
 
-    const resultado = validarEstrutura(resposta.saida);
-    const conferenciaSistema = conferirComSistema(regra, dataset, resultado);
+    const { resultado, conferencia: conferenciaSistema } = execucao.validar(
+      regra,
+      dataset,
+      analise,
+      resposta.saida,
+    );
 
     await this.#analises.concluir(analise.id, {
       hashDataset: dataset.hash,

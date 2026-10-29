@@ -1,4 +1,5 @@
 import { Type, type TSchema } from '@fastify/type-provider-typebox';
+import { ParametrosEstrategiaSchema } from '@mega/analises';
 import { esforcosAnalise, modelosAnalise, tiposAnalise } from '@mega/analises/catalogo';
 
 const Nulavel = <T extends TSchema>(schema: T) => Type.Union([schema, Type.Null()]);
@@ -26,6 +27,7 @@ export const SolicitacaoAnaliseSchema = Type.Object(
     modelo: ModeloSchema,
     esforco: EsforcoSchema,
     forcar: Type.Boolean({ default: false }),
+    parametros: Type.Optional(Nulavel(ParametrosEstrategiaSchema)),
   },
   { additionalProperties: false },
 );
@@ -49,6 +51,7 @@ const camposBase = {
   esforco: EsforcoSchema,
   status: StatusSchema,
   ultimoConcurso: Type.Integer(),
+  parametros: Type.Unknown(),
   hashDataset: Nulavel(Type.String()),
   conferenciaSistema: Nulavel(ConferenciaSchema),
   custoUsd: Nulavel(Type.Number()),

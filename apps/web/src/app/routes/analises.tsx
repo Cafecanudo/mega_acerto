@@ -22,9 +22,16 @@ const Explicacao = () => (
     />
     <div className="flex flex-col gap-3">
       <p>
-        A análise verifica, com estatística, se o histórico do jogo escolhido se comporta como um
-        sorteio <strong>uniforme e independente</strong>. Ela não prevê números: em um sorteio
-        auditado, o resultado esperado é justamente não encontrar padrão.
+        A análise de <strong>aleatoriedade</strong> verifica, com estatística, se o histórico do
+        jogo escolhido se comporta como um sorteio <strong>uniforme e independente</strong>. Ela não
+        prevê números: em um sorteio auditado, o resultado esperado é justamente não encontrar
+        padrão.
+      </p>
+      <p>
+        A análise de <strong>estratégia</strong> gera o palpite de uma regra de escolha de dezenas
+        para o próximo concurso e testa essa regra em cada concurso do passado, usando só os dados
+        anteriores a ele, contra apostas aleatórias. Ela mostra se a regra teria acertado mais que o
+        acaso.
       </p>
       <ol className="grid gap-3 md:grid-cols-2 xl:grid-cols-4">
         <Passo titulo="1. Dados">

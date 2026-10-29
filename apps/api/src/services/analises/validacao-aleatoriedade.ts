@@ -1,22 +1,11 @@
 import { ResultadoAleatoriedadeSchema, type ResultadoAleatoriedade } from '@mega/analises';
 import type { RegraJogo } from '@mega/domain';
-import { Value } from 'typebox/value';
 import type { ConferenciaSistema } from '../../data/repositories/analise-repository.ts';
 import type { DatasetExportado } from './exportador-dataset.ts';
+import { ErroValidacaoResultado, validarContraSchema } from './validacao-schema.ts';
 
-const LIMITE_ERROS = 8;
-
-export class ErroValidacaoResultado extends Error {}
-
-export const validarEstrutura = (saida: unknown): ResultadoAleatoriedade => {
-  if (Value.Check(ResultadoAleatoriedadeSchema, saida)) return saida;
-
-  const detalhes = [...Value.Errors(ResultadoAleatoriedadeSchema, saida)]
-    .slice(0, LIMITE_ERROS)
-    .map((erro) => `${erro.instancePath || '/'} ${erro.message}`)
-    .join('; ');
-  throw new ErroValidacaoResultado(`Resultado fora do schema: ${detalhes}`);
-};
+export const validarEstrutura = (saida: unknown): ResultadoAleatoriedade =>
+  validarContraSchema(ResultadoAleatoriedadeSchema, saida, 'Resultado');
 
 const validarUniverso = (regra: RegraJogo, resultado: ResultadoAleatoriedade): string[] => {
   const esperado = regra.universo.maximo - regra.universo.minimo + 1;

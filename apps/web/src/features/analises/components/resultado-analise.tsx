@@ -19,26 +19,16 @@ import {
 } from '@/lib/formatadores';
 import { estiloCorJogo } from '@/lib/cor-jogo';
 import { obterAnaliseQuery } from '../api/analises';
-import { emAndamento, type Analise, type ConferenciaSistema } from '../types';
+import { emAndamento, type Analise, type AnaliseAleatoriedade } from '../types';
 import { GraficoFrequencias } from './grafico-frequencias';
+import { Conferencia, Limitacoes, Scripts, Secao } from './partes-resultado';
+import { ResultadoEstrategiaConcluida, type PalpiteAnalise } from './resultado-estrategia';
 import { SeloStatus } from './selo-status';
 
 interface ResultadoAnaliseProps {
   readonly id: number;
+  readonly acoesPalpite?: (palpite: PalpiteAnalise) => ReactNode;
 }
-
-const Secao = ({
-  titulo,
-  children,
-}: {
-  readonly titulo: ReactNode;
-  readonly children: ReactNode;
-}) => (
-  <section className="flex flex-col gap-3 rounded-xl border border-slate-200 bg-white p-4 dark:border-slate-800 dark:bg-slate-900">
-    <h3 className="text-sm font-semibold">{titulo}</h3>
-    {children}
-  </section>
-);
 
 const Cabecalho = ({ analise }: { readonly analise: Analise }) => (
   <div className="flex flex-wrap items-center gap-x-4 gap-y-1 text-sm">
@@ -54,38 +44,6 @@ const Cabecalho = ({ analise }: { readonly analise: Analise }) => (
     </span>
   </div>
 );
-
-const Conferencia = ({
-  doClaude,
-  doSistema,
-}: {
-  readonly doClaude: ResultadoAleatoriedade['conferencia'];
-  readonly doSistema: ConferenciaSistema | null;
-}) => {
-  const ok = doClaude.frequenciasConferem && (doSistema?.ok ?? false);
-  const divergencias = [...doClaude.divergencias, ...(doSistema?.divergencias ?? [])];
-
-  return (
-    <div
-      className={`rounded-lg px-3 py-2 text-sm ${
-        ok
-          ? 'bg-emerald-50 text-emerald-800 dark:bg-emerald-500/10 dark:text-emerald-300'
-          : 'bg-amber-50 text-amber-800 dark:bg-amber-500/10 dark:text-amber-300'
-      }`}
-    >
-      {ok
-        ? 'Conferência ok: as contagens do Claude batem com os agregados SQL do sistema.'
-        : 'Atenção: há divergências entre os cálculos do Claude e os agregados SQL.'}
-      {divergencias.length > 0 && (
-        <ul className="mt-1 list-disc pl-5 text-xs">
-          {divergencias.slice(0, 10).map((divergencia) => (
-            <li key={divergencia}>{divergencia}</li>
-          ))}
-        </ul>
-      )}
-    </div>
-  );
-};
 
 const TabelaTestes = ({ testes }: { readonly testes: ResultadoAleatoriedade['testes'] }) => (
   <div className="overflow-x-auto">
@@ -167,29 +125,13 @@ const Pares = ({
     </ul>
   );
 
-const Scripts = ({ scripts }: { readonly scripts: Analise['scripts'] }) => (
-  <div className="flex flex-col gap-2">
-    {scripts.map((script) => (
-      <details
-        key={script.nome}
-        className="rounded-lg border border-slate-200 dark:border-slate-800"
-      >
-        <summary className="cursor-pointer px-3 py-2 font-mono text-xs">{script.nome}</summary>
-        <pre className="max-h-96 overflow-auto border-t border-slate-200 bg-slate-50 p-3 text-xs dark:border-slate-800 dark:bg-slate-950">
-          {script.conteudo}
-        </pre>
-      </details>
-    ))}
-  </div>
-);
-
 const Concluida = ({
   regra,
   analise,
   resultado,
 }: {
   readonly regra: RegraJogo;
-  readonly analise: Analise;
+  readonly analise: AnaliseAleatoriedade;
   readonly resultado: ResultadoAleatoriedade;
 }) => (
   <>
@@ -227,11 +169,7 @@ const Concluida = ({
       <Pares regra={regra} pares={resultado.paresRelevantes} />
     </Secao>
     <Secao titulo="Limitações">
-      <ul className="list-disc pl-5 text-sm text-slate-600 dark:text-slate-300">
-        {resultado.conclusao.limitacoes.map((limitacao) => (
-          <li key={limitacao}>{limitacao}</li>
-        ))}
-      </ul>
+      <Limitacoes limitacoes={resultado.conclusao.limitacoes} />
     </Secao>
     {analise.scripts.length > 0 && (
       <Secao titulo={`Scripts executados pelo Claude (${analise.scripts.length})`}>
@@ -241,7 +179,31 @@ const Concluida = ({
   </>
 );
 
-export const ResultadoAnalise = ({ id }: ResultadoAnaliseProps) => {
+const ConteudoConcluido = ({
+  regra,
+  analise,
+  acoesPalpite,
+}: {
+  readonly regra: RegraJogo;
+  readonly analise: Analise;
+  readonly acoesPalpite: ResultadoAnaliseProps['acoesPalpite'];
+}) => {
+  if (analise.tipo === 'estrategia') {
+    return analise.resultado ? (
+      <ResultadoEstrategiaConcluida
+        regra={regra}
+        analise={analise}
+        resultado={analise.resultado}
+        acoesPalpite={acoesPalpite}
+      />
+    ) : null;
+  }
+  return analise.resultado ? (
+    <Concluida regra={regra} analise={analise} resultado={analise.resultado} />
+  ) : null;
+};
+
+export const ResultadoAnalise = ({ id, acoesPalpite }: ResultadoAnaliseProps) => {
   const consulta = useQuery(obterAnaliseQuery(id));
 
   if (consulta.isPending) return <Carregando mensagem="Carregando análise…" />;
@@ -271,8 +233,8 @@ export const ResultadoAnalise = ({ id }: ResultadoAnaliseProps) => {
           {analise.scripts.length > 0 && <Scripts scripts={analise.scripts} />}
         </Secao>
       )}
-      {analise.status === 'concluida' && analise.resultado && (
-        <Concluida regra={regra} analise={analise} resultado={analise.resultado} />
+      {analise.status === 'concluida' && (
+        <ConteudoConcluido regra={regra} analise={analise} acoesPalpite={acoesPalpite} />
       )}
     </div>
   );

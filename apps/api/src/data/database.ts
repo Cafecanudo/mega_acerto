@@ -73,6 +73,7 @@ export interface AnaliseTabela {
   ultimo_concurso: number;
   hash_dataset: string | null;
   resultado: unknown;
+  parametros: unknown;
   conferencia_sistema: unknown;
   scripts: unknown;
   metadados: unknown;
