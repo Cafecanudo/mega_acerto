@@ -101,7 +101,9 @@ export const criarContainer = (config: Config, db: Kysely<Database>, logger: Log
     jogoService: lazy(() => new JogoService(new JogoRepository(db))),
     concursoService: lazy(() => new ConcursoService(concursosLeitura())),
     analiseService: lazy(() => new AnaliseService(new AnaliseRepository(db), concursosLeitura())),
-    apostaService: lazy(() => new ApostaService(new ApostaRepository(db), conferencia())),
+    apostaService: lazy(
+      () => new ApostaService(new ApostaRepository(db), conferencia(), concursosLeitura()),
+    ),
     favoritoService: lazy(() => new FavoritoService(new FavoritoRepository(db), conferencia())),
     ingestaoService: lazy(() => criarIngestaoService(config, db, logger)),
     executorAnalise: lazy(() => criarExecutorAnalise(config, db, logger)),

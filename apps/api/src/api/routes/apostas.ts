@@ -1,6 +1,8 @@
 import type { FastifyPluginAsyncTypebox } from '@fastify/type-provider-typebox';
 import {
+  ApostasEfetivadasSchema,
   ConsultaApostasSchema,
+  EfetivacaoApostasSchema,
   PaginaApostasSchema,
   ResumoApostasSchema,
 } from '../schemas/aposta.ts';
@@ -21,6 +23,15 @@ const rotasApostas: FastifyPluginAsyncTypebox<OpcoesRotas> = async (app, { conta
         pagina,
         tamanho,
       });
+    },
+  );
+
+  app.post(
+    '/apostas',
+    { schema: { body: EfetivacaoApostasSchema, response: { 201: ApostasEfetivadasSchema } } },
+    async (requisicao, resposta) => {
+      const efetivadas = await container.apostaService().efetivar(requisicao.body);
+      return resposta.status(201).send(efetivadas);
     },
   );
 

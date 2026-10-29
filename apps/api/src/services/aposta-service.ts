@@ -1,4 +1,10 @@
-import type { ApostaFiltrada, ApostaRepository } from '../data/repositories/aposta-repository.ts';
+import { isCodigoJogo, obterRegraJogo, validarAposta } from '@mega/domain';
+import type {
+  ApostaFiltrada,
+  ApostaRepository,
+  NovaApostaItem,
+} from '../data/repositories/aposta-repository.ts';
+import type { ConcursoLeituraRepository } from '../data/repositories/concurso-leitura-repository.ts';
 import { entradaInvalida } from '../shared/erros.ts';
 import type { Conferencia, ConferenciaService } from './conferencia-service.ts';
 
@@ -31,15 +37,68 @@ export interface ResumoApostas {
   } | null;
 }
 
+export interface EfetivacaoApostas {
+  readonly jogo: string;
+  readonly itens: readonly {
+    readonly dezenas: readonly number[];
+    readonly nome?: string | null | undefined;
+    readonly favoritoId?: number | null | undefined;
+  }[];
+}
+
+export interface ApostasEfetivadas {
+  readonly concurso: number;
+  readonly ids: number[];
+}
+
 const LIMITE_DEZENAS_FILTRO = 20;
+const LIMITE_ITENS_EFETIVACAO = 100;
+const TAMANHO_MAXIMO_NOME = 80;
 
 export class ApostaService {
   readonly #repository: ApostaRepository;
   readonly #conferencia: ConferenciaService;
+  readonly #concursos: ConcursoLeituraRepository;
 
-  constructor(repository: ApostaRepository, conferencia: ConferenciaService) {
+  constructor(
+    repository: ApostaRepository,
+    conferencia: ConferenciaService,
+    concursos: ConcursoLeituraRepository,
+  ) {
     this.#repository = repository;
     this.#conferencia = conferencia;
+    this.#concursos = concursos;
+  }
+
+  async efetivar(efetivacao: EfetivacaoApostas): Promise<ApostasEfetivadas> {
+    if (!isCodigoJogo(efetivacao.jogo)) {
+      throw entradaInvalida(`Jogo ${efetivacao.jogo} ainda não está disponível`);
+    }
+    const regra = obterRegraJogo(efetivacao.jogo);
+
+    if (efetivacao.itens.length === 0 || efetivacao.itens.length > LIMITE_ITENS_EFETIVACAO) {
+      throw entradaInvalida(`Informe de 1 a ${LIMITE_ITENS_EFETIVACAO} apostas`);
+    }
+
+    const itens: NovaApostaItem[] = efetivacao.itens.map((item, indice) => {
+      const erros = validarAposta(regra, item.dezenas);
+      if (erros.length > 0) {
+        throw entradaInvalida(`Aposta ${indice + 1} inválida: ${JSON.stringify(erros)}`);
+      }
+      const nome = item.nome?.trim().slice(0, TAMANHO_MAXIMO_NOME) ?? '';
+      return {
+        dezenas: item.dezenas,
+        nome: nome.length > 0 ? nome : null,
+        favoritoId: item.favoritoId ?? null,
+      };
+    });
+
+    const ultimo = await this.#concursos.obterNumeroUltimo(regra.codigo);
+    if (ultimo === null) throw entradaInvalida(`Não há concursos importados para ${regra.codigo}`);
+
+    const concurso = ultimo + 1;
+    const ids = await this.#repository.criarLote(regra.codigo, concurso, itens);
+    return { concurso, ids };
   }
 
   async listar(consulta: ConsultaApostas): Promise<PaginaApostas> {

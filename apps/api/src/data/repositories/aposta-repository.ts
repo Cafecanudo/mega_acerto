@@ -97,4 +97,50 @@ export class ApostaRepository {
       criadaEm: linha.criada_em.toISOString(),
     }));
   }
+
+  async criarLote(
+    jogo: string,
+    concurso: number,
+    itens: readonly NovaApostaItem[],
+  ): Promise<number[]> {
+    return this.#db.transaction().execute(async (trx) => {
+      const idsFavoritos = itens.flatMap((item) =>
+        item.favoritoId === null ? [] : [item.favoritoId],
+      );
+      const existentes = new Set(
+        idsFavoritos.length === 0
+          ? []
+          : (
+              await trx
+                .selectFrom('favorito')
+                .select('id')
+                .where('id', 'in', idsFavoritos)
+                .execute()
+            ).map((linha) => linha.id),
+      );
+
+      const criadas = await trx
+        .insertInto('aposta')
+        .values(
+          itens.map((item) => ({
+            jogo,
+            concurso,
+            nome: item.nome,
+            dezenas: sql<number[]>`${sql.val([...item.dezenas].sort((a, b) => a - b))}::smallint[]`,
+            favorito_id:
+              item.favoritoId !== null && existentes.has(item.favoritoId) ? item.favoritoId : null,
+          })),
+        )
+        .returning('id')
+        .execute();
+
+      return criadas.map((linha) => linha.id);
+    });
+  }
+}
+
+export interface NovaApostaItem {
+  readonly dezenas: readonly number[];
+  readonly nome: string | null;
+  readonly favoritoId: number | null;
 }

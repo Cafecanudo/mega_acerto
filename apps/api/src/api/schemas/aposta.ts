@@ -29,6 +29,32 @@ export const PaginaApostasSchema = Type.Object({
   tamanho: Type.Integer(),
 });
 
+export const EfetivacaoApostasSchema = Type.Object(
+  {
+    jogo: Type.String({ minLength: 1 }),
+    itens: Type.Array(
+      Type.Object(
+        {
+          dezenas: Type.Array(Type.Integer({ minimum: 0, maximum: 100 }), {
+            minItems: 1,
+            maxItems: 30,
+          }),
+          nome: Type.Optional(Nulavel(Type.String({ maxLength: 80 }))),
+          favoritoId: Type.Optional(Nulavel(Type.Integer({ minimum: 1 }))),
+        },
+        { additionalProperties: false },
+      ),
+      { minItems: 1, maxItems: 100 },
+    ),
+  },
+  { additionalProperties: false },
+);
+
+export const ApostasEfetivadasSchema = Type.Object({
+  concurso: Type.Integer(),
+  ids: Type.Array(Type.Integer()),
+});
+
 export const ResumoApostasSchema = Type.Object({
   total: Type.Integer(),
   comAcertos: Type.Integer(),

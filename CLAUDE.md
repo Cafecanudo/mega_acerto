@@ -59,7 +59,7 @@ docker compose up -d --build
 - **Favoritos** (tabela `favorito`, `/api/favoritos`): jogos que o usuário monta para usar quando quiser. Cadastro completo (criar, editar, excluir) pela página Favoritos, com diálogo e histórico das dezenas.
 - **Apostas** (tabela `aposta`, `/api/apostas`): apostas efetivadas, criadas a partir de um favorito ou direto num jogo. Somente leitura na interface: sem criar nem excluir pela página Apostas. A lista segue o formato do histórico (tabela, busca por dezenas, combinações, paginação). `concurso` nulo confere contra o último sorteio; concurso futuro aparece como aguardando.
 - A conferência é genérica (`ConferenciaService`) e atende às duas entidades.
-- A criação de apostas virá pelo botão "Apostar" da sidebar, cujo comportamento ainda será definido.
+- Apostas são criadas pelo botão "Apostar" da sidebar: diálogo com seleção de jogo, dezenas na grade ou favoritos (um a um ou todos), lista de apostas a efetivar e botão "Efetivar", que grava o lote (`POST /api/apostas`) para o próximo concurso.
 
 ## Análises com Claude (Fase 2)
 

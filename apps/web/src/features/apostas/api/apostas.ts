@@ -1,5 +1,5 @@
 import type { RegraJogo } from '@mega/domain';
-import { keepPreviousData, queryOptions } from '@tanstack/react-query';
+import { keepPreviousData, queryOptions, useMutation, useQueryClient } from '@tanstack/react-query';
 import { api } from '@/lib/api-client';
 import { calcularFaixaAcertos, type ParametrosBusca } from '@/lib/busca-dezenas';
 import type { Pagina } from '@/types/api';
@@ -22,6 +22,28 @@ export const listarApostasQuery = (regra: RegraJogo, busca: ParametrosBusca) =>
       }),
     placeholderData: keepPreviousData,
   });
+
+export interface ItemEfetivacao {
+  readonly dezenas: readonly number[];
+  readonly nome: string | null;
+  readonly favoritoId: number | null;
+}
+
+export interface ApostasEfetivadas {
+  readonly concurso: number;
+  readonly ids: number[];
+}
+
+export const useEfetivarApostas = () => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (efetivacao: {
+      readonly jogo: string;
+      readonly itens: readonly ItemEfetivacao[];
+    }) => api.post<ApostasEfetivadas>('/apostas', efetivacao),
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: CHAVE_APOSTAS }),
+  });
+};
 
 export const resumoApostasQuery = () =>
   queryOptions({
