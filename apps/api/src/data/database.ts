@@ -1,0 +1,71 @@
+import type { Generated } from 'kysely';
+
+export interface JogoTabela {
+  codigo: string;
+  nome: string;
+  universo_minimo: number;
+  universo_maximo: number;
+  dezenas_por_sorteio: number;
+  sorteios_por_concurso: number;
+}
+
+export interface ConcursoTabela {
+  jogo: string;
+  numero: number;
+  data_apuracao: string;
+  acumulado: boolean;
+  valor_arrecadado: number | null;
+  valor_acumulado_proximo: number | null;
+  valor_estimado_proximo: number | null;
+  data_proximo: string | null;
+  local_sorteio: string | null;
+  municipio_uf: string | null;
+  importado_em: Generated<Date>;
+}
+
+export interface DezenaSorteadaTabela {
+  jogo: string;
+  numero: number;
+  sorteio: number;
+  dezena: number;
+  ordem_extracao: number | null;
+}
+
+export interface PremiacaoTabela {
+  jogo: string;
+  numero: number;
+  faixa: number;
+  descricao: string;
+  ganhadores: number;
+  valor_premio: number;
+}
+
+export interface PayloadBrutoTabela {
+  jogo: string;
+  numero: number;
+  payload: unknown;
+  hash: string;
+  obtido_em: Generated<Date>;
+}
+
+export interface IngestaoExecucaoTabela {
+  id: Generated<number>;
+  jogo: string;
+  gatilho: string;
+  status: string;
+  iniciado_em: Generated<Date>;
+  finalizado_em: Date | null;
+  ultimo_concurso_caixa: number | null;
+  total_previsto: Generated<number>;
+  importados: Generated<number>;
+  erro: string | null;
+}
+
+export interface Database {
+  jogo: JogoTabela;
+  concurso: ConcursoTabela;
+  dezena_sorteada: DezenaSorteadaTabela;
+  premiacao: PremiacaoTabela;
+  payload_bruto: PayloadBrutoTabela;
+  ingestao_execucao: IngestaoExecucaoTabela;
+}

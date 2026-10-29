@@ -43,6 +43,7 @@ export default tseslint.config(
     rules: {
       'no-warning-comments': 'error',
       '@typescript-eslint/consistent-type-imports': 'error',
+      '@typescript-eslint/require-await': 'off',
       '@typescript-eslint/restrict-template-expressions': ['error', { allowNumber: true }],
       'import-x/no-duplicates': 'error',
     },
