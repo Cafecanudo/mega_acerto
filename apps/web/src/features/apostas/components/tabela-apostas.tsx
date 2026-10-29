@@ -114,6 +114,7 @@ export const TabelaApostas = ({ apostas, destacadas, exibirCoincidencias }: Tabe
                   regra={regra}
                   dezenas={aposta.dezenas}
                   destacadas={destacadas}
+                  acertadas={new Set(aposta.conferencia.concursoConferido?.dezenasAcertadas)}
                   tamanho="sm"
                 />
               </td>
