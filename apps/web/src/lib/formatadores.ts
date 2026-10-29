@@ -1,9 +1,24 @@
 const moeda = new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' });
+const moedaCompacta = new Intl.NumberFormat('pt-BR', {
+  style: 'currency',
+  currency: 'BRL',
+  notation: 'compact',
+  maximumFractionDigits: 1,
+});
 const inteiro = new Intl.NumberFormat('pt-BR');
 const dataHora = new Intl.DateTimeFormat('pt-BR', { dateStyle: 'short', timeStyle: 'short' });
+const dataHoraCurta = new Intl.DateTimeFormat('pt-BR', {
+  day: '2-digit',
+  month: '2-digit',
+  hour: '2-digit',
+  minute: '2-digit',
+});
 
 export const formatarMoeda = (valor: number | null): string =>
   valor === null ? '—' : moeda.format(valor);
+
+export const formatarMoedaCompacta = (valor: number | null): string =>
+  valor === null ? '—' : moedaCompacta.format(valor);
 
 export const formatarInteiro = (valor: number | null): string =>
   valor === null ? '—' : inteiro.format(valor);
@@ -16,3 +31,6 @@ export const formatarData = (iso: string | null): string => {
 
 export const formatarDataHora = (iso: string | null): string =>
   iso ? dataHora.format(new Date(iso)) : '—';
+
+export const formatarDataHoraCurta = (iso: string | null): string =>
+  iso ? dataHoraCurta.format(new Date(iso)).replace(',', '') : '—';

@@ -12,18 +12,20 @@ const carregar = (importar: () => ModuloRota) => async () => ({
 export const router = createBrowserRouter([
   {
     path: paths.inicio,
-    element: <Navigate to={paths.historico(JOGO_PADRAO)} replace />,
-  },
-  {
-    path: ':jogo',
-    lazy: carregar(() => import('./routes/raiz-jogo')),
+    lazy: carregar(() => import('./routes/raiz')),
     ErrorBoundary: ErroRota,
     children: [
-      { index: true, element: <Navigate to="concursos" replace /> },
-      { path: 'concursos', lazy: carregar(() => import('./routes/historico')) },
-      { path: 'concursos/:numero', lazy: carregar(() => import('./routes/concurso')) },
-      { path: 'busca', lazy: carregar(() => import('./routes/busca')) },
+      { index: true, element: <Navigate to={paths.jogo(JOGO_PADRAO)} replace /> },
+      {
+        path: ':jogo',
+        lazy: carregar(() => import('./routes/raiz-jogo')),
+        children: [
+          { index: true, lazy: carregar(() => import('./routes/jogo')) },
+          { path: 'concursos', element: <Navigate to=".." replace /> },
+          { path: 'concursos/:numero', lazy: carregar(() => import('./routes/concurso')) },
+        ],
+      },
+      { path: '*', lazy: carregar(() => import('./routes/nao-encontrado')) },
     ],
   },
-  { path: '*', lazy: carregar(() => import('./routes/nao-encontrado')) },
 ]);

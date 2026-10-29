@@ -18,7 +18,7 @@ export const criarQueryClient = (): QueryClient =>
   });
 
 export const chavesConsulta = {
-  jogo: (jogo: string) => ['jogos', jogo] as const,
+  jogos: () => ['jogos'] as const,
   concursos: (jogo: string) => ['jogos', jogo, 'concursos'] as const,
   ingestao: (jogo: string) => ['jogos', jogo, 'ingestao'] as const,
 };

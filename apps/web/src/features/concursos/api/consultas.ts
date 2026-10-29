@@ -29,6 +29,12 @@ export const obterConcursoQuery = (jogo: string, numero: number) =>
     queryFn: () => api.get<DetalheConcurso>(`/jogos/${jogo}/concursos/${numero}`),
   });
 
+export const ultimoConcursoQuery = (jogo: string) =>
+  queryOptions({
+    queryKey: [...chavesConsulta.concursos(jogo), 'ultimo'],
+    queryFn: () => api.get<DetalheConcurso>(`/jogos/${jogo}/concursos/ultimo`),
+  });
+
 export const buscarConcursosQuery = (jogo: string, busca: ParametrosBusca) =>
   queryOptions({
     queryKey: [...chavesConsulta.concursos(jogo), 'busca', busca],

@@ -5,7 +5,7 @@ interface LinhaDezenasProps {
   readonly regra: RegraJogo;
   readonly dezenas: readonly number[];
   readonly destacadas?: ReadonlySet<number>;
-  readonly tamanho?: 'sm' | 'md' | 'lg';
+  readonly tamanho?: 'sm' | 'md' | 'lg' | 'xl';
 }
 
 export const LinhaDezenas = ({ regra, dezenas, destacadas, tamanho }: LinhaDezenasProps) => (

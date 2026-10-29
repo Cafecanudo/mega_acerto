@@ -29,7 +29,7 @@ const useInvalidarConcursosAoConcluir = (jogo: string, emAndamento: boolean | un
 
   useEffect(() => {
     if (anterior.current && emAndamento === false) {
-      void queryClient.invalidateQueries({ queryKey: chavesConsulta.concursos(jogo) });
+      void queryClient.invalidateQueries({ queryKey: chavesConsulta.jogos() });
     }
     anterior.current = emAndamento;
   }, [emAndamento, jogo, queryClient]);

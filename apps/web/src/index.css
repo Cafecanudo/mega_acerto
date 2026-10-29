@@ -5,6 +5,11 @@
   --font-mono: 'JetBrains Mono', ui-monospace, 'Cascadia Code', monospace;
 }
 
+@theme inline {
+  --color-jogo: var(--cor-jogo, #209869);
+  --color-jogo-texto: var(--cor-jogo-texto, #ffffff);
+}
+
 @layer base {
   html {
     @apply bg-slate-50 text-slate-900 antialiased dark:bg-slate-950 dark:text-slate-100;
