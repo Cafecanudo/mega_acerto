@@ -5,6 +5,7 @@ import { listarApostasQuery } from '../api/apostas';
 import type { Aposta } from '../types';
 import { CartaoAposta } from './cartao-aposta';
 import { FormularioAposta } from './formulario-aposta';
+import { ResumoFavoritas } from './resumo-favoritas';
 
 interface PaginaApostasProps {
   readonly somenteFavoritas: boolean;
@@ -29,10 +30,13 @@ const Lista = ({
   }
 
   return (
-    <div className="grid gap-3 2xl:grid-cols-2">
-      {consulta.data.map((aposta) => (
-        <CartaoAposta key={aposta.id} aposta={aposta} aoEditar={aoEditar} />
-      ))}
+    <div className="flex flex-col gap-3 lg:min-h-0 lg:flex-1">
+      {somenteFavoritas && <ResumoFavoritas apostas={consulta.data} />}
+      <div className="grid content-start gap-3 lg:min-h-0 lg:flex-1 lg:overflow-auto 2xl:grid-cols-2">
+        {consulta.data.map((aposta) => (
+          <CartaoAposta key={aposta.id} aposta={aposta} aoEditar={aoEditar} />
+        ))}
+      </div>
     </div>
   );
 };
@@ -56,7 +60,7 @@ export const PaginaApostas = ({ somenteFavoritas }: PaginaApostasProps) => {
           aoConcluir={concluir}
         />
       </div>
-      <div className="lg:min-h-0 lg:overflow-auto">
+      <div className="flex flex-col lg:min-h-0">
         <Lista somenteFavoritas={somenteFavoritas} aoEditar={setEmEdicao} />
       </div>
     </div>
