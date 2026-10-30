@@ -81,3 +81,17 @@ export const resumoApostasQuery = () =>
     queryKey: [...CHAVE_APOSTAS, 'resumo'],
     queryFn: () => api.get<ResumoAcertos>('/apostas/resumo'),
   });
+
+export interface EdicaoAposta {
+  readonly dezenas: readonly number[];
+  readonly nome: string | null;
+}
+
+export const useEditarAposta = () => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: ({ id, edicao }: { readonly id: number; readonly edicao: EdicaoAposta }) =>
+      api.patch<{ readonly ids: number[] }>(`/apostas/${String(id)}`, edicao),
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: CHAVE_APOSTAS }),
+  });
+};

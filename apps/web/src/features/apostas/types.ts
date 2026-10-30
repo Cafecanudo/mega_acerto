@@ -18,3 +18,6 @@ export interface Aposta {
   readonly coincidencias: number | null;
   readonly conferencia: Conferencia;
 }
+
+export const isApostaEditavel = (aposta: Aposta): boolean =>
+  aposta.concurso !== null && aposta.conferencia.concursoConferido === null;

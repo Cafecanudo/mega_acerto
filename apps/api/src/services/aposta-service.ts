@@ -17,7 +17,7 @@ import type {
   NovaApostaItem,
 } from '../data/repositories/aposta-repository.ts';
 import type { ConcursoLeituraRepository } from '../data/repositories/concurso-leitura-repository.ts';
-import { entradaInvalida } from '../shared/erros.ts';
+import { entradaInvalida, naoEncontrado } from '../shared/erros.ts';
 import type { Conferencia, ConferenciaService } from './conferencia-service.ts';
 
 export interface ApostaConferida extends ApostaFiltrada {
@@ -82,6 +82,20 @@ export interface ApostasEfetivadas {
   readonly ids: number[];
   readonly valorTotal: number | null;
 }
+
+export interface EdicaoAposta {
+  readonly dezenas: readonly number[];
+  readonly nome?: string | null | undefined;
+}
+
+export interface ApostasEditadas {
+  readonly ids: number[];
+}
+
+const mesmasDezenas = (atuais: readonly number[], novas: readonly number[]): boolean => {
+  const conjunto = new Set(atuais);
+  return conjunto.size === new Set(novas).size && novas.every((dezena) => conjunto.has(dezena));
+};
 
 interface ContextoJogo {
   readonly regra: RegraJogo;
@@ -203,6 +217,35 @@ export class ApostaService {
       concurso,
     }));
     return { concursos, ids, valorTotal };
+  }
+
+  async editar(usuarioId: number, id: number, edicao: EdicaoAposta): Promise<ApostasEditadas> {
+    const aposta = await this.#repository.obter(usuarioId, id);
+    if (!aposta) throw naoEncontrado('Aposta não encontrada');
+    const contexto = (await this.#prepararJogos([aposta.jogo])).get(aposta.jogo);
+    if (!contexto) throw entradaInvalida(`Jogo ${aposta.jogo} ainda não está disponível`);
+    const ultimoSorteado = contexto.concurso - 1;
+    if (aposta.concurso === null || aposta.concurso <= ultimoSorteado) {
+      throw entradaInvalida('Aposta já sorteada não pode ser editada');
+    }
+    const erros = validarAposta(contexto.regra, edicao.dezenas);
+    if (erros.length > 0) throw entradaInvalida(`Aposta inválida: ${JSON.stringify(erros)}`);
+
+    const nome = edicao.nome?.trim().slice(0, TAMANHO_MAXIMO_NOME) ?? '';
+    const ids = await this.#repository.atualizarPendentes(
+      usuarioId,
+      { id, teimosinhaGrupo: aposta.teimosinha?.grupo ?? null, aposDoConcurso: ultimoSorteado },
+      {
+        dezenas: edicao.dezenas,
+        nome: nome.length > 0 ? nome : null,
+        valor:
+          contexto.valorSimples === null
+            ? null
+            : calcularValorAposta(contexto.regra, edicao.dezenas.length, contexto.valorSimples),
+        favoritoId: mesmasDezenas(aposta.dezenas, edicao.dezenas) ? aposta.favoritoId : null,
+      },
+    );
+    return { ids };
   }
 
   async #prepararJogos(jogos: readonly string[]): Promise<Map<string, ContextoJogo>> {

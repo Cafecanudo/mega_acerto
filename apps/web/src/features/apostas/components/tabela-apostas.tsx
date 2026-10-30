@@ -1,15 +1,16 @@
 import { formatarDezena, isCodigoJogo, obterApresentacaoJogo, obterRegraJogo } from '@mega/domain';
-import { IconClover } from '@tabler/icons-react';
+import { IconClover, IconPencil } from '@tabler/icons-react';
 import { LinhaDezenas } from '@/components/dezenas/linha-dezenas';
 import { estiloCorJogo } from '@/lib/cor-jogo';
 import { formatarDataHora, formatarInteiro, formatarMoeda } from '@/lib/formatadores';
-import type { Aposta } from '../types';
+import { isApostaEditavel, type Aposta } from '../types';
 import { SeloTeimosinha } from './selo-teimosinha';
 
 interface TabelaApostasProps {
   readonly apostas: readonly Aposta[];
   readonly destacadas?: ReadonlySet<number>;
   readonly exibirCoincidencias: boolean;
+  readonly aoEditar: (aposta: Aposta) => void;
 }
 
 const celula = 'px-4 py-2 align-middle';
@@ -58,7 +59,12 @@ const Historico = ({ aposta }: { readonly aposta: Aposta }) => (
   </span>
 );
 
-export const TabelaApostas = ({ apostas, destacadas, exibirCoincidencias }: TabelaApostasProps) => (
+export const TabelaApostas = ({
+  apostas,
+  destacadas,
+  exibirCoincidencias,
+  aoEditar,
+}: TabelaApostasProps) => (
   <div className="overflow-x-auto lg:overflow-visible">
     <table className="w-full min-w-[900px] text-left text-sm">
       <thead className="text-xs tracking-wide text-slate-500 uppercase dark:text-slate-400">
@@ -71,6 +77,9 @@ export const TabelaApostas = ({ apostas, destacadas, exibirCoincidencias }: Tabe
           <th className={cabecalho}>Valor</th>
           <th className={cabecalho}>Resultado</th>
           <th className={cabecalho}>No histórico</th>
+          <th className={cabecalho}>
+            <span className="sr-only">Ações</span>
+          </th>
         </tr>
       </thead>
       <tbody>
@@ -134,6 +143,21 @@ export const TabelaApostas = ({ apostas, destacadas, exibirCoincidencias }: Tabe
               </td>
               <td className={celula}>
                 <Historico aposta={aposta} />
+              </td>
+              <td className={`${celula} text-right`}>
+                {isApostaEditavel(aposta) && (
+                  <button
+                    type="button"
+                    title="Editar aposta"
+                    aria-label={`Editar aposta ${String(aposta.id)}`}
+                    onClick={() => {
+                      aoEditar(aposta);
+                    }}
+                    className="rounded-md p-1.5 text-slate-500 transition hover:bg-slate-100 hover:text-slate-900 dark:hover:bg-slate-800 dark:hover:text-slate-100"
+                  >
+                    <IconPencil aria-hidden size="1rem" />
+                  </button>
+                )}
               </td>
             </tr>
           );

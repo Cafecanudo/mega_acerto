@@ -65,7 +65,7 @@ const paraTeimosinha = (linha: ColunasTeimosinha): Teimosinha | null =>
         total: linha.teimosinha_total,
       };
 
-const paraAposta = (linha: LinhaAposta): ApostaFiltrada => ({
+const paraApostaBase = (linha: Omit<LinhaAposta, 'coincidencias' | 'total'>): Aposta => ({
   id: linha.id,
   jogo: linha.jogo,
   nome: linha.nome,
@@ -75,6 +75,10 @@ const paraAposta = (linha: LinhaAposta): ApostaFiltrada => ({
   valor: linha.valor,
   criadaEm: linha.criada_em.toISOString(),
   teimosinha: paraTeimosinha(linha),
+});
+
+const paraAposta = (linha: LinhaAposta): ApostaFiltrada => ({
+  ...paraApostaBase(linha),
   coincidencias: linha.coincidencias,
 });
 
@@ -145,17 +149,41 @@ export class ApostaRepository {
       .$if(somenteNaoConferidas, (consulta) => consulta.where('conferida_em', 'is', null))
       .orderBy('id', 'desc')
       .execute();
-    return linhas.map((linha) => ({
-      id: linha.id,
-      jogo: linha.jogo,
-      nome: linha.nome,
-      dezenas: linha.dezenas,
-      favoritoId: linha.favorito_id,
-      concurso: linha.concurso,
-      valor: linha.valor,
-      criadaEm: linha.criada_em.toISOString(),
-      teimosinha: paraTeimosinha(linha),
-    }));
+    return linhas.map(paraApostaBase);
+  }
+
+  async obter(usuarioId: number, id: number): Promise<Aposta | undefined> {
+    const linha = await this.#db
+      .selectFrom('aposta')
+      .selectAll()
+      .where('usuario_id', '=', usuarioId)
+      .where('id', '=', id)
+      .executeTakeFirst();
+    return linha ? paraApostaBase(linha) : undefined;
+  }
+
+  async atualizarPendentes(
+    usuarioId: number,
+    alvo: AlvoEdicao,
+    dados: DadosEdicaoAposta,
+  ): Promise<number[]> {
+    const linhas = await this.#db
+      .updateTable('aposta')
+      .set({
+        nome: dados.nome,
+        valor: dados.valor,
+        favorito_id: dados.favoritoId,
+        dezenas: sql<number[]>`${sql.val([...dados.dezenas].sort((a, b) => a - b))}::smallint[]`,
+      })
+      .where('usuario_id', '=', usuarioId)
+      .where('concurso', '>', alvo.aposDoConcurso)
+      .$if(alvo.teimosinhaGrupo === null, (consulta) => consulta.where('id', '=', alvo.id))
+      .$if(alvo.teimosinhaGrupo !== null, (consulta) =>
+        consulta.where('teimosinha_grupo', '=', alvo.teimosinhaGrupo),
+      )
+      .returning('id')
+      .execute();
+    return linhas.map((linha) => linha.id);
   }
 
   async criarLote(usuarioId: number, itens: readonly NovaApostaItem[]): Promise<number[]> {
@@ -209,4 +237,17 @@ export interface NovaApostaItem {
   readonly favoritoId: number | null;
   readonly valor: number | null;
   readonly teimosinha: Teimosinha | null;
+}
+
+export interface AlvoEdicao {
+  readonly id: number;
+  readonly teimosinhaGrupo: string | null;
+  readonly aposDoConcurso: number;
+}
+
+export interface DadosEdicaoAposta {
+  readonly dezenas: readonly number[];
+  readonly nome: string | null;
+  readonly valor: number | null;
+  readonly favoritoId: number | null;
 }

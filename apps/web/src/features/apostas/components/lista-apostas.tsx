@@ -1,26 +1,33 @@
 import type { RegraJogo } from '@mega/domain';
 import { useQuery } from '@tanstack/react-query';
-import type { ReactNode } from 'react';
+import { lazy, Suspense, useState, type ReactNode } from 'react';
 import { BarraBuscaDezenas } from '@/components/dezenas/barra-busca-dezenas';
 import { BaloesAcertos } from '@/components/ui/baloes-acertos';
 import { Carregando, Falha, Vazio } from '@/components/ui/estado';
 import { Paginacao } from '@/components/ui/paginacao';
 import { descreverFaixa, type ParametrosBusca } from '@/lib/busca-dezenas';
 import { listarApostasQuery, resumoApostasQuery } from '../api/apostas';
+import type { Aposta } from '../types';
 import { TabelaApostas } from './tabela-apostas';
 
 interface ListaApostasProps {
   readonly regra: RegraJogo;
   readonly busca: ParametrosBusca;
   readonly aoBuscar: (busca: ParametrosBusca) => void;
+  readonly valorApostaSimples: (jogo: string) => number | null;
 }
+
+const DialogoEditarAposta = lazy(() =>
+  import('./dialogo-editar-aposta').then((modulo) => ({ default: modulo.DialogoEditarAposta })),
+);
 
 const Estado = ({ children }: { readonly children: ReactNode }) => (
   <div className="p-4 lg:min-h-0 lg:flex-1 lg:overflow-auto">{children}</div>
 );
 
-const Resultados = ({ regra, busca, aoBuscar }: ListaApostasProps) => {
+const Resultados = ({ regra, busca, aoBuscar, valorApostaSimples }: ListaApostasProps) => {
   const consulta = useQuery(listarApostasQuery(regra, busca));
+  const [emEdicao, setEmEdicao] = useState<Aposta | null>(null);
   const filtrando = busca.dezenas.length > 0;
 
   if (consulta.isPending) return <Estado>{<Carregando mensagem="Carregando apostas…" />}</Estado>;
@@ -46,6 +53,7 @@ const Resultados = ({ regra, busca, aoBuscar }: ListaApostasProps) => {
           apostas={consulta.data.itens}
           destacadas={filtrando ? new Set(busca.dezenas) : undefined}
           exibirCoincidencias={filtrando}
+          aoEditar={setEmEdicao}
         />
       </div>
       <div className="shrink-0 border-t border-slate-200 px-4 py-2 dark:border-slate-800">
@@ -58,6 +66,17 @@ const Resultados = ({ regra, busca, aoBuscar }: ListaApostasProps) => {
           }}
         />
       </div>
+      {emEdicao && (
+        <Suspense>
+          <DialogoEditarAposta
+            aposta={emEdicao}
+            valorApostaSimples={valorApostaSimples}
+            aoFechar={() => {
+              setEmEdicao(null);
+            }}
+          />
+        </Suspense>
+      )}
     </>
   );
 };

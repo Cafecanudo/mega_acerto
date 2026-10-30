@@ -5,10 +5,24 @@ interface DialogoProps {
   readonly aberto: boolean;
   readonly titulo: string;
   readonly aoFechar: () => void;
+  readonly tamanho?: TamanhoDialogo;
   readonly children: ReactNode;
 }
 
-export const Dialogo = ({ aberto, titulo, aoFechar, children }: DialogoProps) => {
+type TamanhoDialogo = 'grande' | 'medio';
+
+const classesTamanho: Record<TamanhoDialogo, string> = {
+  grande: 'h-[min(52rem,92dvh)] w-[min(90rem,96vw)]',
+  medio: 'max-h-[92dvh] w-[min(40rem,96vw)]',
+};
+
+export const Dialogo = ({
+  aberto,
+  titulo,
+  aoFechar,
+  tamanho = 'grande',
+  children,
+}: DialogoProps) => {
   const referencia = useRef<HTMLDialogElement>(null);
 
   useEffect(() => {
@@ -30,10 +44,10 @@ export const Dialogo = ({ aberto, titulo, aoFechar, children }: DialogoProps) =>
       onClick={(evento) => {
         if (evento.target === evento.currentTarget) aoFechar();
       }}
-      className="m-auto h-[min(52rem,92dvh)] w-[min(90rem,96vw)] max-w-none overflow-hidden rounded-2xl border border-slate-200 bg-slate-50 p-0 text-slate-900 shadow-2xl backdrop:bg-slate-950/60 backdrop:backdrop-blur-sm dark:border-slate-800 dark:bg-slate-950 dark:text-slate-100"
+      className={`m-auto ${classesTamanho[tamanho]} max-w-none overflow-hidden rounded-2xl border border-slate-200 bg-slate-50 p-0 text-slate-900 shadow-2xl backdrop:bg-slate-950/60 backdrop:backdrop-blur-sm dark:border-slate-800 dark:bg-slate-950 dark:text-slate-100`}
     >
       {aberto && (
-        <div className="flex h-full flex-col">
+        <div className="flex h-full max-h-[inherit] flex-col">
           <header className="flex shrink-0 items-center justify-between border-b border-slate-200 px-5 py-3 dark:border-slate-800">
             <h2 className="text-base font-semibold">{titulo}</h2>
             <button

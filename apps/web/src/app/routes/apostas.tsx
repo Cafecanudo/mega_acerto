@@ -1,7 +1,9 @@
 import { obterRegraJogo } from '@mega/domain';
 import { IconTicket } from '@tabler/icons-react';
+import { useQuery } from '@tanstack/react-query';
 import { useSearchParams } from 'react-router';
 import { ListaApostas } from '@/features/apostas/components/lista-apostas';
+import { listarValoresQuery } from '@/features/configuracoes/api/valores';
 import { buscaParaUrl, lerBuscaDaUrl } from '@/lib/busca-dezenas';
 import { PaginaConta } from './pagina-conta';
 
@@ -9,6 +11,7 @@ const regraFiltro = obterRegraJogo('megasena');
 
 const Apostas = () => {
   const [parametros, setParametros] = useSearchParams();
+  const valores = useQuery(listarValoresQuery());
 
   return (
     <PaginaConta
@@ -22,6 +25,7 @@ const Apostas = () => {
         aoBuscar={(busca) => {
           setParametros(buscaParaUrl(busca), { replace: true });
         }}
+        valorApostaSimples={(jogo) => valores.data?.get(jogo)?.valorAposta ?? null}
       />
     </PaginaConta>
   );
