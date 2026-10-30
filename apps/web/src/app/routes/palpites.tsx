@@ -81,7 +81,7 @@ const AcoesSelecao = ({
         className="inline-flex items-center gap-1.5 rounded-lg bg-emerald-600 px-3 py-1.5 text-sm font-semibold text-white transition hover:bg-emerald-700 disabled:cursor-not-allowed disabled:opacity-40"
       >
         <IconTicket aria-hidden size="1rem" />
-        Usar no Apostar
+        Apostar
       </button>
     </div>
   );
