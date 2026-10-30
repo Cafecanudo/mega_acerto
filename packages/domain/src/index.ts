@@ -9,7 +9,13 @@ export type { ApresentacaoJogo, DisponibilidadeJogo } from './jogos/apresentacao
 export { apresentacoesJogo, obterApresentacaoJogo } from './jogos/apresentacao.ts';
 export type { ErroAposta } from './dezenas/validar-aposta.ts';
 export { menorFaixaPremiada, validarAposta } from './dezenas/validar-aposta.ts';
-export { calcularValorAposta, combinacoes, contarApostasSimples } from './dezenas/custo-aposta.ts';
+export type { CustoAposta, CustoProjetado } from './dezenas/custo-aposta.ts';
+export {
+  calcularValorAposta,
+  combinacoes,
+  contarApostasSimples,
+  projetarCusto,
+} from './dezenas/custo-aposta.ts';
 export type { PremioAposta } from './dezenas/premios-aposta.ts';
 export { contarPremiosAposta } from './dezenas/premios-aposta.ts';
 export type { SortearInteiro } from './dezenas/gerar-combinacoes.ts';

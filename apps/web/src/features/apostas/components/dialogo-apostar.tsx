@@ -5,6 +5,7 @@ import {
   isCodigoJogo,
   obterApresentacaoJogo,
   obterRegraJogo,
+  projetarCusto,
   type ApresentacaoJogo,
 } from '@mega/domain';
 import { IconCheck, IconClover, IconPlus, IconTrash } from '@tabler/icons-react';
@@ -13,6 +14,7 @@ import { LinhaDezenas } from '@/components/dezenas/linha-dezenas';
 import { SeletorDezenas } from '@/components/dezenas/seletor-dezenas';
 import { Dialogo } from '@/components/ui/dialogo';
 import { Vazio } from '@/components/ui/estado';
+import { TotaisCusto } from '@/components/ui/totais-custo';
 import { estiloCorJogo } from '@/lib/cor-jogo';
 import { formatarInteiro, formatarMoeda } from '@/lib/formatadores';
 import {
@@ -135,7 +137,13 @@ const Conteudo = ({
   const jogosSemValor = [
     ...new Set(itens.filter((_, indice) => valoresItens[indice] === null).map((item) => item.jogo)),
   ].map((codigo) => obterApresentacaoJogo(codigo)?.nome ?? codigo);
-  const valorTotal = valoresItens.reduce<number>((soma, valor) => soma + (valor ?? 0), 0);
+  const custo = projetarCusto(
+    itens.flatMap((item, indice) =>
+      isCodigoJogo(item.jogo)
+        ? [{ regra: obterRegraJogo(item.jogo), valor: valoresItens[indice] ?? null }]
+        : [],
+    ),
+  );
 
   const adicionar = (novos: readonly ItemEfetivacao[]) => {
     const existentes = new Set(itens.map((item) => chaveItem(item.jogo, item.dezenas)));
@@ -278,7 +286,7 @@ const Conteudo = ({
             )}
           </div>
           <footer className="flex shrink-0 flex-wrap items-center justify-between gap-3 border-t border-slate-200 px-4 py-3 dark:border-slate-800">
-            <span className="flex flex-col text-xs text-slate-500 dark:text-slate-400">
+            <span className="flex flex-col gap-1 text-xs text-slate-500 dark:text-slate-400">
               <span>Cada aposta vale para o próximo concurso do seu jogo.</span>
               {jogosSemValor.length > 0 && (
                 <span className="text-amber-600 dark:text-amber-400">
@@ -286,12 +294,7 @@ const Conteudo = ({
                   Valores.
                 </span>
               )}
-              <span className="text-sm text-slate-700 dark:text-slate-200">
-                Total:{' '}
-                <strong className="font-semibold">
-                  {formatarMoeda(itens.length > 0 && jogosSemValor.length > 0 ? null : valorTotal)}
-                </strong>
-              </span>
+              <TotaisCusto custo={custo} />
             </span>
             <div className="flex items-center gap-3">
               {efetivar.isError && (

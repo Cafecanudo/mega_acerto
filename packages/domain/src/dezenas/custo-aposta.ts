@@ -18,3 +18,30 @@ export const calcularValorAposta = (
   valorApostaSimples: number,
 ): number =>
   Math.round(contarApostasSimples(regra, quantidadeDezenas) * valorApostaSimples * 100) / 100;
+
+const SEMANAS_POR_MES = 52 / 12;
+
+export interface CustoAposta {
+  readonly regra: RegraJogo;
+  readonly valor: number | null;
+}
+
+export interface CustoProjetado {
+  readonly porConcurso: number | null;
+  readonly porSemana: number | null;
+  readonly porMes: number | null;
+}
+
+const arredondar = (valor: number): number => Math.round(valor * 100) / 100;
+
+export const projetarCusto = (custos: readonly CustoAposta[]): CustoProjetado => {
+  if (custos.some((custo) => custo.valor === null))
+    return { porConcurso: null, porSemana: null, porMes: null };
+  const somar = (fator: (regra: RegraJogo) => number) =>
+    arredondar(custos.reduce((soma, custo) => soma + (custo.valor ?? 0) * fator(custo.regra), 0));
+  return {
+    porConcurso: somar(() => 1),
+    porSemana: somar((regra) => regra.concursosPorSemana),
+    porMes: somar((regra) => regra.concursosPorSemana * SEMANAS_POR_MES),
+  };
+};

@@ -1,9 +1,10 @@
-import { isCodigoJogo, obterApresentacaoJogo, obterRegraJogo } from '@mega/domain';
+import { isCodigoJogo, obterApresentacaoJogo, obterRegraJogo, projetarCusto } from '@mega/domain';
 import { IconTicket, IconTrash } from '@tabler/icons-react';
 import { useState } from 'react';
 import { LinhaDezenas } from '@/components/dezenas/linha-dezenas';
 import { Vazio } from '@/components/ui/estado';
 import { Paginacao } from '@/components/ui/paginacao';
+import { TotaisCusto } from '@/components/ui/totais-custo';
 import { formatarInteiro, formatarMoeda } from '@/lib/formatadores';
 import { LIMITE_JOGOS_POR_APOSTA, type JogoMontado } from '../types';
 
@@ -71,7 +72,13 @@ export const ListaJogosMontados = ({
   const inicio = (pagina - 1) * TAMANHO_PAGINA;
   const valores = jogos.map(valorDe);
   const semValor = valores.some((valor) => valor === null);
-  const valorTotal = valores.reduce<number>((soma, valor) => soma + (valor ?? 0), 0);
+  const custo = projetarCusto(
+    jogos.flatMap((jogo, indice) =>
+      isCodigoJogo(jogo.jogo)
+        ? [{ regra: obterRegraJogo(jogo.jogo), valor: valores[indice] ?? null }]
+        : [],
+    ),
+  );
   const excedeLimite = jogos.length > LIMITE_JOGOS_POR_APOSTA;
 
   return (
@@ -121,7 +128,7 @@ export const ListaJogosMontados = ({
         )}
       </div>
       <footer className="flex shrink-0 flex-wrap items-center justify-between gap-3 border-t border-slate-200 px-4 py-3 dark:border-slate-800">
-        <span className="flex flex-col text-xs text-slate-500 dark:text-slate-400">
+        <span className="flex flex-col gap-1 text-xs text-slate-500 dark:text-slate-400">
           {excedeLimite && (
             <span className="text-amber-600 dark:text-amber-400">
               O Apostar recebe até {LIMITE_JOGOS_POR_APOSTA} jogos por vez. Remova{' '}
@@ -133,12 +140,7 @@ export const ListaJogosMontados = ({
               Valor não configurado. Defina em Configurações › Valores.
             </span>
           )}
-          <span className="text-sm text-slate-700 dark:text-slate-200">
-            Total:{' '}
-            <strong className="font-semibold">
-              {formatarMoeda(jogos.length > 0 && semValor ? null : valorTotal)}
-            </strong>
-          </span>
+          <TotaisCusto custo={custo} />
         </span>
         <button
           type="button"

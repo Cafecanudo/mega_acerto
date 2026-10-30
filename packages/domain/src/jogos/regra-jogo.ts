@@ -10,6 +10,7 @@ export interface RegraJogo {
   readonly universo: IntervaloNumerico;
   readonly dezenasPorSorteio: number;
   readonly sorteiosPorConcurso: number;
+  readonly concursosPorSemana: number;
   readonly dezenasPorAposta: IntervaloNumerico;
   readonly faixasPremiadas: readonly FaixaPremiada[];
 }
