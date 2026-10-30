@@ -10,6 +10,7 @@ import {
   useMarcarConferidas,
   type ApostaAConferir,
 } from '../api/conferencia';
+import { SeloTeimosinha } from './selo-teimosinha';
 
 const PremioAReceber = ({ aposta }: { readonly aposta: ApostaAConferir }) => (
   <div className="flex flex-wrap items-center gap-x-3 gap-y-1 rounded-lg border border-emerald-300 bg-emerald-50 px-3 py-2 text-sm text-emerald-900 dark:border-emerald-500/30 dark:bg-emerald-500/10 dark:text-emerald-200">
@@ -58,6 +59,7 @@ const ItemConferencia = ({
             <p className="truncate font-medium">
               <span className="font-mono text-jogo">#{aposta.id}</span>{' '}
               {aposta.nome ?? apresentacao.nome}
+              <SeloTeimosinha teimosinha={aposta.teimosinha} />
             </p>
             <p className="text-xs text-slate-500 dark:text-slate-400">
               {apresentacao.nome} · concurso {concurso?.numero ?? aposta.concurso ?? '—'}

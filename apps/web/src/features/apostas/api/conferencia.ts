@@ -1,6 +1,7 @@
 import { queryOptions, useMutation, useQueryClient } from '@tanstack/react-query';
 import { api } from '@/lib/api-client';
 import type { Conferencia } from '@/types/conferencia';
+import type { TeimosinhaAposta } from '../types';
 
 export interface PremioConferido {
   readonly faixa: number;
@@ -19,6 +20,7 @@ export interface ApostaAConferir {
   readonly concurso: number | null;
   readonly valor: number | null;
   readonly criadaEm: string;
+  readonly teimosinha: TeimosinhaAposta | null;
   readonly conferencia: Conferencia;
   readonly premios: PremioConferido[];
   readonly premioTotal: number | null;

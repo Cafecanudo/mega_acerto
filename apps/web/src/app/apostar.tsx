@@ -9,6 +9,7 @@ import {
 } from '@/features/apostas/components/dialogo-apostar';
 import { listarValoresQuery } from '@/features/configuracoes/api/valores';
 import { FavoritosParaAposta } from '@/features/favoritos/components/favoritos-para-aposta';
+import { listarJogosQuery } from '@/features/jogos/api/consultas';
 import { ApostarContexto, useAbrirApostar } from './apostar-contexto';
 import { PainelDezenasAposta } from './routes/painel-dezenas-aposta';
 
@@ -21,6 +22,7 @@ export const ProvedorApostar = ({ children }: { readonly children: ReactNode }) 
   const [estado, setEstado] = useState<EstadoApostar>({ aberto: false, inicial: null });
   const navegar = useNavigate();
   const valores = useQuery({ ...listarValoresQuery(), enabled: estado.aberto });
+  const jogos = useQuery({ ...listarJogosQuery(), enabled: estado.aberto });
 
   const fechar = () => {
     setEstado({ aberto: false, inicial: null });
@@ -46,6 +48,10 @@ export const ProvedorApostar = ({ children }: { readonly children: ReactNode }) 
         )}
         painelDezenas={(selecao) => <PainelDezenasAposta selecao={selecao} />}
         valorApostaSimples={(jogo) => valores.data?.get(jogo)?.valorAposta ?? null}
+        proximoConcurso={(jogo) => {
+          const ultimo = jogos.data?.get(jogo)?.ultimoConcurso;
+          return ultimo === undefined || ultimo === null ? null : ultimo + 1;
+        }}
       />
     </ApostarContexto>
   );

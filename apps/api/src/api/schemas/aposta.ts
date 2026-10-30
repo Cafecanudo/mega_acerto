@@ -1,4 +1,5 @@
 import { Type, type TSchema } from '@fastify/type-provider-typebox';
+import { TEIMOSINHA_MAXIMA } from '@mega/domain';
 import { ConferenciaSchema } from './conferencia.ts';
 
 const Nulavel = <T extends TSchema>(schema: T) => Type.Union([schema, Type.Null()]);
@@ -10,6 +11,8 @@ export const ConsultaApostasSchema = Type.Object({
   minimoCoincidencias: Type.Optional(Type.Integer({ minimum: 1 })),
 });
 
+const TeimosinhaSchema = Nulavel(Type.Object({ posicao: Type.Integer(), total: Type.Integer() }));
+
 const ApostaSchema = Type.Object({
   id: Type.Integer(),
   jogo: Type.String(),
@@ -19,6 +22,7 @@ const ApostaSchema = Type.Object({
   concurso: Nulavel(Type.Integer()),
   valor: Nulavel(Type.Number()),
   criadaEm: Type.String({ format: 'date-time' }),
+  teimosinha: TeimosinhaSchema,
   coincidencias: Nulavel(Type.Integer()),
   conferencia: ConferenciaSchema,
 });
@@ -42,6 +46,7 @@ export const EfetivacaoApostasSchema = Type.Object(
           }),
           nome: Type.Optional(Nulavel(Type.String({ maxLength: 80 }))),
           favoritoId: Type.Optional(Nulavel(Type.Integer({ minimum: 1 }))),
+          teimosinha: Type.Optional(Type.Integer({ minimum: 1, maximum: TEIMOSINHA_MAXIMA })),
         },
         { additionalProperties: false },
       ),
@@ -66,6 +71,7 @@ export const ApostaAConferirSchema = Type.Object({
   concurso: Nulavel(Type.Integer()),
   valor: Nulavel(Type.Number()),
   criadaEm: Type.String({ format: 'date-time' }),
+  teimosinha: TeimosinhaSchema,
   conferencia: ConferenciaSchema,
   premios: Type.Array(
     Type.Object({

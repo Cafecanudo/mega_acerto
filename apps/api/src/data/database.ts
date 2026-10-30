@@ -127,6 +127,9 @@ export interface ApostaTabela {
   valor: number | null;
   criada_em: Generated<Date>;
   conferida_em: Generated<Date | null>;
+  teimosinha_grupo: string | null;
+  teimosinha_posicao: number | null;
+  teimosinha_total: number | null;
 }
 
 export interface UsuarioTabela {

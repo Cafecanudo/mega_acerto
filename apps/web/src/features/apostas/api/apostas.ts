@@ -27,6 +27,7 @@ export interface ItemEfetivacao {
   readonly dezenas: readonly number[];
   readonly nome: string | null;
   readonly favoritoId: number | null;
+  readonly teimosinha?: number;
 }
 
 export interface ItemEfetivacaoJogo extends ItemEfetivacao {

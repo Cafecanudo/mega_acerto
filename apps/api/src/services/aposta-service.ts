@@ -1,8 +1,10 @@
+import { randomUUID } from 'node:crypto';
 import {
   calcularValorAposta,
   contarPremiosAposta,
   isCodigoJogo,
   obterRegraJogo,
+  TEIMOSINHA_MAXIMA,
   validarAposta,
   type PremioAposta,
   type RegraJogo,
@@ -68,6 +70,7 @@ interface ItemEfetivacao {
   readonly dezenas: readonly number[];
   readonly nome?: string | null | undefined;
   readonly favoritoId?: number | null | undefined;
+  readonly teimosinha?: number | undefined;
 }
 
 export interface EfetivacaoApostas {
@@ -107,6 +110,32 @@ const ordenarParaConferencia = (a: ApostaAConferir, b: ApostaAConferir): number 
   return (a.concurso ?? 0) - (b.concurso ?? 0) || b.id - a.id;
 };
 
+const expandirTeimosinha = (item: NovaApostaItem, quantidade: number): NovaApostaItem[] => {
+  if (quantidade === 1) return [item];
+  const grupo = randomUUID();
+  return Array.from({ length: quantidade }, (_, indice) => ({
+    ...item,
+    concurso: item.concurso + indice,
+    teimosinha: { grupo, posicao: indice + 1, total: quantidade },
+  }));
+};
+
+const somenteProximaDaTeimosinha = (apostas: readonly ApostaAConferir[]): ApostaAConferir[] => {
+  const proximas = new Map<string, number>();
+  for (const aposta of apostas) {
+    if (!aposta.teimosinha || aposta.conferencia.concursoConferido) continue;
+    const atual = proximas.get(aposta.teimosinha.grupo);
+    if (atual === undefined || (aposta.concurso ?? 0) < atual)
+      proximas.set(aposta.teimosinha.grupo, aposta.concurso ?? 0);
+  }
+  return apostas.filter(
+    (aposta) =>
+      !aposta.teimosinha ||
+      aposta.conferencia.concursoConferido !== null ||
+      proximas.get(aposta.teimosinha.grupo) === aposta.concurso,
+  );
+};
+
 const LIMITE_DEZENAS_FILTRO = 20;
 const LIMITE_ITENS_EFETIVACAO = 200;
 const TAMANHO_MAXIMO_NOME = 80;
@@ -136,25 +165,33 @@ export class ApostaService {
 
     const contextos = await this.#prepararJogos(efetivacao.itens.map((item) => item.jogo));
 
-    const itens: NovaApostaItem[] = efetivacao.itens.map((item, indice) => {
+    const itens: NovaApostaItem[] = efetivacao.itens.flatMap((item, indice) => {
       const contexto = contextos.get(item.jogo);
       if (!contexto) throw entradaInvalida(`Jogo ${item.jogo} ainda não está disponível`);
       const erros = validarAposta(contexto.regra, item.dezenas);
       if (erros.length > 0) {
         throw entradaInvalida(`Aposta ${indice + 1} inválida: ${JSON.stringify(erros)}`);
       }
+      const teimosinha = item.teimosinha ?? 1;
+      if (!Number.isInteger(teimosinha) || teimosinha < 1 || teimosinha > TEIMOSINHA_MAXIMA) {
+        throw entradaInvalida(`Teimosinha deve ser de 1 a ${TEIMOSINHA_MAXIMA} concursos`);
+      }
       const nome = item.nome?.trim().slice(0, TAMANHO_MAXIMO_NOME) ?? '';
-      return {
-        jogo: item.jogo,
-        concurso: contexto.concurso,
-        dezenas: item.dezenas,
-        nome: nome.length > 0 ? nome : null,
-        favoritoId: item.favoritoId ?? null,
-        valor:
-          contexto.valorSimples === null
-            ? null
-            : calcularValorAposta(contexto.regra, item.dezenas.length, contexto.valorSimples),
-      };
+      return expandirTeimosinha(
+        {
+          jogo: item.jogo,
+          concurso: contexto.concurso,
+          dezenas: item.dezenas,
+          nome: nome.length > 0 ? nome : null,
+          favoritoId: item.favoritoId ?? null,
+          valor:
+            contexto.valorSimples === null
+              ? null
+              : calcularValorAposta(contexto.regra, item.dezenas.length, contexto.valorSimples),
+          teimosinha: null,
+        },
+        teimosinha,
+      );
     });
 
     const ids = await this.#repository.criarLote(usuarioId, itens);
@@ -223,13 +260,13 @@ export class ApostaService {
       ]),
     );
 
-    return apostas
-      .map((aposta) => {
+    return somenteProximaDaTeimosinha(
+      apostas.map((aposta) => {
         const conferencia = conferencias.get(aposta.id) ?? CONFERENCIA_PENDENTE;
         const premios = this.#calcularPremios(aposta, conferencia, valores);
         return { ...aposta, conferencia, premios, premioTotal: somarPremios(premios) };
-      })
-      .sort(ordenarParaConferencia);
+      }),
+    ).sort(ordenarParaConferencia);
   }
 
   async marcarConferidas(usuarioId: number, ids: readonly number[]): Promise<{ marcadas: number }> {

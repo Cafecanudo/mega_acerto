@@ -4,6 +4,7 @@ import { LinhaDezenas } from '@/components/dezenas/linha-dezenas';
 import { estiloCorJogo } from '@/lib/cor-jogo';
 import { formatarDataHora, formatarInteiro, formatarMoeda } from '@/lib/formatadores';
 import type { Aposta } from '../types';
+import { SeloTeimosinha } from './selo-teimosinha';
 
 interface TabelaApostasProps {
   readonly apostas: readonly Aposta[];
@@ -97,6 +98,7 @@ export const TabelaApostas = ({ apostas, destacadas, exibirCoincidencias }: Tabe
                   <div className="min-w-0">
                     <p className="truncate font-medium">
                       {aposta.nome ?? apresentacao.nome}
+                      <SeloTeimosinha teimosinha={aposta.teimosinha} />
                       {aposta.favoritoId !== null && (
                         <span className="ml-1 text-xs font-normal text-amber-600 dark:text-amber-400">
                           · favorito #{aposta.favoritoId}

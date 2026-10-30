@@ -5,10 +5,11 @@ import {
   isCodigoJogo,
   obterApresentacaoJogo,
   obterRegraJogo,
+  opcoesTeimosinha,
   projetarCusto,
   type ApresentacaoJogo,
 } from '@mega/domain';
-import { IconCheck, IconClover, IconPlus, IconTrash } from '@tabler/icons-react';
+import { IconCheck, IconClover, IconPlus, IconRepeat, IconTrash } from '@tabler/icons-react';
 import { useState, type ReactNode } from 'react';
 import { LinhaDezenas } from '@/components/dezenas/linha-dezenas';
 import { SeletorDezenas } from '@/components/dezenas/seletor-dezenas';
@@ -40,11 +41,13 @@ interface DialogoApostarProps {
   ) => ReactNode;
   readonly painelDezenas?: (selecao: SelecaoParaAposta) => ReactNode;
   readonly valorApostaSimples?: (jogo: string) => number | null;
+  readonly proximoConcurso?: (jogo: string) => number | null;
   readonly inicial?: SelecaoParaAposta | null;
 }
 
 interface ItemLista extends ItemEfetivacaoJogo {
   readonly chave: number;
+  readonly teimosinha: number;
 }
 
 const jogosDisponiveis: readonly ApresentacaoJogo[] = apresentacoesJogo.filter(
@@ -58,15 +61,55 @@ const chaveItem = (jogo: string, dezenas: readonly number[]): string =>
 const classeSelect =
   'rounded-lg border border-slate-300 bg-white px-2.5 py-1.5 text-sm dark:border-slate-700 dark:bg-slate-950';
 
+const descreverConcursos = (proximo: number | null, teimosinha: number): string | null => {
+  if (proximo === null) return null;
+  return teimosinha === 1
+    ? `concurso ${proximo}`
+    : `concursos ${proximo} a ${proximo + teimosinha - 1}`;
+};
+
+const SeletorTeimosinha = ({
+  valor,
+  aoMudar,
+  rotulo,
+}: {
+  readonly valor: number;
+  readonly aoMudar: (valor: number) => void;
+  readonly rotulo: string;
+}) => (
+  <label className="inline-flex items-center gap-1.5 text-xs text-slate-500 dark:text-slate-400">
+    <IconRepeat aria-hidden size="0.875rem" />
+    <span>{rotulo}</span>
+    <select
+      value={valor}
+      onChange={(evento) => {
+        aoMudar(Number(evento.target.value));
+      }}
+      className="rounded-md border border-slate-300 bg-white px-1.5 py-0.5 text-xs tabular-nums dark:border-slate-700 dark:bg-slate-950"
+    >
+      {opcoesTeimosinha.map((opcao) => (
+        <option key={opcao} value={opcao}>
+          {opcao === 1 ? 'Não' : `${opcao} concursos`}
+        </option>
+      ))}
+    </select>
+  </label>
+);
+
 const ItemDaLista = ({
   item,
   valor,
+  proximoConcurso,
+  aoMudarTeimosinha,
   aoRemover,
 }: {
   readonly item: ItemLista;
   readonly valor: number | null;
+  readonly proximoConcurso: number | null;
+  readonly aoMudarTeimosinha: (teimosinha: number) => void;
   readonly aoRemover: () => void;
 }) => {
+  const concursos = descreverConcursos(proximoConcurso, item.teimosinha);
   const apresentacao = obterApresentacaoJogo(item.jogo);
   if (!apresentacao || !isCodigoJogo(item.jogo)) return null;
 
@@ -88,11 +131,22 @@ const ItemDaLista = ({
             {apresentacao.nome}
           </span>
           {item.nome ?? 'Aposta manual'} · {item.dezenas.length} dezenas ·
+          {item.teimosinha > 1 && ` ${formatarMoeda(valor)} × ${item.teimosinha} =`}
           <strong className="font-semibold text-slate-700 dark:text-slate-200">
-            {formatarMoeda(valor)}
+            {formatarMoeda(valor === null ? null : valor * item.teimosinha)}
           </strong>
         </span>
         <LinhaDezenas regra={obterRegraJogo(item.jogo)} dezenas={item.dezenas} tamanho="sm" />
+        <span className="flex flex-wrap items-center gap-x-2 gap-y-1">
+          <SeletorTeimosinha
+            rotulo="Teimosinha"
+            valor={item.teimosinha}
+            aoMudar={aoMudarTeimosinha}
+          />
+          {concursos && (
+            <span className="text-xs text-slate-500 dark:text-slate-400">{concursos}</span>
+          )}
+        </span>
       </div>
       <button
         type="button"
@@ -111,13 +165,19 @@ const Conteudo = ({
   favoritos,
   painelDezenas,
   valorApostaSimples,
+  proximoConcurso,
   inicial,
 }: Omit<DialogoApostarProps, 'aberto' | 'aoFechar'>) => {
   const [jogo, setJogo] = useState(inicial?.jogo ?? jogosDisponiveis[0]?.codigo ?? '');
   const [dezenas, setDezenas] = useState<ReadonlySet<number>>(() => new Set(inicial?.dezenas));
   const [itens, setItens] = useState<readonly ItemLista[]>(() =>
-    (inicial?.itens ?? []).map((item, indice) => ({ ...item, chave: indice + 1 })),
+    (inicial?.itens ?? []).map((item, indice) => ({
+      ...item,
+      chave: indice + 1,
+      teimosinha: item.teimosinha ?? 1,
+    })),
   );
+  const [teimosinhaPadrao, setTeimosinhaPadrao] = useState(1);
   const [proximaChave, setProximaChave] = useState(() => (inicial?.itens?.length ?? 0) + 1);
   const efetivar = useEfetivarApostas();
 
@@ -137,6 +197,14 @@ const Conteudo = ({
   const jogosSemValor = [
     ...new Set(itens.filter((_, indice) => valoresItens[indice] === null).map((item) => item.jogo)),
   ].map((codigo) => obterApresentacaoJogo(codigo)?.nome ?? codigo);
+  const totalAPagar = valoresItens.some((valor) => valor === null)
+    ? null
+    : Math.round(
+        itens.reduce(
+          (soma, item, indice) => soma + (valoresItens[indice] ?? 0) * item.teimosinha,
+          0,
+        ) * 100,
+      ) / 100;
   const custo = projetarCusto(
     itens.flatMap((item, indice) =>
       isCodigoJogo(item.jogo)
@@ -150,7 +218,12 @@ const Conteudo = ({
     const ineditos = novos.filter((item) => !existentes.has(chaveItem(jogo, item.dezenas)));
     setItens([
       ...itens,
-      ...ineditos.map((item, indice) => ({ ...item, jogo, chave: proximaChave + indice })),
+      ...ineditos.map((item, indice) => ({
+        ...item,
+        jogo,
+        chave: proximaChave + indice,
+        teimosinha: teimosinhaPadrao,
+      })),
     ]);
     setProximaChave(proximaChave + ineditos.length);
   };
@@ -168,6 +241,15 @@ const Conteudo = ({
     });
   };
 
+  const aplicarTeimosinhaATodos = (teimosinha: number) => {
+    setTeimosinhaPadrao(teimosinha);
+    setItens(itens.map((item) => ({ ...item, teimosinha })));
+  };
+
+  const mudarTeimosinha = (chave: number, teimosinha: number) => {
+    setItens(itens.map((item) => (item.chave === chave ? { ...item, teimosinha } : item)));
+  };
+
   const trocarJogo = (codigo: string) => {
     setJogo(codigo);
     setDezenas(new Set());
@@ -175,11 +257,12 @@ const Conteudo = ({
 
   const confirmar = () => {
     efetivar.mutate(
-      itens.map(({ jogo: jogoItem, dezenas: dezenasItem, nome, favoritoId }) => ({
+      itens.map(({ jogo: jogoItem, dezenas: dezenasItem, nome, favoritoId, teimosinha }) => ({
         jogo: jogoItem,
         dezenas: dezenasItem,
         nome,
         favoritoId,
+        teimosinha,
       })),
       { onSuccess: aoEfetivar },
     );
@@ -255,17 +338,24 @@ const Conteudo = ({
         <section className="flex flex-col rounded-xl border border-slate-200 bg-white lg:min-h-0 lg:flex-[2] dark:border-slate-800 dark:bg-slate-900">
           <header className="flex shrink-0 items-center justify-between border-b border-slate-200 px-4 py-3 dark:border-slate-800">
             <h3 className="text-sm font-semibold">Apostas a efetivar ({itens.length})</h3>
-            {itens.length > 0 && (
-              <button
-                type="button"
-                onClick={() => {
-                  setItens([]);
-                }}
-                className="text-xs font-medium text-slate-500 hover:text-rose-600 dark:text-slate-400"
-              >
-                Limpar lista
-              </button>
-            )}
+            <div className="flex items-center gap-4">
+              <SeletorTeimosinha
+                rotulo="Teimosinha para todas"
+                valor={teimosinhaPadrao}
+                aoMudar={aplicarTeimosinhaATodos}
+              />
+              {itens.length > 0 && (
+                <button
+                  type="button"
+                  onClick={() => {
+                    setItens([]);
+                  }}
+                  className="text-xs font-medium text-slate-500 hover:text-rose-600 dark:text-slate-400"
+                >
+                  Limpar lista
+                </button>
+              )}
+            </div>
           </header>
           <div className="p-3 lg:min-h-0 lg:flex-1 lg:overflow-auto">
             {itens.length === 0 ? (
@@ -277,6 +367,10 @@ const Conteudo = ({
                     key={item.chave}
                     item={item}
                     valor={valoresItens[indice] ?? null}
+                    proximoConcurso={proximoConcurso?.(item.jogo) ?? null}
+                    aoMudarTeimosinha={(teimosinha) => {
+                      mudarTeimosinha(item.chave, teimosinha);
+                    }}
                     aoRemover={() => {
                       setItens(itens.filter((atual) => atual.chave !== item.chave));
                     }}
@@ -287,14 +381,17 @@ const Conteudo = ({
           </div>
           <footer className="flex shrink-0 flex-wrap items-center justify-between gap-3 border-t border-slate-200 px-4 py-3 dark:border-slate-800">
             <span className="flex flex-col gap-1 text-xs text-slate-500 dark:text-slate-400">
-              <span>Cada aposta vale para o próximo concurso do seu jogo.</span>
+              <span>
+                Cada aposta começa no próximo concurso do seu jogo; a Teimosinha repete nos
+                seguintes.
+              </span>
               {jogosSemValor.length > 0 && (
                 <span className="text-amber-600 dark:text-amber-400">
                   Valor não configurado para {jogosSemValor.join(', ')}. Defina em Configurações ›
                   Valores.
                 </span>
               )}
-              <TotaisCusto custo={custo} />
+              <TotaisCusto custo={custo} total={totalAPagar} />
             </span>
             <div className="flex items-center gap-3">
               {efetivar.isError && (

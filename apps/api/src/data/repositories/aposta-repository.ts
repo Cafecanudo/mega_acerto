@@ -1,6 +1,12 @@
 import { sql, type Kysely } from 'kysely';
 import type { Database } from '../database.ts';
 
+export interface Teimosinha {
+  readonly grupo: string;
+  readonly posicao: number;
+  readonly total: number;
+}
+
 export interface Aposta {
   readonly id: number;
   readonly jogo: string;
@@ -10,6 +16,7 @@ export interface Aposta {
   readonly concurso: number | null;
   readonly valor: number | null;
   readonly criadaEm: string;
+  readonly teimosinha: Teimosinha | null;
 }
 
 export interface ApostaFiltrada extends Aposta {
@@ -35,9 +42,28 @@ interface LinhaAposta {
   readonly concurso: number | null;
   readonly valor: number | null;
   readonly criada_em: Date;
+  readonly teimosinha_grupo: string | null;
+  readonly teimosinha_posicao: number | null;
+  readonly teimosinha_total: number | null;
   readonly coincidencias: number | null;
   readonly total: number;
 }
+
+type ColunasTeimosinha = Pick<
+  LinhaAposta,
+  'teimosinha_grupo' | 'teimosinha_posicao' | 'teimosinha_total'
+>;
+
+const paraTeimosinha = (linha: ColunasTeimosinha): Teimosinha | null =>
+  linha.teimosinha_grupo === null ||
+  linha.teimosinha_posicao === null ||
+  linha.teimosinha_total === null
+    ? null
+    : {
+        grupo: linha.teimosinha_grupo,
+        posicao: linha.teimosinha_posicao,
+        total: linha.teimosinha_total,
+      };
 
 const paraAposta = (linha: LinhaAposta): ApostaFiltrada => ({
   id: linha.id,
@@ -48,6 +74,7 @@ const paraAposta = (linha: LinhaAposta): ApostaFiltrada => ({
   concurso: linha.concurso,
   valor: linha.valor,
   criadaEm: linha.criada_em.toISOString(),
+  teimosinha: paraTeimosinha(linha),
   coincidencias: linha.coincidencias,
 });
 
@@ -127,6 +154,7 @@ export class ApostaRepository {
       concurso: linha.concurso,
       valor: linha.valor,
       criadaEm: linha.criada_em.toISOString(),
+      teimosinha: paraTeimosinha(linha),
     }));
   }
 
@@ -160,6 +188,9 @@ export class ApostaRepository {
             dezenas: sql<number[]>`${sql.val([...item.dezenas].sort((a, b) => a - b))}::smallint[]`,
             favorito_id:
               item.favoritoId !== null && existentes.has(item.favoritoId) ? item.favoritoId : null,
+            teimosinha_grupo: item.teimosinha?.grupo ?? null,
+            teimosinha_posicao: item.teimosinha?.posicao ?? null,
+            teimosinha_total: item.teimosinha?.total ?? null,
           })),
         )
         .returning('id')
@@ -177,4 +208,5 @@ export interface NovaApostaItem {
   readonly nome: string | null;
   readonly favoritoId: number | null;
   readonly valor: number | null;
+  readonly teimosinha: Teimosinha | null;
 }

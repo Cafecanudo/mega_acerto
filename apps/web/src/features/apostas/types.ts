@@ -1,5 +1,10 @@
 import type { Conferencia } from '@/types/conferencia';
 
+export interface TeimosinhaAposta {
+  readonly posicao: number;
+  readonly total: number;
+}
+
 export interface Aposta {
   readonly id: number;
   readonly jogo: string;
@@ -9,6 +14,7 @@ export interface Aposta {
   readonly concurso: number | null;
   readonly valor: number | null;
   readonly criadaEm: string;
+  readonly teimosinha: TeimosinhaAposta | null;
   readonly coincidencias: number | null;
   readonly conferencia: Conferencia;
 }
