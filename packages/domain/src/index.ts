@@ -21,3 +21,4 @@ export { contarPremiosAposta } from './dezenas/premios-aposta.ts';
 export type { SortearInteiro } from './dezenas/gerar-combinacoes.ts';
 export { listarCombinacoes, sortearCombinacoes } from './dezenas/gerar-combinacoes.ts';
 export { opcoesTeimosinha, TEIMOSINHA_MAXIMA } from './dezenas/teimosinha.ts';
+export { sortearConcurso } from './dezenas/sortear-concurso.ts';

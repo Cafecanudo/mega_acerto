@@ -1,4 +1,4 @@
-import { IconBulb, IconChartHistogram, IconChecklist } from '@tabler/icons-react';
+import { IconBulb, IconChartHistogram, IconChecklist, IconDice5 } from '@tabler/icons-react';
 import type { ReactNode } from 'react';
 import { NavLink } from 'react-router';
 import { paths } from '@/config/paths';
@@ -43,6 +43,12 @@ export const MenuPrincipal = () => (
       icone={<IconBulb aria-hidden size="1.375rem" stroke={1.75} className="text-amber-500" />}
     >
       Palpites
+    </Item>
+    <Item
+      destino={paths.simulador}
+      icone={<IconDice5 aria-hidden size="1.375rem" stroke={1.75} className="text-violet-500" />}
+    >
+      Simulador
     </Item>
     <Item
       destino={paths.conferirApostas}

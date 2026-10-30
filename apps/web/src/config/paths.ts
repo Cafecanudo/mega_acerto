@@ -8,6 +8,7 @@ export const paths = {
   analise: (id: number) => `/analises/${id}`,
   conferirApostas: '/conferir-apostas',
   palpites: '/palpites',
+  simulador: '/simulador',
   apostas: '/conta/apostas',
   favoritos: '/conta/favoritos',
   valores: '/configuracoes/valores',

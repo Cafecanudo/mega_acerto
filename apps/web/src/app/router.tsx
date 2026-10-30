@@ -20,6 +20,7 @@ export const router = createBrowserRouter([
       { path: 'analises/:id', lazy: carregar(() => import('./routes/analise')) },
       { path: 'conferir-apostas', lazy: carregar(() => import('./routes/conferir-apostas')) },
       { path: 'palpites', lazy: carregar(() => import('./routes/palpites')) },
+      { path: 'simulador', lazy: carregar(() => import('./routes/simulador')) },
       { path: 'conta/apostas', lazy: carregar(() => import('./routes/apostas')) },
       { path: 'conta/favoritos', lazy: carregar(() => import('./routes/favoritos')) },
       { path: 'configuracoes/valores', lazy: carregar(() => import('./routes/valores')) },
