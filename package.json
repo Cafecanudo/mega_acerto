@@ -8,7 +8,12 @@
   },
   "scripts": {
     "dev": "pnpm --parallel --filter @mega/api --filter @mega/web dev",
-    "dev:db": "docker compose up -d db",
+    "dev:db": "docker compose -f docker-compose.dev.yml up -d --wait db",
+    "dev:db:copiar": "docker compose -f docker-compose.dev.yml up -d --wait db && docker compose exec -T db pg_dump -U mega --clean --if-exists --no-owner mega_acerto | docker compose -f docker-compose.dev.yml exec -T db psql -q -U mega -d mega_acerto -v ON_ERROR_STOP=1 -o /dev/null",
+    "dev:worker": "docker compose -f docker-compose.dev.yml --profile analises up -d --build ai-worker",
+    "dev:parar": "docker compose -f docker-compose.dev.yml --profile analises stop",
+    "prod:up": "docker compose up -d --build",
+    "prod:backup": "docker compose exec -T db pg_dump -U mega -Fc mega_acerto > mega_acerto.dump",
     "lint": "eslint . --max-warnings=0",
     "typecheck": "pnpm -r typecheck",
     "format": "prettier --write .",

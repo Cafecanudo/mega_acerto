@@ -10,5 +10,7 @@ coverage/
 !.vscode/extensions.json
 .idea/
 *.tsbuildinfo
+*.dump
+backups/
 
 .claude/settings.local.json

@@ -8,8 +8,6 @@ services:
       POSTGRES_DB: mega_acerto
       POSTGRES_USER: mega
       POSTGRES_PASSWORD: mega
-    ports:
-      - '${DB_PORTA_HOST:-5442}:5432'
     volumes:
       - dados-postgres:/var/lib/postgresql/data
     healthcheck:

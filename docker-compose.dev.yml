@@ -1,0 +1,35 @@
+name: mega-acerto-dev
+
+services:
+  db:
+    image: postgres:17-alpine
+    environment:
+      POSTGRES_DB: mega_acerto
+      POSTGRES_USER: mega
+      POSTGRES_PASSWORD: mega
+    ports:
+      - '${DB_DEV_PORTA_HOST:-5442}:5432'
+    volumes:
+      - dados-postgres:/var/lib/postgresql/data
+    healthcheck:
+      test: ['CMD-SHELL', 'pg_isready -U mega -d mega_acerto']
+      interval: 5s
+      timeout: 3s
+      retries: 10
+
+  ai-worker:
+    profiles: ['analises']
+    build:
+      context: .
+      dockerfile: docker/ai-worker.Dockerfile
+    depends_on:
+      db:
+        condition: service_healthy
+    environment:
+      DATABASE_URL: postgres://mega:mega@db:5432/mega_acerto
+      LOG_LEVEL: ${LOG_LEVEL:-info}
+      CLAUDE_CODE_OAUTH_TOKEN: ${CLAUDE_CODE_OAUTH_TOKEN:-}
+      ANALISE_TIMEOUT_MIN: ${ANALISE_TIMEOUT_MIN:-30}
+
+volumes:
+  dados-postgres:

@@ -3,7 +3,7 @@ import { Value } from 'typebox/value';
 
 const EsquemaConfig = Type.Object({
   HOST: Type.String({ default: '0.0.0.0' }),
-  PORT: Type.Integer({ default: 3000 }),
+  PORT: Type.Integer({ default: 3100 }),
   LOG_LEVEL: Type.Union(
     [
       Type.Literal('fatal'),

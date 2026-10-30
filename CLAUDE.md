@@ -42,16 +42,22 @@ Roteiro e status das fases: [roadmap.md](roadmap.md).
 ```bash
 corepack pnpm install
 corepack pnpm dev:db
+corepack pnpm dev:db:copiar
 corepack pnpm dev
+corepack pnpm dev:worker
+corepack pnpm dev:parar
 corepack pnpm lint
 corepack pnpm typecheck
 corepack pnpm format
-docker compose up -d --build
+corepack pnpm prod:up
+corepack pnpm prod:backup
 ```
 
-- Desenvolvimento: `dev:db` sobe só o Postgres (host `localhost:5442`); `dev` roda API (`:3000`, lê `.env` da raiz) e Vite (`:5173`, proxy de `/api`). Copie `.env.example` para `.env`.
-- Uso local completo: `docker compose up -d --build` sobe `db` e `app`; acesse `http://localhost:3000`. A API serve o build do front e aplica migrations ao iniciar.
-- Não rodar a API de desenvolvimento e o container `app` ao mesmo tempo: ambos usam a porta 3000 e disparariam a ingestão em paralelo.
+- Dois ambientes Docker isolados, cada um com PostgreSQL e volume próprios (detalhes no [README.md](README.md)):
+  - **Produção** (`docker-compose.yml`, projeto `mega-acerto`): `db` sem porta no host, `app` em `:3000`, `ai-worker`. Contém os dados reais do usuário.
+  - **Desenvolvimento** (`docker-compose.dev.yml`, projeto `mega-acerto-dev`): `db` em `localhost:5442` e `ai-worker` sob o perfil `analises`. `dev` roda a API em `:3100` (lê `.env`) e o Vite em `:5173` (proxy de `/api` para `:3100`).
+- `dev:db:copiar` recria o banco de desenvolvimento a partir da produção (sempre nessa direção). Pare a API de dev antes.
+- **Produção é intocável para a IA:** todo teste, migration nova, cadastro de conta de teste ou dado sintético vai no ambiente de desenvolvimento. Na produção, só leitura e só quando o usuário pedir; escrita, exclusão ou `prod:up` apenas com pedido explícito. Nunca rodar `down -v` no projeto `mega-acerto`.
 - Ao testar processos em background, encerrar apenas o PID iniciado na sessão; nunca matar todos os processos `node`.
 
 ## Favoritos e Apostas
@@ -68,7 +74,7 @@ docker compose up -d --build
 - Senha com scrypt (`shared/senha.ts`); sessão em cookie `mega_sessao` (HttpOnly, SameSite=Strict), guardada como hash SHA-256 na tabela `sessao` e renovada por 30 dias.
 - Todo `/api` exige sessão, exceto `/api/auth/*` e `/api/saude`. Rotas obtêm o usuário com `usuarioDe(requisicao)` e repassam o id; repositórios de `favorito`, `aposta` e `analise` sempre filtram por `usuario_id`.
 - Compartilhados entre usuários: concursos, ingestão e `valor_jogo`.
-- Para testar com contas sem afetar os dados reais, clone o banco (`pg_dump` para outro database) e rode a API com outro `DATABASE_URL` e `PORT`; o primeiro cadastro assume os dados sem dono.
+- Para testar com contas sem afetar os dados reais, use o ambiente de desenvolvimento (`dev:db:copiar` e conta de teste criada nele); o primeiro cadastro num banco sem usuários assume os dados sem dono.
 
 ## Análises com Claude (Fase 2)
 
@@ -80,7 +86,7 @@ docker compose up -d --build
 - `estrategia` recebe `parametros` (estratégia do catálogo ou personalizada, quantidade de dezenas, janela), gravados em `analise.parametros` e considerados no reaproveitamento. O Claude gera o palpite, faz backtest walk-forward contra 2000 replicações aleatórias e teste de permutação. O sistema confere frequências, universo e quantidade do palpite, concurso-alvo, média teórica e, para estratégias determinísticas sem janela, o próprio palpite contra o ranking SQL.
 - O catálogo de estratégias fica em `@mega/analises/catalogo` (sem `typebox`, para o front); schemas em `@mega/analises`.
 - O projeto não calcula estatística: só exporta dados, confere as contagens do Claude contra os agregados SQL e valida o schema.
-- Para testar a interface de resultado sem gastar cota, insira um registro sintético e apague-o depois.
+- Para testar a interface de resultado sem gastar cota, insira um registro sintético no banco de desenvolvimento.
 
 ## API da Caixa
 
