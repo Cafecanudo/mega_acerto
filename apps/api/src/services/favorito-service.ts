@@ -19,7 +19,16 @@ export interface EntradaFavorito {
 
 export type AlteracaoFavorito = Partial<EntradaFavorito>;
 
+export interface FavoritosCriados {
+  readonly criados: number;
+  readonly repetidos: number;
+}
+
 const TAMANHO_MAXIMO_NOME = 80;
+const LIMITE_LOTE = 200;
+
+const chaveFavorito = (dados: Pick<DadosFavorito, 'jogo' | 'dezenas'>): string =>
+  `${dados.jogo}:${[...dados.dezenas].sort((a, b) => a - b).join(',')}`;
 
 const regraDisponivel = (jogo: string): RegraJogo => {
   if (!isCodigoJogo(jogo)) throw entradaInvalida(`Jogo ${jogo} ainda não está disponível`);
@@ -57,6 +66,25 @@ export class FavoritoService {
   async criar(usuarioId: number, entrada: EntradaFavorito): Promise<FavoritoConferido> {
     const favorito = await this.#repository.criar(usuarioId, prepararDados(entrada));
     return this.#conferirUm(favorito);
+  }
+
+  async criarLote(
+    usuarioId: number,
+    entradas: readonly EntradaFavorito[],
+  ): Promise<FavoritosCriados> {
+    if (entradas.length > LIMITE_LOTE)
+      throw entradaInvalida(`Envie até ${LIMITE_LOTE} favoritos por vez`);
+    const vistos = new Set(
+      (await this.#repository.listar(usuarioId)).map((favorito) => chaveFavorito(favorito)),
+    );
+    const ineditos = entradas.map(prepararDados).filter((dados) => {
+      const chave = chaveFavorito(dados);
+      if (vistos.has(chave)) return false;
+      vistos.add(chave);
+      return true;
+    });
+    const criados = await this.#repository.criarLote(usuarioId, ineditos);
+    return { criados, repetidos: entradas.length - ineditos.length };
   }
 
   async alterar(

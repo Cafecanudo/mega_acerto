@@ -14,6 +14,7 @@ import {
   type SelecaoRanking,
 } from '@/features/concursos/components/ranking-dezenas';
 import { BotaoSalvarFavorito } from '@/features/favoritos/components/botao-salvar-favorito';
+import { BotaoSalvarFavoritosLote } from '@/features/favoritos/components/botao-salvar-favoritos-lote';
 import { listarValoresQuery } from '@/features/configuracoes/api/valores';
 import { estiloCorJogo } from '@/lib/cor-jogo';
 import { useAbrirApostar } from '../apostar-contexto';
@@ -152,7 +153,10 @@ const Palpites = () => {
             aoFechar={() => {
               setMontagem(null);
             }}
-            aoUsarNaAposta={(itens) => {
+            salvarFavoritos={(itens, desabilitado) => (
+              <BotaoSalvarFavoritosLote itens={itens} desabilitado={desabilitado} />
+            )}
+            aoApostar={(itens) => {
               setMontagem(null);
               abrirApostar({ jogo: montagem.jogo, dezenas: [], itens });
             }}

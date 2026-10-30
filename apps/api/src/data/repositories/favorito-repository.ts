@@ -69,6 +69,22 @@ export class FavoritoRepository {
     return paraFavorito(linha);
   }
 
+  async criarLote(usuarioId: number, lote: readonly DadosFavorito[]): Promise<number> {
+    if (lote.length === 0) return 0;
+    const resultado = await this.#db
+      .insertInto('favorito')
+      .values(
+        lote.map((dados) => ({
+          usuario_id: usuarioId,
+          jogo: dados.jogo,
+          nome: dados.nome,
+          dezenas: arrayDezenas(dados.dezenas),
+        })),
+      )
+      .executeTakeFirst();
+    return Number(resultado.numInsertedOrUpdatedRows ?? 0);
+  }
+
   async atualizar(
     usuarioId: number,
     id: number,

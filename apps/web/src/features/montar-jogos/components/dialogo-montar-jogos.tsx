@@ -8,12 +8,17 @@ import {
   sortearCombinacoes,
   type ApresentacaoJogo,
 } from '@mega/domain';
-import { useState } from 'react';
+import { Fragment, useState, type ReactNode } from 'react';
 import { Dialogo } from '@/components/ui/dialogo';
 import { sortearInteiro } from '@/lib/aleatorio';
 import { estiloCorJogo } from '@/lib/cor-jogo';
 import { formatarInteiro } from '@/lib/formatadores';
-import { LIMITE_JOGOS_MONTADOS, type JogoMontado, type JogoParaAposta } from '../types';
+import {
+  LIMITE_JOGOS_MONTADOS,
+  LIMITE_JOGOS_POR_APOSTA,
+  type JogoMontado,
+  type JogoParaAposta,
+} from '../types';
 import { chaveJogo, tamanhosPossiveis } from '../utils';
 import { DezenasBase } from './dezenas-base';
 import { GerarJogos, type ConfiguracaoGeracao } from './gerar-jogos';
@@ -25,7 +30,8 @@ interface DialogoMontarJogosProps {
   readonly dezenas: readonly number[];
   readonly valorApostaSimples: (jogo: string) => number | null;
   readonly aoFechar: () => void;
-  readonly aoUsarNaAposta: (jogos: readonly JogoParaAposta[]) => void;
+  readonly aoApostar: (jogos: readonly JogoParaAposta[]) => void;
+  readonly salvarFavoritos?: (jogos: readonly JogoParaAposta[], desabilitado: boolean) => ReactNode;
 }
 
 const NOME_MANUAL = 'Jogo montado';
@@ -58,7 +64,8 @@ const Conteudo = ({
   jogo: jogoInicial,
   dezenas,
   valorApostaSimples,
-  aoUsarNaAposta,
+  aoApostar,
+  salvarFavoritos,
 }: Omit<DialogoMontarJogosProps, 'aberto' | 'aoFechar'>) => {
   const [base, setBase] = useState<readonly number[]>(() => [...dezenas].sort((a, b) => a - b));
   const [marcadas, setMarcadas] = useState<ReadonlySet<number>>(new Set());
@@ -141,16 +148,13 @@ const Conteudo = ({
     );
   };
 
-  const usarNaAposta = () => {
-    aoUsarNaAposta(
-      jogos.map((item) => ({
-        jogo: item.jogo,
-        dezenas: item.dezenas,
-        nome: item.nome,
-        favoritoId: null,
-      })),
-    );
-  };
+  const selecionados: readonly JogoParaAposta[] = jogos.map((item) => ({
+    jogo: item.jogo,
+    dezenas: item.dezenas,
+    nome: item.nome,
+    favoritoId: null,
+  }));
+  const versaoLista = jogos.map((item) => item.chave).join(',');
 
   return (
     <div
@@ -205,7 +209,19 @@ const Conteudo = ({
             setJogos([]);
             setAviso(null);
           }}
-          aoUsarNaAposta={usarNaAposta}
+          aoApostar={() => {
+            aoApostar(selecionados);
+          }}
+          acaoFavoritos={
+            salvarFavoritos && (
+              <Fragment key={versaoLista}>
+                {salvarFavoritos(
+                  selecionados,
+                  jogos.length === 0 || jogos.length > LIMITE_JOGOS_POR_APOSTA,
+                )}
+              </Fragment>
+            )
+          }
         />
       </div>
     </div>

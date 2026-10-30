@@ -2,6 +2,8 @@ import { Type, type FastifyPluginAsyncTypebox } from '@fastify/type-provider-typ
 import {
   AlteracaoFavoritoSchema,
   FavoritoSchema,
+  FavoritosCriadosSchema,
+  LoteFavoritosSchema,
   NovoFavoritoSchema,
   ParametrosFavoritoSchema,
 } from '../schemas/favorito.ts';
@@ -23,6 +25,17 @@ const rotasFavoritos: FastifyPluginAsyncTypebox<OpcoesRotas> = async (app, { con
         .favoritoService()
         .criar(usuarioDe(requisicao).id, requisicao.body);
       return resposta.status(201).send(favorito);
+    },
+  );
+
+  app.post(
+    '/favoritos/lote',
+    { schema: { body: LoteFavoritosSchema, response: { 201: FavoritosCriadosSchema } } },
+    async (requisicao, resposta) => {
+      const resultado = await container
+        .favoritoService()
+        .criarLote(usuarioDe(requisicao).id, requisicao.body.itens);
+      return resposta.status(201).send(resultado);
     },
   );
 

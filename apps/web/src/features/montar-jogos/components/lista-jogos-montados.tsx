@@ -1,6 +1,6 @@
 import { isCodigoJogo, obterApresentacaoJogo, obterRegraJogo, projetarCusto } from '@mega/domain';
 import { IconTicket, IconTrash } from '@tabler/icons-react';
-import { useState } from 'react';
+import { useState, type ReactNode } from 'react';
 import { LinhaDezenas } from '@/components/dezenas/linha-dezenas';
 import { Vazio } from '@/components/ui/estado';
 import { Paginacao } from '@/components/ui/paginacao';
@@ -14,7 +14,8 @@ interface ListaJogosMontadosProps {
   readonly valorDe: (jogo: JogoMontado) => number | null;
   readonly aoRemover: (chave: number) => void;
   readonly aoLimpar: () => void;
-  readonly aoUsarNaAposta: () => void;
+  readonly aoApostar: () => void;
+  readonly acaoFavoritos?: ReactNode;
 }
 
 const TAMANHO_PAGINA = 50;
@@ -64,7 +65,8 @@ export const ListaJogosMontados = ({
   valorDe,
   aoRemover,
   aoLimpar,
-  aoUsarNaAposta,
+  aoApostar,
+  acaoFavoritos,
 }: ListaJogosMontadosProps) => {
   const [paginaEscolhida, setPagina] = useState(1);
   const totalPaginas = Math.max(1, Math.ceil(jogos.length / TAMANHO_PAGINA));
@@ -131,7 +133,7 @@ export const ListaJogosMontados = ({
         <span className="flex flex-col gap-1 text-xs text-slate-500 dark:text-slate-400">
           {excedeLimite && (
             <span className="text-amber-600 dark:text-amber-400">
-              O Apostar recebe até {LIMITE_JOGOS_POR_APOSTA} jogos por vez. Remova{' '}
+              Apostar e favoritos recebem até {LIMITE_JOGOS_POR_APOSTA} jogos por vez. Remova{' '}
               {formatarInteiro(jogos.length - LIMITE_JOGOS_POR_APOSTA)} para continuar.
             </span>
           )}
@@ -142,15 +144,18 @@ export const ListaJogosMontados = ({
           )}
           <TotaisCusto custo={custo} />
         </span>
-        <button
-          type="button"
-          disabled={jogos.length === 0 || excedeLimite}
-          onClick={aoUsarNaAposta}
-          className="inline-flex items-center gap-1.5 rounded-lg bg-emerald-600 px-4 py-2 text-sm font-semibold text-white transition hover:bg-emerald-700 disabled:cursor-not-allowed disabled:opacity-40"
-        >
-          <IconTicket aria-hidden size="1rem" />
-          Usar na Aposta
-        </button>
+        <div className="flex flex-wrap items-center gap-2">
+          {acaoFavoritos}
+          <button
+            type="button"
+            disabled={jogos.length === 0 || excedeLimite}
+            onClick={aoApostar}
+            className="inline-flex items-center gap-1.5 rounded-lg bg-emerald-600 px-4 py-2 text-sm font-semibold text-white transition hover:bg-emerald-700 disabled:cursor-not-allowed disabled:opacity-40"
+          >
+            <IconTicket aria-hidden size="1rem" />
+            Apostar
+          </button>
+        </div>
       </footer>
     </section>
   );

@@ -18,6 +18,16 @@ export const NovoFavoritoSchema = Type.Object(
   { additionalProperties: false },
 );
 
+export const LoteFavoritosSchema = Type.Object(
+  { itens: Type.Array(NovoFavoritoSchema, { minItems: 1, maxItems: 200 }) },
+  { additionalProperties: false },
+);
+
+export const FavoritosCriadosSchema = Type.Object({
+  criados: Type.Integer(),
+  repetidos: Type.Integer(),
+});
+
 export const AlteracaoFavoritoSchema = Type.Object(
   {
     jogo: Type.Optional(Type.String({ minLength: 1 })),

@@ -26,6 +26,20 @@ export const useSalvarFavorito = () => {
   });
 };
 
+export interface FavoritosCriados {
+  readonly criados: number;
+  readonly repetidos: number;
+}
+
+export const useSalvarFavoritosEmLote = () => {
+  const invalidar = useInvalidarFavoritos();
+  return useMutation({
+    mutationFn: (itens: readonly DadosFavorito[]) =>
+      api.post<FavoritosCriados>('/favoritos/lote', { itens }),
+    onSuccess: invalidar,
+  });
+};
+
 export const useExcluirFavorito = () => {
   const invalidar = useInvalidarFavoritos();
   return useMutation({
