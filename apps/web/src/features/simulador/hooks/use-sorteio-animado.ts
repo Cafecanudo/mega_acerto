@@ -25,6 +25,9 @@ type Acao =
 
 const PAUSA_MINIMA_RESULTADO_MS = 1500;
 
+const pausaEntreSorteios = (intervaloMs: number): number =>
+  Math.max(intervaloMs, Math.min(PAUSA_MINIMA_RESULTADO_MS, intervaloMs * 6));
+
 const ESTADO_INICIAL: EstadoAnimacao = {
   status: 'parado',
   sorteio: null,
@@ -64,10 +67,12 @@ const reduzir = (estado: EstadoAnimacao, acao: Acao): EstadoAnimacao => {
   }
 };
 
+export type AnimacaoSorteio = ReturnType<typeof useSorteioAnimado>;
+
 export const useSorteioAnimado = (
   regra: RegraJogo,
   intervaloMs: number,
-  aoConcluir: (sorteio: Sorteio) => void,
+  aoConcluir: (sorteio: Sorteio) => boolean,
 ) => {
   const [estado, despachar] = useReducer(reduzir, ESTADO_INICIAL);
   const concluir = useEffectEvent(aoConcluir);
@@ -81,15 +86,16 @@ export const useSorteioAnimado = (
     const temporizador = window.setTimeout(
       () => {
         if (!completo) {
-          if (revelados + 1 === bolas) concluir(sorteio);
+          const deveParar = revelados + 1 === bolas && concluir(sorteio);
           despachar({ tipo: 'avancar' });
+          if (deveParar) despachar({ tipo: 'parar' });
         } else if (restantes > 0) {
           despachar({ tipo: 'proximo', sorteio: sortearConcursoNaOrdem(regra, sortearInteiro) });
         } else {
           despachar({ tipo: 'parar' });
         }
       },
-      completo ? Math.max(intervaloMs, PAUSA_MINIMA_RESULTADO_MS) : intervaloMs,
+      completo ? pausaEntreSorteios(intervaloMs) : intervaloMs,
     );
     return () => {
       window.clearTimeout(temporizador);

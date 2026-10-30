@@ -8,6 +8,7 @@ import { IconDice5, IconInfoCircle } from '@tabler/icons-react';
 import { useQuery } from '@tanstack/react-query';
 import { useMemo, useState } from 'react';
 import { apostasPendentesQuery } from '@/features/apostas/api/apostas';
+import { listarValoresQuery } from '@/features/configuracoes/api/valores';
 import { listarFavoritosQuery } from '@/features/favoritos/api/favoritos';
 import { SimuladorSorteios } from '@/features/simulador/components/simulador-sorteios';
 import type { ReferenciasSimulacao } from '@/features/simulador/types';
@@ -40,6 +41,7 @@ const Simulador = () => {
   const [jogo, setJogo] = useState(jogosDisponiveis[0]?.codigo ?? '');
   const apresentacao = jogosDisponiveis.find((item) => item.codigo === jogo);
   const referencias = useReferencias(jogo);
+  const valores = useQuery(listarValoresQuery());
 
   return (
     <PaginaConta
@@ -76,7 +78,12 @@ const Simulador = () => {
           </p>
         </div>
         {isCodigoJogo(jogo) && (
-          <SimuladorSorteios key={jogo} regra={obterRegraJogo(jogo)} referencias={referencias} />
+          <SimuladorSorteios
+            key={jogo}
+            regra={obterRegraJogo(jogo)}
+            referencias={referencias}
+            valorApostaSimples={valores.data?.get(jogo)?.valorAposta ?? null}
+          />
         )}
       </div>
     </PaginaConta>

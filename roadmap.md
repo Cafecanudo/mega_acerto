@@ -73,7 +73,7 @@ Dados separados por usuário.
 - [x] Análise `estrategia` pelo Claude: palpite do próximo concurso e backtest walk-forward contra apostas aleatórias (mais/menos sorteadas, mais atrasadas, equilibrada ou regra personalizada)
 - [x] Montar jogos (diálogo em Palpites): jogo manual com as dezenas selecionadas, todas as combinações (até 1000) ou combinações sorteadas sem repetição, tipo de jogo e dezenas por jogo, envio de até 200 jogos ao Apostar
 - [x] Teimosinha de 1 a 12 concursos no Apostar, com uma aposta gravada por concurso e etiqueta nas listas
-- [x] Simulador: sorteios aleatórios no navegador, sem gravação. Modo Ao vivo com globo animado (uma bola por intervalo, até 100 sorteios) e modo Rápido (até 10 mil por clique, 100 mil na lista); dezenas que coincidem com apostas pendentes ficam verdes e com favoritos, azuis, com filtro de sorteios premiados
+- [x] Simulador: sorteios aleatórios no navegador, sem gravação. Modo Ao vivo com globo animado (uma bola por intervalo, até 100 sorteios) e modo Rápido (até 10 mil por clique, 100 mil na lista); dezenas que coincidem com apostas pendentes ficam verdes e com favoritos, azuis, com filtro de sorteios premiados; "Sortear até ganhar" com busca em Web Worker e diálogo de match
 - [ ] Filtro de popularidade (evitar combinações muito jogadas)
 - [ ] Fechamentos (desdobramentos com garantia)
 

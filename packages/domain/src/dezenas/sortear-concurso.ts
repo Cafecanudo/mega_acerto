@@ -21,3 +21,21 @@ export const sortearConcursoNaOrdem = (
 
 export const sortearConcurso = (regra: RegraJogo, sortearInteiro: SortearInteiro): number[][] =>
   sortearConcursoNaOrdem(regra, sortearInteiro).map((dezenas) => dezenas.sort((a, b) => a - b));
+
+export const criarSorteioReutilizavel = (
+  regra: RegraJogo,
+  sortearInteiro: SortearInteiro,
+): (() => Int32Array) => {
+  const { minimo, maximo } = regra.universo;
+  const globo = Int32Array.from({ length: maximo - minimo + 1 }, (_, indice) => minimo + indice);
+  const tamanho = regra.dezenasPorSorteio;
+  return () => {
+    for (let posicao = 0; posicao < tamanho; posicao++) {
+      const escolhida = posicao + sortearInteiro(globo.length - posicao);
+      const temporaria = globo[posicao] ?? 0;
+      globo[posicao] = globo[escolhida] ?? 0;
+      globo[escolhida] = temporaria;
+    }
+    return globo.subarray(0, tamanho);
+  };
+};

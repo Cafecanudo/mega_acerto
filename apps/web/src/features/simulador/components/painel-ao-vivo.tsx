@@ -6,7 +6,11 @@ import {
 } from '@tabler/icons-react';
 import { useState } from 'react';
 import { formatarInteiro } from '@/lib/formatadores';
-import { totalBolas, useSorteioAnimado, type EstadoAnimacao } from '../hooks/use-sorteio-animado';
+import {
+  totalBolas,
+  type AnimacaoSorteio,
+  type EstadoAnimacao,
+} from '../hooks/use-sorteio-animado';
 import type { ReferenciasSimulacao } from '../types';
 import { conferirDezenas, marcacaoDaDezena } from '../utils';
 import { BolaSorteada } from './bola-sorteada';
@@ -16,7 +20,14 @@ import { SeloCoincidencia } from './selo-coincidencia';
 interface PainelAoVivoProps {
   readonly regra: RegraJogo;
   readonly referencias: ReferenciasSimulacao;
-  readonly aoConcluir: (sorteio: readonly (readonly number[])[]) => void;
+  readonly animacao: AnimacaoSorteio;
+  readonly intervaloMs: number;
+  readonly ateGanhar: boolean;
+  readonly aoMudarIntervalo: (intervaloMs: number) => void;
+  readonly aoIniciar: (quantidade: number) => void;
+  readonly aoPausar: () => void;
+  readonly aoContinuar: () => void;
+  readonly aoParar: () => void;
 }
 
 const LIMITE_AO_VIVO = 100;
@@ -24,6 +35,7 @@ const VELOCIDADES = [
   { rotulo: '1 bola por segundo', intervaloMs: 1000 },
   { rotulo: '2 bolas por segundo', intervaloMs: 500 },
   { rotulo: '4 bolas por segundo', intervaloMs: 250 },
+  { rotulo: 'Turbo, 20 bolas por segundo', intervaloMs: 50 },
 ] as const;
 
 const classeEntrada =
@@ -45,18 +57,30 @@ const reveladasPorLinha = (estado: EstadoAnimacao): (readonly number[])[] => {
 
 const descreverStatus = (estado: EstadoAnimacao): string => {
   if (!estado.sorteio) return 'Pronto para sortear';
-  const atual = Math.min(estado.realizados + 1, estado.total);
   const bolas = totalBolas(estado.sorteio);
-  const andamento = `Sorteio ${formatarInteiro(atual)} de ${formatarInteiro(estado.total)} · bola ${String(Math.min(estado.revelados, bolas))}/${String(bolas)}`;
+  const bola = `bola ${String(Math.min(estado.revelados, bolas))}/${String(bolas)}`;
+  const sorteio = Number.isFinite(estado.total)
+    ? `Sorteio ${formatarInteiro(Math.min(estado.realizados + 1, estado.total))} de ${formatarInteiro(estado.total)}`
+    : 'Sorteando até ganhar';
+  const andamento = `${sorteio} · ${bola}`;
   if (estado.status === 'pausado') return `${andamento} · pausado`;
   if (estado.status === 'parado') return `${andamento} · encerrado`;
   return andamento;
 };
 
-export const PainelAoVivo = ({ regra, referencias, aoConcluir }: PainelAoVivoProps) => {
+export const PainelAoVivo = ({
+  regra,
+  referencias,
+  animacao,
+  intervaloMs,
+  ateGanhar,
+  aoMudarIntervalo,
+  aoIniciar,
+  aoPausar,
+  aoContinuar,
+  aoParar,
+}: PainelAoVivoProps) => {
   const [quantidade, setQuantidade] = useState(10);
-  const [intervaloMs, setIntervaloMs] = useState<number>(VELOCIDADES[0].intervaloMs);
-  const animacao = useSorteioAnimado(regra, intervaloMs, aoConcluir);
   const { estado } = animacao;
 
   const linhas = reveladasPorLinha(estado);
@@ -73,28 +97,30 @@ export const PainelAoVivo = ({ regra, referencias, aoConcluir }: PainelAoVivoPro
   return (
     <div className="flex flex-col gap-4 border-b border-slate-200 px-4 py-4 dark:border-slate-800">
       <div className="flex flex-wrap items-end gap-2">
-        <label className="flex flex-col gap-1 text-sm">
-          <span className="text-xs font-medium text-slate-500 dark:text-slate-400">
-            Sorteios (até {LIMITE_AO_VIVO})
-          </span>
-          <input
-            type="number"
-            min={1}
-            max={LIMITE_AO_VIVO}
-            value={quantidade}
-            disabled={emAndamento}
-            onChange={(evento) => {
-              setQuantidade(limitarQuantidade(Number(evento.target.value)));
-            }}
-            className={`w-24 tabular-nums ${classeEntrada}`}
-          />
-        </label>
+        {!ateGanhar && (
+          <label className="flex flex-col gap-1 text-sm">
+            <span className="text-xs font-medium text-slate-500 dark:text-slate-400">
+              Sorteios (até {LIMITE_AO_VIVO})
+            </span>
+            <input
+              type="number"
+              min={1}
+              max={LIMITE_AO_VIVO}
+              value={quantidade}
+              disabled={emAndamento}
+              onChange={(evento) => {
+                setQuantidade(limitarQuantidade(Number(evento.target.value)));
+              }}
+              className={`w-24 tabular-nums ${classeEntrada}`}
+            />
+          </label>
+        )}
         <label className="flex flex-col gap-1 text-sm">
           <span className="text-xs font-medium text-slate-500 dark:text-slate-400">Velocidade</span>
           <select
             value={intervaloMs}
             onChange={(evento) => {
-              setIntervaloMs(Number(evento.target.value));
+              aoMudarIntervalo(Number(evento.target.value));
             }}
             className={classeEntrada}
           >
@@ -109,18 +135,18 @@ export const PainelAoVivo = ({ regra, referencias, aoConcluir }: PainelAoVivoPro
           <button
             type="button"
             onClick={() => {
-              animacao.iniciar(quantidade);
+              aoIniciar(quantidade);
             }}
             className={`${classeBotao} bg-jogo text-jogo-texto hover:brightness-110`}
           >
             <IconPlayerPlayFilled aria-hidden size="1rem" />
-            Sortear
+            {ateGanhar ? 'Sortear até ganhar' : 'Sortear'}
           </button>
         )}
         {estado.status === 'rodando' && (
           <button
             type="button"
-            onClick={animacao.pausar}
+            onClick={aoPausar}
             className={`${classeBotao} bg-amber-500 text-white hover:brightness-110`}
           >
             <IconPlayerPauseFilled aria-hidden size="1rem" />
@@ -130,7 +156,7 @@ export const PainelAoVivo = ({ regra, referencias, aoConcluir }: PainelAoVivoPro
         {estado.status === 'pausado' && (
           <button
             type="button"
-            onClick={animacao.continuar}
+            onClick={aoContinuar}
             className={`${classeBotao} bg-jogo text-jogo-texto hover:brightness-110`}
           >
             <IconPlayerPlayFilled aria-hidden size="1rem" />
@@ -140,7 +166,7 @@ export const PainelAoVivo = ({ regra, referencias, aoConcluir }: PainelAoVivoPro
         <button
           type="button"
           disabled={!emAndamento}
-          onClick={animacao.parar}
+          onClick={aoParar}
           className={`${classeBotao} border border-slate-300 hover:bg-slate-100 dark:border-slate-700 dark:hover:bg-slate-800`}
         >
           <IconPlayerStopFilled aria-hidden size="1rem" />
