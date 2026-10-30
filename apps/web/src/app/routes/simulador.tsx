@@ -5,8 +5,12 @@ import {
   type ApresentacaoJogo,
 } from '@mega/domain';
 import { IconDice5, IconInfoCircle } from '@tabler/icons-react';
-import { useState } from 'react';
+import { useQuery } from '@tanstack/react-query';
+import { useMemo, useState } from 'react';
+import { apostasPendentesQuery } from '@/features/apostas/api/apostas';
+import { listarFavoritosQuery } from '@/features/favoritos/api/favoritos';
 import { SimuladorSorteios } from '@/features/simulador/components/simulador-sorteios';
+import type { ReferenciasSimulacao } from '@/features/simulador/types';
 import { estiloCorJogo } from '@/lib/cor-jogo';
 import { PaginaConta } from './pagina-conta';
 
@@ -15,9 +19,27 @@ const jogosDisponiveis: readonly ApresentacaoJogo[] = apresentacoesJogo.filter(
     apresentacao.disponibilidade === 'disponivel' && isCodigoJogo(apresentacao.codigo),
 );
 
+const SEM_REFERENCIAS: ReferenciasSimulacao = { apostas: [], favoritos: [] };
+
+const useReferencias = (jogo: string): ReferenciasSimulacao => {
+  const apostas = useQuery({ ...apostasPendentesQuery(jogo), enabled: isCodigoJogo(jogo) });
+  const favoritos = useQuery(listarFavoritosQuery());
+  return useMemo(
+    () =>
+      apostas.data === undefined && favoritos.data === undefined
+        ? SEM_REFERENCIAS
+        : {
+            apostas: apostas.data ?? [],
+            favoritos: (favoritos.data ?? []).filter((favorito) => favorito.jogo === jogo),
+          },
+    [apostas.data, favoritos.data, jogo],
+  );
+};
+
 const Simulador = () => {
   const [jogo, setJogo] = useState(jogosDisponiveis[0]?.codigo ?? '');
   const apresentacao = jogosDisponiveis.find((item) => item.codigo === jogo);
+  const referencias = useReferencias(jogo);
 
   return (
     <PaginaConta
@@ -53,7 +75,9 @@ const Simulador = () => {
             e somem ao sair dela.
           </p>
         </div>
-        {isCodigoJogo(jogo) && <SimuladorSorteios key={jogo} regra={obterRegraJogo(jogo)} />}
+        {isCodigoJogo(jogo) && (
+          <SimuladorSorteios key={jogo} regra={obterRegraJogo(jogo)} referencias={referencias} />
+        )}
       </div>
     </PaginaConta>
   );

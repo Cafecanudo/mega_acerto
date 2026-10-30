@@ -62,6 +62,14 @@ export const ApostasEfetivadasSchema = Type.Object({
   valorTotal: Nulavel(Type.Number()),
 });
 
+export const ConsultaPendentesSchema = Type.Object({ jogo: Type.String({ minLength: 1 }) });
+
+export const ApostaPendenteSchema = Type.Object({
+  id: Type.Integer(),
+  nome: Nulavel(Type.String()),
+  dezenas: Type.Array(Type.Integer()),
+});
+
 export const ParametrosApostaSchema = Type.Object({ id: Type.Integer({ minimum: 1 }) });
 
 export const EdicaoApostaSchema = Type.Object(

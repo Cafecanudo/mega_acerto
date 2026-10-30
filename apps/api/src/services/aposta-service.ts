@@ -54,6 +54,12 @@ export interface AcertosConcurso {
   readonly dezenas: number[];
 }
 
+export interface ApostaPendente {
+  readonly id: number;
+  readonly nome: string | null;
+  readonly dezenas: number[];
+}
+
 export interface ResumoApostas {
   readonly total: number;
   readonly comAcertos: number;
@@ -246,6 +252,26 @@ export class ApostaService {
       },
     );
     return { ids };
+  }
+
+  async listarPendentes(usuarioId: number, jogo: string): Promise<ApostaPendente[]> {
+    if (!isCodigoJogo(jogo)) throw entradaInvalida(`Jogo ${jogo} ainda não está disponível`);
+    const [apostas, ultimo] = await Promise.all([
+      this.#repository.listarTodas(usuarioId),
+      this.#concursos.obterNumeroUltimo(jogo),
+    ]);
+    const gruposVistos = new Set<string>();
+    return apostas
+      .filter((aposta) => aposta.jogo === jogo && (aposta.concurso ?? 0) > (ultimo ?? 0))
+      .sort((a, b) => (a.concurso ?? 0) - (b.concurso ?? 0))
+      .filter((aposta) => {
+        const grupo = aposta.teimosinha?.grupo;
+        if (grupo === undefined) return true;
+        if (gruposVistos.has(grupo)) return false;
+        gruposVistos.add(grupo);
+        return true;
+      })
+      .map(({ id, nome, dezenas }) => ({ id, nome, dezenas }));
   }
 
   async #prepararJogos(jogos: readonly string[]): Promise<Map<string, ContextoJogo>> {

@@ -95,3 +95,15 @@ export const useEditarAposta = () => {
     onSuccess: () => queryClient.invalidateQueries({ queryKey: CHAVE_APOSTAS }),
   });
 };
+
+export interface ApostaPendente {
+  readonly id: number;
+  readonly nome: string | null;
+  readonly dezenas: number[];
+}
+
+export const apostasPendentesQuery = (jogo: string) =>
+  queryOptions({
+    queryKey: [...CHAVE_APOSTAS, 'pendentes', jogo],
+    queryFn: () => api.get<ApostaPendente[]>('/apostas/pendentes', { jogo }),
+  });

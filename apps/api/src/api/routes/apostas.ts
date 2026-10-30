@@ -3,7 +3,9 @@ import { Type, type FastifyPluginAsyncTypebox } from '@fastify/type-provider-typ
 import {
   AcertosConcursoSchema,
   ApostaAConferirSchema,
+  ApostaPendenteSchema,
   ApostasEditadasSchema,
+  ConsultaPendentesSchema,
   ApostasEfetivadasSchema,
   EdicaoApostaSchema,
   ParametrosApostaSchema,
@@ -59,6 +61,18 @@ const rotasApostas: FastifyPluginAsyncTypebox<OpcoesRotas> = async (app, { conta
       container
         .apostaService()
         .editar(usuarioDe(requisicao).id, requisicao.params.id, requisicao.body),
+  );
+
+  app.get(
+    '/apostas/pendentes',
+    {
+      schema: {
+        querystring: ConsultaPendentesSchema,
+        response: { 200: Type.Array(ApostaPendenteSchema) },
+      },
+    },
+    async (requisicao) =>
+      container.apostaService().listarPendentes(usuarioDe(requisicao).id, requisicao.query.jogo),
   );
 
   app.get(

@@ -1,15 +1,18 @@
 import { sortearConcurso, type RegraJogo } from '@mega/domain';
 import { IconDice5, IconTrash } from '@tabler/icons-react';
-import { useState } from 'react';
-import { LinhaDezenas } from '@/components/dezenas/linha-dezenas';
+import { useMemo, useState } from 'react';
 import { Vazio } from '@/components/ui/estado';
 import { Paginacao } from '@/components/ui/paginacao';
 import { sortearInteiro } from '@/lib/aleatorio';
 import { formatarInteiro } from '@/lib/formatadores';
+import type { ReferenciasSimulacao, SorteioSimulado } from '../types';
+import { conferirSorteio } from '../utils';
+import { LegendaMarcacoes } from './legenda-marcacoes';
+import { LinhaSorteio } from './linha-sorteio';
 
-interface SorteioSimulado {
-  readonly numero: number;
-  readonly sorteios: readonly (readonly number[])[];
+interface SimuladorSorteiosProps {
+  readonly regra: RegraJogo;
+  readonly referencias: ReferenciasSimulacao;
 }
 
 const ATALHOS = [10, 100, 1000] as const;
@@ -23,14 +26,22 @@ const classeAtalho =
 const limitarQuantidade = (valor: number): number =>
   Math.min(Math.max(Math.trunc(valor) || 1, 1), LIMITE_POR_GERACAO);
 
-export const SimuladorSorteios = ({ regra }: { readonly regra: RegraJogo }) => {
+export const SimuladorSorteios = ({ regra, referencias }: SimuladorSorteiosProps) => {
   const [quantidade, setQuantidade] = useState(100);
   const [sorteios, setSorteios] = useState<readonly SorteioSimulado[]>([]);
   const [pagina, setPagina] = useState(1);
+  const [somentePremiados, setSomentePremiados] = useState(false);
+
+  const conferidos = useMemo(
+    () => sorteios.map((sorteio) => conferirSorteio(regra, sorteio, referencias)),
+    [regra, sorteios, referencias],
+  );
+  const premiados = useMemo(() => conferidos.filter((sorteio) => sorteio.premiado), [conferidos]);
+  const exibidos = somentePremiados ? premiados : conferidos;
 
   const espaco = LIMITE_LISTA - sorteios.length;
   const aGerar = Math.min(quantidade, espaco);
-  const totalPaginas = Math.max(1, Math.ceil(sorteios.length / TAMANHO_PAGINA));
+  const totalPaginas = Math.max(1, Math.ceil(exibidos.length / TAMANHO_PAGINA));
   const paginaAtual = Math.min(pagina, totalPaginas);
   const inicio = (paginaAtual - 1) * TAMANHO_PAGINA;
 
@@ -88,7 +99,19 @@ export const SimuladorSorteios = ({ regra }: { readonly regra: RegraJogo }) => {
             Gerar
           </button>
         </div>
-        <div className="flex items-center gap-3">
+        <div className="flex flex-wrap items-center gap-3">
+          <label className="inline-flex items-center gap-1.5 text-xs font-medium">
+            <input
+              type="checkbox"
+              checked={somentePremiados}
+              onChange={(evento) => {
+                setSomentePremiados(evento.target.checked);
+                setPagina(1);
+              }}
+              className="accent-emerald-600"
+            />
+            Só premiados ({formatarInteiro(premiados.length)})
+          </label>
           <span className="text-xs text-slate-500 tabular-nums dark:text-slate-400">
             {formatarInteiro(sorteios.length)} de {formatarInteiro(LIMITE_LISTA)} sorteios
           </span>
@@ -105,32 +128,41 @@ export const SimuladorSorteios = ({ regra }: { readonly regra: RegraJogo }) => {
       </div>
 
       <div className="flex flex-col gap-3 p-3 lg:min-h-0 lg:flex-1 lg:overflow-auto">
-        {sorteios.length === 0 ? (
-          <Vazio>Informe a quantidade e clique em Gerar para simular sorteios.</Vazio>
+        <LegendaMarcacoes referencias={referencias} />
+        {exibidos.length === 0 ? (
+          <Vazio>
+            {sorteios.length === 0
+              ? 'Informe a quantidade e clique em Gerar para simular sorteios.'
+              : 'Nenhum sorteio premiou suas apostas ou favoritos.'}
+          </Vazio>
         ) : (
           <ol className="flex flex-col gap-1.5">
-            {sorteios.slice(inicio, inicio + TAMANHO_PAGINA).map((sorteio) => (
+            {exibidos.slice(inicio, inicio + TAMANHO_PAGINA).map((sorteio) => (
               <li
                 key={sorteio.numero}
-                className="flex items-center gap-3 rounded-lg border border-slate-100 px-3 py-1.5 dark:border-slate-800"
+                className={`flex items-center gap-3 rounded-lg border px-3 py-1.5 ${
+                  sorteio.premiado
+                    ? 'border-emerald-200 bg-emerald-50/50 dark:border-emerald-500/20 dark:bg-emerald-500/5'
+                    : 'border-slate-100 dark:border-slate-800'
+                }`}
               >
                 <span className="w-16 shrink-0 text-right font-mono text-xs text-slate-400 tabular-nums">
                   #{formatarInteiro(sorteio.numero)}
                 </span>
                 <div className="flex flex-col gap-1">
-                  {sorteio.sorteios.map((dezenas, indice) => (
-                    <LinhaDezenas key={indice} regra={regra} dezenas={dezenas} tamanho="sm" />
+                  {sorteio.resultados.map((resultado, indice) => (
+                    <LinhaSorteio key={indice} regra={regra} resultado={resultado} />
                   ))}
                 </div>
               </li>
             ))}
           </ol>
         )}
-        {sorteios.length > TAMANHO_PAGINA && (
+        {exibidos.length > TAMANHO_PAGINA && (
           <Paginacao
             pagina={paginaAtual}
             tamanho={TAMANHO_PAGINA}
-            total={sorteios.length}
+            total={exibidos.length}
             aoMudar={setPagina}
           />
         )}
