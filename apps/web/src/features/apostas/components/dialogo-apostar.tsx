@@ -25,6 +25,7 @@ import {
 export interface SelecaoParaAposta {
   readonly jogo: string;
   readonly dezenas: readonly number[];
+  readonly itens?: readonly ItemEfetivacaoJogo[];
 }
 
 interface DialogoApostarProps {
@@ -112,8 +113,10 @@ const Conteudo = ({
 }: Omit<DialogoApostarProps, 'aberto' | 'aoFechar'>) => {
   const [jogo, setJogo] = useState(inicial?.jogo ?? jogosDisponiveis[0]?.codigo ?? '');
   const [dezenas, setDezenas] = useState<ReadonlySet<number>>(() => new Set(inicial?.dezenas));
-  const [itens, setItens] = useState<readonly ItemLista[]>([]);
-  const [proximaChave, setProximaChave] = useState(1);
+  const [itens, setItens] = useState<readonly ItemLista[]>(() =>
+    (inicial?.itens ?? []).map((item, indice) => ({ ...item, chave: indice + 1 })),
+  );
+  const [proximaChave, setProximaChave] = useState(() => (inicial?.itens?.length ?? 0) + 1);
   const efetivar = useEfetivarApostas();
 
   const apresentacao = obterApresentacaoJogo(jogo);

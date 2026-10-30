@@ -45,7 +45,7 @@ export const EfetivacaoApostasSchema = Type.Object(
         },
         { additionalProperties: false },
       ),
-      { minItems: 1, maxItems: 100 },
+      { minItems: 1, maxItems: 200 },
     ),
   },
   { additionalProperties: false },

@@ -108,7 +108,7 @@ const ordenarParaConferencia = (a: ApostaAConferir, b: ApostaAConferir): number 
 };
 
 const LIMITE_DEZENAS_FILTRO = 20;
-const LIMITE_ITENS_EFETIVACAO = 100;
+const LIMITE_ITENS_EFETIVACAO = 200;
 const TAMANHO_MAXIMO_NOME = 80;
 
 export class ApostaService {

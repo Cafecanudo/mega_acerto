@@ -4,8 +4,9 @@ import {
   obterRegraJogo,
   type ApresentacaoJogo,
 } from '@mega/domain';
-import { IconBulb, IconHistory, IconInfoCircle, IconTicket } from '@tabler/icons-react';
-import { useState } from 'react';
+import { IconBulb, IconHistory, IconInfoCircle, IconStack2, IconTicket } from '@tabler/icons-react';
+import { useQuery } from '@tanstack/react-query';
+import { lazy, Suspense, useState } from 'react';
 import { Link } from 'react-router';
 import { paths } from '@/config/paths';
 import {
@@ -13,6 +14,7 @@ import {
   type SelecaoRanking,
 } from '@/features/concursos/components/ranking-dezenas';
 import { BotaoSalvarFavorito } from '@/features/favoritos/components/botao-salvar-favorito';
+import { listarValoresQuery } from '@/features/configuracoes/api/valores';
 import { estiloCorJogo } from '@/lib/cor-jogo';
 import { useAbrirApostar } from '../apostar-contexto';
 import { PaginaConta } from './pagina-conta';
@@ -22,7 +24,19 @@ const jogosDisponiveis: readonly ApresentacaoJogo[] = apresentacoesJogo.filter(
     apresentacao.disponibilidade === 'disponivel' && isCodigoJogo(apresentacao.codigo),
 );
 
-const AcoesSelecao = ({ selecao }: { readonly selecao: SelecaoRanking }) => {
+const DialogoMontarJogos = lazy(() =>
+  import('@/features/montar-jogos/components/dialogo-montar-jogos').then((modulo) => ({
+    default: modulo.DialogoMontarJogos,
+  })),
+);
+
+const AcoesSelecao = ({
+  selecao,
+  aoMontar,
+}: {
+  readonly selecao: SelecaoRanking;
+  readonly aoMontar: () => void;
+}) => {
   const abrirApostar = useAbrirApostar();
   if (!isCodigoJogo(selecao.jogo)) return null;
   const { minimo } = obterRegraJogo(selecao.jogo).dezenasPorAposta;
@@ -50,6 +64,16 @@ const AcoesSelecao = ({ selecao }: { readonly selecao: SelecaoRanking }) => {
         type="button"
         disabled={!valida}
         title={valida ? undefined : `Selecione pelo menos ${minimo} dezenas`}
+        onClick={aoMontar}
+        className="inline-flex items-center gap-1.5 rounded-lg border border-slate-300 px-3 py-1.5 text-sm font-medium transition hover:bg-slate-100 disabled:cursor-not-allowed disabled:opacity-40 dark:border-slate-700 dark:hover:bg-slate-800"
+      >
+        <IconStack2 aria-hidden size="1rem" />
+        Montar jogos
+      </button>
+      <button
+        type="button"
+        disabled={!valida}
+        title={valida ? undefined : `Selecione pelo menos ${minimo} dezenas`}
         onClick={() => {
           abrirApostar({ jogo: selecao.jogo, dezenas: selecao.dezenas });
         }}
@@ -65,6 +89,9 @@ const AcoesSelecao = ({ selecao }: { readonly selecao: SelecaoRanking }) => {
 const Palpites = () => {
   const [jogo, setJogo] = useState(jogosDisponiveis[0]?.codigo ?? '');
   const apresentacao = jogosDisponiveis.find((item) => item.codigo === jogo);
+  const [montagem, setMontagem] = useState<SelecaoRanking | null>(null);
+  const valores = useQuery({ ...listarValoresQuery(), enabled: montagem !== null });
+  const abrirApostar = useAbrirApostar();
 
   return (
     <PaginaConta
@@ -104,10 +131,34 @@ const Palpites = () => {
           <RankingDezenas
             key={jogo}
             regra={obterRegraJogo(jogo)}
-            acoes={(selecao) => <AcoesSelecao selecao={selecao} />}
+            acoes={(selecao) => (
+              <AcoesSelecao
+                selecao={selecao}
+                aoMontar={() => {
+                  setMontagem(selecao);
+                }}
+              />
+            )}
           />
         )}
       </div>
+      {montagem && (
+        <Suspense>
+          <DialogoMontarJogos
+            aberto
+            jogo={montagem.jogo}
+            dezenas={montagem.dezenas}
+            valorApostaSimples={(codigo) => valores.data?.get(codigo)?.valorAposta ?? null}
+            aoFechar={() => {
+              setMontagem(null);
+            }}
+            aoUsarNaAposta={(itens) => {
+              setMontagem(null);
+              abrirApostar({ jogo: montagem.jogo, dezenas: [], itens });
+            }}
+          />
+        </Suspense>
+      )}
     </PaginaConta>
   );
 };

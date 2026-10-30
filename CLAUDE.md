@@ -59,7 +59,8 @@ docker compose up -d --build
 - **Favoritos** (tabela `favorito`, `/api/favoritos`): jogos que o usuário monta para usar quando quiser. Cadastro completo (criar, editar, excluir) pela página Favoritos, com diálogo e histórico das dezenas.
 - **Apostas** (tabela `aposta`, `/api/apostas`): apostas efetivadas, criadas a partir de um favorito ou direto num jogo. Somente leitura na interface: sem criar nem excluir pela página Apostas. A lista segue o formato do histórico (tabela, busca por dezenas, combinações, paginação). `concurso` nulo confere contra o último sorteio; concurso futuro aparece como aguardando.
 - A conferência é genérica (`ConferenciaService`) e atende às duas entidades.
-- Apostas são criadas pelo botão "Apostar" da sidebar: diálogo com seleção de jogo, dezenas na grade ou favoritos (um a um ou todos), lista de apostas a efetivar e botão "Efetivar", que grava o lote (`POST /api/apostas`) para o próximo concurso.
+- Apostas são criadas pelo botão "Apostar" da sidebar: diálogo com seleção de jogo, dezenas na grade ou favoritos (um a um ou todos), lista de apostas a efetivar e botão "Efetivar", que grava o lote (`POST /api/apostas`, até 200 itens) para o próximo concurso.
+- Palpites › "Montar jogos" (`features/montar-jogos`, carregado sob demanda): gera jogos a partir das dezenas selecionadas (manual, todas as combinações ou sorteio) e envia a lista ao Apostar. A geração fica em `packages/domain` (`listarCombinacoes`, `sortearCombinacoes` por desranqueamento de posições sorteadas com o algoritmo de Floyd); a aleatoriedade vem de `crypto.getRandomValues`.
 
 ## Usuários e sessão
 

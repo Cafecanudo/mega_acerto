@@ -71,6 +71,7 @@ Dados separados por usuário.
 
 - [x] Página Palpites: ranking das dezenas mais sorteadas por período, seleção livre ou Top 6/10/15, envio ao Apostar, favoritos ou busca no histórico
 - [x] Análise `estrategia` pelo Claude: palpite do próximo concurso e backtest walk-forward contra apostas aleatórias (mais/menos sorteadas, mais atrasadas, equilibrada ou regra personalizada)
+- [x] Montar jogos (diálogo em Palpites): jogo manual com as dezenas selecionadas, todas as combinações (até 1000) ou combinações sorteadas sem repetição, tipo de jogo e dezenas por jogo, envio de até 200 jogos ao Apostar
 - [ ] Filtro de popularidade (evitar combinações muito jogadas)
 - [ ] Fechamentos (desdobramentos com garantia)
 
