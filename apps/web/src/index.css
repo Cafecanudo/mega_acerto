@@ -20,3 +20,41 @@
     @apply min-h-dvh font-sans;
   }
 }
+
+@theme {
+  --animate-agitar-bola: agitar-bola var(--duracao-agitar, 0.9s) ease-in-out infinite alternate;
+  --animate-girar-globo: girar-globo 6s linear infinite;
+  --animate-sair-bola: sair-bola 0.6s cubic-bezier(0.34, 1.56, 0.64, 1) both;
+
+  @keyframes agitar-bola {
+    0% {
+      transform: translate(0, 0);
+    }
+    33% {
+      transform: translate(var(--dx), calc(var(--dy) * -1));
+    }
+    66% {
+      transform: translate(calc(var(--dx) * -1), var(--dy));
+    }
+    100% {
+      transform: translate(var(--dy), var(--dx));
+    }
+  }
+
+  @keyframes girar-globo {
+    to {
+      transform: rotate(360deg);
+    }
+  }
+
+  @keyframes sair-bola {
+    0% {
+      opacity: 0;
+      transform: translateY(-1.5rem) scale(0.3);
+    }
+    100% {
+      opacity: 1;
+      transform: translateY(0) scale(1);
+    }
+  }
+}

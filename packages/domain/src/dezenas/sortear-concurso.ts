@@ -8,10 +8,16 @@ const sortearSemReposicao = (regra: RegraJogo, sortearInteiro: SortearInteiro): 
     const escolhida = posicao + sortearInteiro(globo.length - posicao);
     [globo[posicao], globo[escolhida]] = [globo[escolhida] ?? 0, globo[posicao] ?? 0];
   }
-  return globo.slice(0, regra.dezenasPorSorteio).sort((a, b) => a - b);
+  return globo.slice(0, regra.dezenasPorSorteio);
 };
 
-export const sortearConcurso = (regra: RegraJogo, sortearInteiro: SortearInteiro): number[][] =>
+export const sortearConcursoNaOrdem = (
+  regra: RegraJogo,
+  sortearInteiro: SortearInteiro,
+): number[][] =>
   Array.from({ length: regra.sorteiosPorConcurso }, () =>
     sortearSemReposicao(regra, sortearInteiro),
   );
+
+export const sortearConcurso = (regra: RegraJogo, sortearInteiro: SortearInteiro): number[][] =>
+  sortearConcursoNaOrdem(regra, sortearInteiro).map((dezenas) => dezenas.sort((a, b) => a - b));

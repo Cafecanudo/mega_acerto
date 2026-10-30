@@ -1,6 +1,6 @@
 import { sortearConcurso, type RegraJogo } from '@mega/domain';
 import { IconDice5, IconTrash } from '@tabler/icons-react';
-import { useMemo, useState } from 'react';
+import { useCallback, useMemo, useState } from 'react';
 import { Vazio } from '@/components/ui/estado';
 import { Paginacao } from '@/components/ui/paginacao';
 import { sortearInteiro } from '@/lib/aleatorio';
@@ -9,11 +9,19 @@ import type { ReferenciasSimulacao, SorteioSimulado } from '../types';
 import { conferirSorteio } from '../utils';
 import { LegendaMarcacoes } from './legenda-marcacoes';
 import { LinhaSorteio } from './linha-sorteio';
+import { PainelAoVivo } from './painel-ao-vivo';
 
 interface SimuladorSorteiosProps {
   readonly regra: RegraJogo;
   readonly referencias: ReferenciasSimulacao;
 }
+
+type Modo = 'ao-vivo' | 'rapido';
+
+const MODOS: readonly { readonly valor: Modo; readonly rotulo: string }[] = [
+  { valor: 'ao-vivo', rotulo: 'Ao vivo' },
+  { valor: 'rapido', rotulo: 'Rápido' },
+];
 
 const ATALHOS = [10, 100, 1000] as const;
 const LIMITE_POR_GERACAO = 10_000;
@@ -27,6 +35,7 @@ const limitarQuantidade = (valor: number): number =>
   Math.min(Math.max(Math.trunc(valor) || 1, 1), LIMITE_POR_GERACAO);
 
 export const SimuladorSorteios = ({ regra, referencias }: SimuladorSorteiosProps) => {
+  const [modo, setModo] = useState<Modo>('ao-vivo');
   const [quantidade, setQuantidade] = useState(100);
   const [sorteios, setSorteios] = useState<readonly SorteioSimulado[]>([]);
   const [pagina, setPagina] = useState(1);
@@ -43,14 +52,28 @@ export const SimuladorSorteios = ({ regra, referencias }: SimuladorSorteiosProps
   const aGerar = Math.min(quantidade, espaco);
   const totalPaginas = Math.max(1, Math.ceil(exibidos.length / TAMANHO_PAGINA));
   const paginaAtual = Math.min(pagina, totalPaginas);
-  const inicio = (paginaAtual - 1) * TAMANHO_PAGINA;
+  const fim = exibidos.length - (paginaAtual - 1) * TAMANHO_PAGINA;
+  const paginaExibida = exibidos.slice(Math.max(0, fim - TAMANHO_PAGINA), fim).reverse();
+
+  const adicionar = useCallback((novos: readonly (readonly (readonly number[])[])[]) => {
+    setSorteios((atuais) => [
+      ...atuais,
+      ...novos.slice(0, LIMITE_LISTA - atuais.length).map((sorteio, indice) => ({
+        numero: atuais.length + indice + 1,
+        sorteios: sorteio.map((dezenas) => [...dezenas].sort((a, b) => a - b)),
+      })),
+    ]);
+  }, []);
+
+  const adicionarUm = useCallback(
+    (sorteio: readonly (readonly number[])[]) => {
+      adicionar([sorteio]);
+    },
+    [adicionar],
+  );
 
   const gerar = () => {
-    const novos = Array.from({ length: aGerar }, (_, indice) => ({
-      numero: sorteios.length + indice + 1,
-      sorteios: sortearConcurso(regra, sortearInteiro),
-    }));
-    setSorteios([...sorteios, ...novos]);
+    adicionar(Array.from({ length: aGerar }, () => sortearConcurso(regra, sortearInteiro)));
   };
 
   const limpar = () => {
@@ -60,8 +83,63 @@ export const SimuladorSorteios = ({ regra, referencias }: SimuladorSorteiosProps
 
   return (
     <section className="flex flex-col rounded-xl border border-slate-200 bg-white lg:min-h-0 lg:flex-1 dark:border-slate-800 dark:bg-slate-900">
-      <div className="flex shrink-0 flex-wrap items-end justify-between gap-3 border-b border-slate-200 px-4 py-3 dark:border-slate-800">
-        <div className="flex flex-wrap items-end gap-2">
+      <div className="flex shrink-0 flex-wrap items-center justify-between gap-3 border-b border-slate-200 px-4 py-3 dark:border-slate-800">
+        <div
+          role="radiogroup"
+          aria-label="Modo do simulador"
+          className="inline-flex rounded-lg border border-slate-300 p-0.5 dark:border-slate-700"
+        >
+          {MODOS.map((item) => (
+            <button
+              key={item.valor}
+              type="button"
+              role="radio"
+              aria-checked={modo === item.valor}
+              onClick={() => {
+                setModo(item.valor);
+              }}
+              className={`rounded-md px-3 py-1 text-sm font-medium transition ${
+                modo === item.valor
+                  ? 'bg-jogo text-jogo-texto'
+                  : 'text-slate-600 hover:bg-slate-100 dark:text-slate-300 dark:hover:bg-slate-800'
+              }`}
+            >
+              {item.rotulo}
+            </button>
+          ))}
+        </div>
+        <div className="flex flex-wrap items-center gap-3">
+          <label className="inline-flex items-center gap-1.5 text-xs font-medium">
+            <input
+              type="checkbox"
+              checked={somentePremiados}
+              onChange={(evento) => {
+                setSomentePremiados(evento.target.checked);
+                setPagina(1);
+              }}
+              className="accent-emerald-600"
+            />
+            Só premiados ({formatarInteiro(premiados.length)})
+          </label>
+          <span className="text-xs text-slate-500 tabular-nums dark:text-slate-400">
+            {formatarInteiro(sorteios.length)} de {formatarInteiro(LIMITE_LISTA)} sorteios
+          </span>
+          <button
+            type="button"
+            disabled={sorteios.length === 0}
+            onClick={limpar}
+            className="inline-flex items-center gap-1 text-xs font-medium text-slate-500 hover:text-rose-600 disabled:opacity-40 dark:text-slate-400"
+          >
+            <IconTrash aria-hidden size="0.875rem" />
+            Limpar
+          </button>
+        </div>
+      </div>
+
+      {modo === 'ao-vivo' ? (
+        <PainelAoVivo regra={regra} referencias={referencias} aoConcluir={adicionarUm} />
+      ) : (
+        <div className="flex shrink-0 flex-wrap items-end gap-2 border-b border-slate-200 px-4 py-3 dark:border-slate-800">
           <label className="flex flex-col gap-1 text-sm">
             <span className="text-xs font-medium text-slate-500 dark:text-slate-400">
               Quantidade de sorteios
@@ -99,45 +177,19 @@ export const SimuladorSorteios = ({ regra, referencias }: SimuladorSorteiosProps
             Gerar
           </button>
         </div>
-        <div className="flex flex-wrap items-center gap-3">
-          <label className="inline-flex items-center gap-1.5 text-xs font-medium">
-            <input
-              type="checkbox"
-              checked={somentePremiados}
-              onChange={(evento) => {
-                setSomentePremiados(evento.target.checked);
-                setPagina(1);
-              }}
-              className="accent-emerald-600"
-            />
-            Só premiados ({formatarInteiro(premiados.length)})
-          </label>
-          <span className="text-xs text-slate-500 tabular-nums dark:text-slate-400">
-            {formatarInteiro(sorteios.length)} de {formatarInteiro(LIMITE_LISTA)} sorteios
-          </span>
-          <button
-            type="button"
-            disabled={sorteios.length === 0}
-            onClick={limpar}
-            className="inline-flex items-center gap-1 text-xs font-medium text-slate-500 hover:text-rose-600 disabled:opacity-40 dark:text-slate-400"
-          >
-            <IconTrash aria-hidden size="0.875rem" />
-            Limpar
-          </button>
-        </div>
-      </div>
+      )}
 
       <div className="flex flex-col gap-3 p-3 lg:min-h-0 lg:flex-1 lg:overflow-auto">
         <LegendaMarcacoes referencias={referencias} />
         {exibidos.length === 0 ? (
           <Vazio>
             {sorteios.length === 0
-              ? 'Informe a quantidade e clique em Gerar para simular sorteios.'
+              ? 'Os sorteios realizados aparecem aqui, do mais recente para o mais antigo.'
               : 'Nenhum sorteio premiou suas apostas ou favoritos.'}
           </Vazio>
         ) : (
           <ol className="flex flex-col gap-1.5">
-            {exibidos.slice(inicio, inicio + TAMANHO_PAGINA).map((sorteio) => (
+            {paginaExibida.map((sorteio) => (
               <li
                 key={sorteio.numero}
                 className={`flex items-center gap-3 rounded-lg border px-3 py-1.5 ${
