@@ -11,6 +11,7 @@ import { UsuarioRepository } from '../data/repositories/usuario-repository.ts';
 import { ValorJogoRepository } from '../data/repositories/valor-jogo-repository.ts';
 import { ConcursoLeituraRepository } from '../data/repositories/concurso-leitura-repository.ts';
 import { JogoRepository } from '../data/repositories/jogo-repository.ts';
+import { LinhaDoTempoRepository } from '../data/repositories/linha-do-tempo-repository.ts';
 import type { ExecutorAnalise } from '../services/analises/executor-analise.ts';
 import { AnaliseService } from '../services/analise-service.ts';
 import { ApostaService } from '../services/aposta-service.ts';
@@ -21,6 +22,7 @@ import { ValorJogoService } from '../services/valor-jogo-service.ts';
 import { ConcursoService } from '../services/concurso-service.ts';
 import type { IngestaoService } from '../services/ingestao-service.ts';
 import { JogoService } from '../services/jogo-service.ts';
+import { LinhaDoTempoService } from '../services/linha-do-tempo-service.ts';
 import type { Logger } from '../shared/logger.ts';
 import { lazy } from '../shared/lazy.ts';
 
@@ -32,6 +34,7 @@ export interface Container {
   readonly concursoService: () => ConcursoService;
   readonly analiseService: () => AnaliseService;
   readonly apostaService: () => ApostaService;
+  readonly linhaDoTempoService: () => LinhaDoTempoService;
   readonly favoritoService: () => FavoritoService;
   readonly valorJogoService: () => ValorJogoService;
   readonly autenticacaoService: () => AutenticacaoService;
@@ -107,6 +110,9 @@ export const criarContainer = (config: Config, db: Kysely<Database>, logger: Log
     jogoService: lazy(() => new JogoService(new JogoRepository(db))),
     concursoService: lazy(() => new ConcursoService(concursosLeitura())),
     analiseService: lazy(() => new AnaliseService(new AnaliseRepository(db), concursosLeitura())),
+    linhaDoTempoService: lazy(
+      () => new LinhaDoTempoService(new LinhaDoTempoRepository(db), concursosLeitura()),
+    ),
     apostaService: lazy(
       () =>
         new ApostaService(

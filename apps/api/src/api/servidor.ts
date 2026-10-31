@@ -21,6 +21,7 @@ export const criarServidor = async (container: Container, logger: FastifyBaseLog
   await app.register(import('./routes/ingestao.ts'), opcoes);
   await app.register(import('./routes/analises.ts'), opcoes);
   await app.register(import('./routes/apostas.ts'), opcoes);
+  await app.register(import('./routes/linha-do-tempo.ts'), opcoes);
   await app.register(import('./routes/favoritos.ts'), opcoes);
   await app.register(import('./routes/configuracoes.ts'), opcoes);
 
