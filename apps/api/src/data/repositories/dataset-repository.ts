@@ -40,7 +40,11 @@ export class DatasetRepository {
       .execute();
   }
 
-  async agregarDezenas(regra: RegraJogo, ateConcurso: number): Promise<AgregadoDezena[]> {
+  async agregarDezenas(
+    regra: RegraJogo,
+    ateConcurso: number,
+    desdeConcurso = 1,
+  ): Promise<AgregadoDezena[]> {
     const { rows } = await sql<AgregadoDezena>`
       select
         universo.dezena::integer as "dezena",
@@ -53,6 +57,7 @@ export class DatasetRepository {
         and d.jogo = ${regra.codigo}
         and d.sorteio = 1
         and d.numero <= ${ateConcurso}
+        and d.numero >= ${desdeConcurso}
       group by universo.dezena
       order by universo.dezena
     `.execute(this.#db);

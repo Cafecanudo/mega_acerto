@@ -13,6 +13,13 @@ export const tiposAnalise = [
       'Gera o palpite de uma estratégia para o próximo concurso e testa a estratégia no histórico, comparando com apostas aleatórias.',
     versaoPrompt: 1,
   },
+  {
+    codigo: 'frequencia-recente',
+    nome: 'Frequência recente',
+    descricao:
+      'Mostra as dezenas mais sorteadas nos últimos concursos, onde elas ficam na frequência histórica e quanto desse destaque o acaso explica.',
+    versaoPrompt: 1,
+  },
 ] as const;
 
 export type TipoAnalise = (typeof tiposAnalise)[number]['codigo'];
@@ -59,3 +66,4 @@ export const nomeEsforco = (codigo: string): string =>
   esforcosAnalise.find((esforco) => esforco.codigo === codigo)?.nome ?? codigo;
 
 export * from './estrategia/catalogo.ts';
+export * from './frequencia-recente/catalogo.ts';

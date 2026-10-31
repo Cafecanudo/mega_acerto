@@ -7,3 +7,7 @@ export { montarPromptEstrategia } from './estrategia/prompt.ts';
 export { ParametrosEstrategiaSchema } from './estrategia/parametros.ts';
 export type { ResultadoEstrategia } from './estrategia/resultado.ts';
 export { ResultadoEstrategiaSchema } from './estrategia/resultado.ts';
+export { montarPromptFrequenciaRecente } from './frequencia-recente/prompt.ts';
+export { ParametrosFrequenciaRecenteSchema } from './frequencia-recente/parametros.ts';
+export type { ResultadoFrequenciaRecente } from './frequencia-recente/resultado.ts';
+export { ResultadoFrequenciaRecenteSchema } from './frequencia-recente/resultado.ts';

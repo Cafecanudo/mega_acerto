@@ -94,6 +94,7 @@ export class ExecutorAnalise {
       obterRegraJogo(analise.jogo),
       analise.ultimoConcurso,
       diretorio,
+      execucoesPorTipo[analise.tipo].janelaDataset(analise),
     );
   }
 

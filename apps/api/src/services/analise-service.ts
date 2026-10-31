@@ -2,6 +2,7 @@ import {
   obterTipoAnalise,
   type EsforcoAnalise,
   type ParametrosEstrategia,
+  type ParametrosFrequenciaRecente,
   type ModeloAnalise,
   type TipoAnalise,
 } from '@mega/analises';
@@ -14,12 +15,14 @@ import type {
 import type { ConcursoLeituraRepository } from '../data/repositories/concurso-leitura-repository.ts';
 import { entradaInvalida, naoEncontrado } from '../shared/erros.ts';
 
+type ParametrosAnalise = ParametrosEstrategia | ParametrosFrequenciaRecente;
+
 export interface SolicitacaoAnalise {
   readonly tipo: TipoAnalise;
   readonly modelo: ModeloAnalise;
   readonly esforco: EsforcoAnalise;
   readonly forcar: boolean;
-  readonly parametros?: ParametrosEstrategia | null | undefined;
+  readonly parametros?: ParametrosAnalise | null | undefined;
 }
 
 export interface AnaliseSolicitada {
@@ -27,15 +30,41 @@ export interface AnaliseSolicitada {
   readonly reaproveitada: boolean;
 }
 
+interface ContextoParametros {
+  readonly jogo: CodigoJogo;
+  readonly ultimoConcurso: number;
+}
+
 const LIMITE_LISTAGEM = 50;
 
-const prepararParametros = (
-  jogo: CodigoJogo,
-  solicitacao: SolicitacaoAnalise,
-): ParametrosEstrategia | null => {
-  if (solicitacao.tipo !== 'estrategia') return null;
-  const parametros = solicitacao.parametros;
-  if (!parametros) throw entradaInvalida('Informe os parâmetros da estratégia');
+const isParametrosEstrategia = (
+  parametros: ParametrosAnalise | null | undefined,
+): parametros is ParametrosEstrategia => !!parametros && 'estrategia' in parametros;
+
+const isParametrosFrequenciaRecente = (
+  parametros: ParametrosAnalise | null | undefined,
+): parametros is ParametrosFrequenciaRecente => !!parametros && 'tamanhoTop' in parametros;
+
+const prepararFrequenciaRecente = (
+  { ultimoConcurso }: ContextoParametros,
+  parametros: ParametrosAnalise | null | undefined,
+): ParametrosFrequenciaRecente => {
+  if (!isParametrosFrequenciaRecente(parametros)) {
+    throw entradaInvalida('Informe a janela e o tamanho do top');
+  }
+  if (parametros.janela > ultimoConcurso) {
+    throw entradaInvalida(`A janela não pode passar de ${ultimoConcurso} concursos`);
+  }
+  return { janela: parametros.janela, tamanhoTop: parametros.tamanhoTop };
+};
+
+const prepararEstrategia = (
+  { jogo }: ContextoParametros,
+  parametros: ParametrosAnalise | null | undefined,
+): ParametrosEstrategia => {
+  if (!isParametrosEstrategia(parametros)) {
+    throw entradaInvalida('Informe os parâmetros da estratégia');
+  }
 
   const { minimo, maximo } = obterRegraJogo(jogo).dezenasPorAposta;
   if (parametros.quantidadeDezenas < minimo || parametros.quantidadeDezenas > maximo) {
@@ -53,6 +82,18 @@ const prepararParametros = (
     quantidadeDezenas: parametros.quantidadeDezenas,
     janela: parametros.janela,
   };
+};
+
+const preparadores: Record<
+  TipoAnalise,
+  (
+    contexto: ContextoParametros,
+    parametros: ParametrosAnalise | null | undefined,
+  ) => ParametrosAnalise | null
+> = {
+  aleatoriedade: () => null,
+  estrategia: prepararEstrategia,
+  'frequencia-recente': prepararFrequenciaRecente,
 };
 
 export class AnaliseService {
@@ -81,7 +122,7 @@ export class AnaliseService {
       modelo: solicitacao.modelo,
       esforco: solicitacao.esforco,
       ultimoConcurso,
-      parametros: prepararParametros(jogo, solicitacao),
+      parametros: preparadores[solicitacao.tipo]({ jogo, ultimoConcurso }, solicitacao.parametros),
     };
 
     if (!solicitacao.forcar) {

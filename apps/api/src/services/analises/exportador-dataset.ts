@@ -14,7 +14,11 @@ export interface DatasetExportado {
   readonly dataInicio: string;
   readonly dataFim: string;
   readonly agregados: readonly AgregadoDezena[];
+  readonly agregadosJanela: readonly AgregadoDezena[] | null;
 }
+
+const montarFrequencias = (agregados: readonly AgregadoDezena[]) =>
+  Object.fromEntries(agregados.map((item) => [item.dezena, item.frequencia]));
 
 const montarCsv = (regra: RegraJogo, concursos: readonly ConcursoDataset[]): string => {
   const colunas = Array.from({ length: regra.dezenasPorSorteio }, (_, i) => `d${i + 1}`);
@@ -27,7 +31,7 @@ const montarCsv = (regra: RegraJogo, concursos: readonly ConcursoDataset[]): str
 
 const montarAgregados = (ultimoConcurso: number, agregados: readonly AgregadoDezena[]) => ({
   ultimoConcurso,
-  frequencia: Object.fromEntries(agregados.map((item) => [item.dezena, item.frequencia])),
+  frequencia: montarFrequencias(agregados),
   atrasoAtual: Object.fromEntries(agregados.map((item) => [item.dezena, item.atrasoAtual])),
 });
 
@@ -42,10 +46,14 @@ export class ExportadorDataset {
     regra: RegraJogo,
     ultimoConcurso: number,
     diretorio: string,
+    janela: number | null = null,
   ): Promise<DatasetExportado> {
-    const [concursos, agregados] = await Promise.all([
+    const [concursos, agregados, agregadosJanela] = await Promise.all([
       this.#repository.listarConcursos(regra.codigo, ultimoConcurso),
       this.#repository.agregarDezenas(regra, ultimoConcurso),
+      janela === null
+        ? Promise.resolve(null)
+        : this.#repository.agregarDezenas(regra, ultimoConcurso, ultimoConcurso - janela + 1),
     ]);
 
     const primeiro = concursos.at(0);
@@ -54,20 +62,40 @@ export class ExportadorDataset {
 
     const csv = montarCsv(regra, concursos);
     const agregadosJson = JSON.stringify(montarAgregados(ultimoConcurso, agregados), null, 2);
+    const janelaJson =
+      agregadosJanela === null
+        ? null
+        : JSON.stringify(
+            {
+              primeiroConcurso: ultimoConcurso - (janela ?? 0) + 1,
+              ultimoConcurso,
+              frequencia: montarFrequencias(agregadosJanela),
+            },
+            null,
+            2,
+          );
 
     await mkdir(join(diretorio, 'scripts'), { recursive: true });
     await Promise.all([
       writeFile(join(diretorio, 'concursos.csv'), csv, 'utf8'),
       writeFile(join(diretorio, 'agregados.json'), agregadosJson, 'utf8'),
       writeFile(join(diretorio, 'jogo.json'), JSON.stringify(regra, null, 2), 'utf8'),
+      ...(janelaJson === null
+        ? []
+        : [writeFile(join(diretorio, 'agregados_janela.json'), janelaJson, 'utf8')]),
     ]);
 
     return {
-      hash: createHash('sha256').update(csv).update(agregadosJson).digest('hex'),
+      hash: createHash('sha256')
+        .update(csv)
+        .update(agregadosJson)
+        .update(janelaJson ?? '')
+        .digest('hex'),
       totalConcursos: concursos.length,
       dataInicio: primeiro.data,
       dataFim: ultimo.data,
       agregados,
+      agregadosJanela,
     };
   }
 }
