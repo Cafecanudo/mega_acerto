@@ -1,7 +1,12 @@
 import {
   ESFORCO_PADRAO,
   esforcosAnalise,
+  JANELAS_FREQUENCIA_RECENTE,
   MODELO_PADRAO,
+  PARAMETROS_FREQUENCIA_RECENTE_PADRAO,
+  TAMANHO_TOP_MAXIMO,
+  TAMANHO_TOP_MINIMO,
+  type ParametrosFrequenciaRecente,
   modelosAnalise,
   estrategiasDisponiveis,
   obterEstrategia,
@@ -18,7 +23,7 @@ import { apresentacoesJogo, isCodigoJogo, obterRegraJogo, type RegraJogo } from 
 import { IconSparkles } from '@tabler/icons-react';
 import { useState, type ReactNode, type SyntheticEvent } from 'react';
 import { useSolicitarAnalise } from '../api/analises';
-import type { AnaliseSolicitada } from '../types';
+import type { AnaliseSolicitada, SolicitacaoAnalise } from '../types';
 
 const jogosDisponiveis = apresentacoesJogo.filter(
   (apresentacao) =>
@@ -134,6 +139,65 @@ const CamposEstrategia = ({
   );
 };
 
+const tamanhosTop = Array.from(
+  { length: TAMANHO_TOP_MAXIMO - TAMANHO_TOP_MINIMO + 1 },
+  (_, indice) => TAMANHO_TOP_MINIMO + indice,
+);
+
+const CamposFrequenciaRecente = ({
+  parametros,
+  aoAlterar,
+}: {
+  readonly parametros: ParametrosFrequenciaRecente;
+  readonly aoAlterar: (parametros: ParametrosFrequenciaRecente) => void;
+}) => (
+  <div className="grid grid-cols-2 gap-3 rounded-lg border border-slate-200 p-3 dark:border-slate-800">
+    <Campo rotulo="Janela">
+      <select
+        value={parametros.janela}
+        onChange={(evento) => {
+          aoAlterar({ ...parametros, janela: Number(evento.target.value) });
+        }}
+        className={classeSelect}
+      >
+        {JANELAS_FREQUENCIA_RECENTE.map((janela) => (
+          <option key={janela} value={janela}>
+            Últimos {janela}
+          </option>
+        ))}
+      </select>
+    </Campo>
+    <Campo rotulo="Tamanho do top">
+      <select
+        value={parametros.tamanhoTop}
+        onChange={(evento) => {
+          aoAlterar({ ...parametros, tamanhoTop: Number(evento.target.value) });
+        }}
+        className={classeSelect}
+      >
+        {tamanhosTop.map((tamanho) => (
+          <option key={tamanho} value={tamanho}>
+            Top {tamanho}
+          </option>
+        ))}
+      </select>
+    </Campo>
+  </div>
+);
+
+const parametrosDoTipo = (
+  tipo: TipoAnalise,
+  estrategia: ParametrosEstrategia,
+  frequenciaRecente: ParametrosFrequenciaRecente,
+): SolicitacaoAnalise['parametros'] => {
+  if (tipo === 'frequencia-recente') return frequenciaRecente;
+  if (tipo !== 'estrategia') return null;
+  return {
+    ...estrategia,
+    descricao: estrategia.estrategia === 'personalizada' ? estrategia.descricao : null,
+  };
+};
+
 export const NovaAnalise = ({ aoSolicitar }: NovaAnaliseProps) => {
   const [jogo, setJogo] = useState(jogosDisponiveis[0]?.codigo ?? '');
   const [tipo, setTipo] = useState<TipoAnalise>(tiposAnalise[0].codigo);
@@ -141,18 +205,15 @@ export const NovaAnalise = ({ aoSolicitar }: NovaAnaliseProps) => {
   const [esforco, setEsforco] = useState<EsforcoAnalise>(ESFORCO_PADRAO);
   const [forcar, setForcar] = useState(false);
   const [estrategia, setEstrategia] = useState<ParametrosEstrategia>(PARAMETROS_INICIAIS);
+  const [frequenciaRecente, setFrequenciaRecente] = useState<ParametrosFrequenciaRecente>(
+    PARAMETROS_FREQUENCIA_RECENTE_PADRAO,
+  );
   const solicitar = useSolicitarAnalise();
   const definicao = obterTipoAnalise(tipo);
 
   const enviar = (evento: SyntheticEvent) => {
     evento.preventDefault();
-    const parametros =
-      tipo === 'estrategia'
-        ? {
-            ...estrategia,
-            descricao: estrategia.estrategia === 'personalizada' ? estrategia.descricao : null,
-          }
-        : null;
+    const parametros = parametrosDoTipo(tipo, estrategia, frequenciaRecente);
     solicitar.mutate(
       { jogo, tipo, modelo, esforco, forcar, parametros },
       { onSuccess: aoSolicitar },
@@ -202,6 +263,9 @@ export const NovaAnalise = ({ aoSolicitar }: NovaAnaliseProps) => {
           parametros={estrategia}
           aoAlterar={setEstrategia}
         />
+      )}
+      {tipo === 'frequencia-recente' && (
+        <CamposFrequenciaRecente parametros={frequenciaRecente} aoAlterar={setFrequenciaRecente} />
       )}
       <div className="grid grid-cols-2 gap-3">
         <Campo rotulo="Modelo">

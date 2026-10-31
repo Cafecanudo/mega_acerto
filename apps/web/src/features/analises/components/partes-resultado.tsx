@@ -69,3 +69,16 @@ export const Limitacoes = ({ limitacoes }: { readonly limitacoes: readonly strin
     ))}
   </ul>
 );
+
+export const Indicador = ({
+  rotulo,
+  valor,
+}: {
+  readonly rotulo: string;
+  readonly valor: string;
+}) => (
+  <div className="flex flex-col gap-0.5 rounded-lg border border-slate-200 px-3 py-2 dark:border-slate-800">
+    <span className="text-xs text-slate-500 dark:text-slate-400">{rotulo}</span>
+    <span className="text-base font-semibold tabular-nums">{valor}</span>
+  </div>
+);

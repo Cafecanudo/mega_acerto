@@ -33,6 +33,12 @@ const Explicacao = () => (
         anteriores a ele, contra apostas aleatórias. Ela mostra se a regra teria acertado mais que o
         acaso.
       </p>
+      <p>
+        A análise de <strong>frequência recente</strong> lista as dezenas mais sorteadas nos últimos
+        concursos, mostra onde cada uma fica no ranking de todo o histórico e compara esse top com
+        milhares de janelas simuladas ao acaso, para separar o que é destaque real do que é efeito
+        de seleção.
+      </p>
       <ol className="grid gap-3 md:grid-cols-2 xl:grid-cols-4">
         <Passo titulo="1. Dados">
           O sistema exporta todos os concursos do jogo e as frequências contadas no banco.

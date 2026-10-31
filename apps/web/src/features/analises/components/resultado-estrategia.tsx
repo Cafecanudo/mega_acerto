@@ -5,7 +5,7 @@ import type { ReactNode } from 'react';
 import { BolaDezena } from '@/components/ui/bola-dezena';
 import { formatarDecimal, formatarInteiro, formatarPValor } from '@/lib/formatadores';
 import type { AnaliseEstrategia } from '../types';
-import { Conferencia, Limitacoes, Scripts, Secao } from './partes-resultado';
+import { Conferencia, Indicador, Limitacoes, Scripts, Secao } from './partes-resultado';
 
 export interface PalpiteAnalise {
   readonly jogo: string;
@@ -104,13 +104,6 @@ const GraficoEvolucao = ({
     </figure>
   );
 };
-
-const Indicador = ({ rotulo, valor }: { readonly rotulo: string; readonly valor: string }) => (
-  <div className="flex flex-col gap-0.5 rounded-lg border border-slate-200 px-3 py-2 dark:border-slate-800">
-    <span className="text-xs text-slate-500 dark:text-slate-400">{rotulo}</span>
-    <span className="text-base font-semibold tabular-nums">{valor}</span>
-  </div>
-);
 
 export const ResultadoEstrategiaConcluida = ({
   regra,

@@ -23,6 +23,7 @@ import { emAndamento, type Analise, type AnaliseAleatoriedade } from '../types';
 import { GraficoFrequencias } from './grafico-frequencias';
 import { Conferencia, Limitacoes, Scripts, Secao } from './partes-resultado';
 import { ResultadoEstrategiaConcluida, type PalpiteAnalise } from './resultado-estrategia';
+import { ResultadoFrequenciaRecenteConcluida } from './resultado-frequencia-recente';
 import { SeloStatus } from './selo-status';
 
 interface ResultadoAnaliseProps {
@@ -188,6 +189,15 @@ const ConteudoConcluido = ({
   readonly analise: Analise;
   readonly acoesPalpite: ResultadoAnaliseProps['acoesPalpite'];
 }) => {
+  if (analise.tipo === 'frequencia-recente') {
+    return analise.resultado ? (
+      <ResultadoFrequenciaRecenteConcluida
+        regra={regra}
+        analise={analise}
+        resultado={analise.resultado}
+      />
+    ) : null;
+  }
   if (analise.tipo === 'estrategia') {
     return analise.resultado ? (
       <ResultadoEstrategiaConcluida
