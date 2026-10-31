@@ -85,6 +85,34 @@ export const EdicaoApostaSchema = Type.Object(
 
 export const ApostasEditadasSchema = Type.Object({ ids: Type.Array(Type.Integer()) });
 
+export const ApostasDoProximoConcursoSchema = Type.Object({
+  jogo: Type.String(),
+  concurso: Type.Integer(),
+  apostas: Type.Array(
+    Type.Object({
+      id: Type.Integer(),
+      nome: Nulavel(Type.String()),
+      dezenas: Type.Array(Type.Integer()),
+      valor: Nulavel(Type.Number()),
+      teimosinha: TeimosinhaSchema,
+    }),
+  ),
+  valorTotal: Nulavel(Type.Number()),
+});
+
+const BalancoPeriodoSchema = Type.Object({
+  apostas: Type.Integer(),
+  gasto: Type.Number(),
+  premios: Type.Number(),
+  incompletas: Type.Integer(),
+});
+
+export const BalancoApostasSchema = Type.Object({
+  total: BalancoPeriodoSchema,
+  ultimos12Meses: BalancoPeriodoSchema,
+  aguardando: Type.Object({ apostas: Type.Integer(), valor: Type.Number() }),
+});
+
 export const ApostaAConferirSchema = Type.Object({
   id: Type.Integer(),
   jogo: Type.String(),

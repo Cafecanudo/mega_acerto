@@ -4,7 +4,9 @@ import {
   AcertosConcursoSchema,
   ApostaAConferirSchema,
   ApostaPendenteSchema,
+  ApostasDoProximoConcursoSchema,
   ApostasEditadasSchema,
+  BalancoApostasSchema,
   ConsultaPendentesSchema,
   ApostasEfetivadasSchema,
   EdicaoApostaSchema,
@@ -73,6 +75,18 @@ const rotasApostas: FastifyPluginAsyncTypebox<OpcoesRotas> = async (app, { conta
     },
     async (requisicao) =>
       container.apostaService().listarPendentes(usuarioDe(requisicao).id, requisicao.query.jogo),
+  );
+
+  app.get(
+    '/apostas/proximas',
+    { schema: { response: { 200: Type.Array(ApostasDoProximoConcursoSchema) } } },
+    async (requisicao) => container.apostaService().listarProximas(usuarioDe(requisicao).id),
+  );
+
+  app.get(
+    '/apostas/balanco',
+    { schema: { response: { 200: BalancoApostasSchema } } },
+    async (requisicao) => container.apostaService().calcularBalanco(usuarioDe(requisicao).id),
   );
 
   app.get(

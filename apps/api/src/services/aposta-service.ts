@@ -15,6 +15,7 @@ import type {
   ApostaFiltrada,
   ApostaRepository,
   NovaApostaItem,
+  Teimosinha,
 } from '../data/repositories/aposta-repository.ts';
 import type { ConcursoLeituraRepository } from '../data/repositories/concurso-leitura-repository.ts';
 import { entradaInvalida, naoEncontrado } from '../shared/erros.ts';
@@ -58,6 +59,34 @@ export interface ApostaPendente {
   readonly id: number;
   readonly nome: string | null;
   readonly dezenas: number[];
+}
+
+export interface ApostaProxima {
+  readonly id: number;
+  readonly nome: string | null;
+  readonly dezenas: number[];
+  readonly valor: number | null;
+  readonly teimosinha: Teimosinha | null;
+}
+
+export interface ApostasDoProximoConcurso {
+  readonly jogo: string;
+  readonly concurso: number;
+  readonly apostas: ApostaProxima[];
+  readonly valorTotal: number | null;
+}
+
+export interface BalancoPeriodo {
+  readonly apostas: number;
+  readonly gasto: number;
+  readonly premios: number;
+  readonly incompletas: number;
+}
+
+export interface BalancoApostas {
+  readonly total: BalancoPeriodo;
+  readonly ultimos12Meses: BalancoPeriodo;
+  readonly aguardando: { readonly apostas: number; readonly valor: number };
 }
 
 export interface ResumoApostas {
@@ -111,15 +140,38 @@ interface ContextoJogo {
 
 const CONFERENCIA_PENDENTE: Conferencia = { concursoConferido: null, historico: [] };
 
+const arredondarCentavos = (valor: number): number => Math.round(valor * 100) / 100;
+
 const somarPremios = (premios: readonly PremioConferido[]): number | null =>
   premios.some((premio) => premio.valorUnitario === null)
     ? null
-    : Math.round(
-        premios.reduce(
-          (soma, premio) => soma + premio.quantidade * (premio.valorUnitario ?? 0),
-          0,
-        ) * 100,
-      ) / 100;
+    : arredondarCentavos(
+        premios.reduce((soma, premio) => soma + premio.quantidade * (premio.valorUnitario ?? 0), 0),
+      );
+
+const somarValores = (itens: readonly { readonly valor: number | null }[]): number | null =>
+  itens.some((item) => item.valor === null)
+    ? null
+    : arredondarCentavos(itens.reduce((soma, item) => soma + (item.valor ?? 0), 0));
+
+const BALANCO_VAZIO: BalancoPeriodo = { apostas: 0, gasto: 0, premios: 0, incompletas: 0 };
+
+const acumularBalanco = (
+  balanco: BalancoPeriodo,
+  valor: number | null,
+  premioTotal: number | null,
+): BalancoPeriodo => ({
+  apostas: balanco.apostas + 1,
+  gasto: arredondarCentavos(balanco.gasto + (valor ?? 0)),
+  premios: arredondarCentavos(balanco.premios + (premioTotal ?? 0)),
+  incompletas: balanco.incompletas + (valor === null || premioTotal === null ? 1 : 0),
+});
+
+const inicioUltimos12Meses = (hoje: Date): string => {
+  const inicio = new Date(hoje);
+  inicio.setFullYear(inicio.getFullYear() - 1);
+  return inicio.toISOString().slice(0, 10);
+};
 
 const ordenarParaConferencia = (a: ApostaAConferir, b: ApostaAConferir): number => {
   const sorteioA = a.conferencia.concursoConferido?.numero ?? null;
@@ -215,9 +267,7 @@ export class ApostaService {
     });
 
     const ids = await this.#repository.criarLote(usuarioId, itens);
-    const valorTotal = itens.some((item) => item.valor === null)
-      ? null
-      : Math.round(itens.reduce((soma, item) => soma + (item.valor ?? 0), 0) * 100) / 100;
+    const valorTotal = somarValores(itens);
     const concursos = [...contextos.values()].map(({ regra, concurso }) => ({
       jogo: regra.codigo,
       concurso,
@@ -274,6 +324,86 @@ export class ApostaService {
       .map(({ id, nome, dezenas }) => ({ id, nome, dezenas }));
   }
 
+  async listarProximas(usuarioId: number): Promise<ApostasDoProximoConcurso[]> {
+    const apostas = await this.#repository.listarTodas(usuarioId);
+    const proximos = await this.#proximosConcursos(apostas.map((aposta) => aposta.jogo));
+    const porJogo = new Map<string, Aposta[]>();
+    for (const aposta of apostas) {
+      if (aposta.concurso === null || aposta.concurso !== proximos.get(aposta.jogo)) continue;
+      porJogo.set(aposta.jogo, [...(porJogo.get(aposta.jogo) ?? []), aposta]);
+    }
+    return [...porJogo].map(([jogo, doJogo]) => ({
+      jogo,
+      concurso: proximos.get(jogo) ?? 0,
+      apostas: doJogo
+        .sort((a, b) => a.id - b.id)
+        .map(({ id, nome, dezenas, valor, teimosinha }) => ({
+          id,
+          nome,
+          dezenas,
+          valor,
+          teimosinha,
+        })),
+      valorTotal: somarValores(doJogo),
+    }));
+  }
+
+  async calcularBalanco(usuarioId: number, hoje = new Date()): Promise<BalancoApostas> {
+    const apostas = await this.#repository.listarTodas(usuarioId);
+    const conferencias = await this.#conferencia.conferir(apostas);
+    const valores = await this.#valoresPremiacao(apostas, conferencias);
+    const inicioPeriodo = inicioUltimos12Meses(hoje);
+
+    let total = BALANCO_VAZIO;
+    let ultimos12Meses = BALANCO_VAZIO;
+    let aguardando = { apostas: 0, valor: 0 };
+    for (const aposta of apostas) {
+      const conferencia = conferencias.get(aposta.id) ?? CONFERENCIA_PENDENTE;
+      const concurso = conferencia.concursoConferido;
+      if (!concurso) {
+        aguardando = {
+          apostas: aguardando.apostas + 1,
+          valor: arredondarCentavos(aguardando.valor + (aposta.valor ?? 0)),
+        };
+        continue;
+      }
+      const premioTotal = somarPremios(this.#calcularPremios(aposta, conferencia, valores));
+      total = acumularBalanco(total, aposta.valor, premioTotal);
+      if (concurso.data >= inicioPeriodo) {
+        ultimos12Meses = acumularBalanco(ultimos12Meses, aposta.valor, premioTotal);
+      }
+    }
+    return { total, ultimos12Meses, aguardando };
+  }
+
+  async #proximosConcursos(jogos: readonly string[]): Promise<Map<string, number>> {
+    const codigos = [...new Set(jogos)].filter(isCodigoJogo);
+    const ultimos = await Promise.all(
+      codigos.map(async (jogo) => [jogo, await this.#concursos.obterNumeroUltimo(jogo)] as const),
+    );
+    return new Map(
+      ultimos.flatMap(([jogo, ultimo]) => (ultimo === null ? [] : [[jogo, ultimo + 1] as const])),
+    );
+  }
+
+  async #valoresPremiacao(
+    apostas: readonly Aposta[],
+    conferencias: ReadonlyMap<number, Conferencia>,
+  ): Promise<Map<string, number>> {
+    const premiacoes = await this.#concursos.listarPremiacoes(
+      apostas.flatMap((aposta) => {
+        const numero = conferencias.get(aposta.id)?.concursoConferido?.numero;
+        return numero === undefined ? [] : [{ jogo: aposta.jogo, numero }];
+      }),
+    );
+    return new Map(
+      premiacoes.map((linha) => [
+        `${linha.jogo}:${String(linha.numero)}:${String(linha.faixa)}`,
+        linha.valorPremio,
+      ]),
+    );
+  }
+
   async #prepararJogos(jogos: readonly string[]): Promise<Map<string, ContextoJogo>> {
     const contextos = new Map<string, ContextoJogo>();
     for (const jogo of new Set(jogos)) {
@@ -316,18 +446,7 @@ export class ApostaService {
   async listarAConferir(usuarioId: number): Promise<ApostaAConferir[]> {
     const apostas = await this.#repository.listarNaoConferidas(usuarioId);
     const conferencias = await this.#conferencia.conferir(apostas);
-    const premiacoes = await this.#concursos.listarPremiacoes(
-      apostas.flatMap((aposta) => {
-        const numero = conferencias.get(aposta.id)?.concursoConferido?.numero;
-        return numero === undefined ? [] : [{ jogo: aposta.jogo, numero }];
-      }),
-    );
-    const valores = new Map(
-      premiacoes.map((linha) => [
-        `${linha.jogo}:${String(linha.numero)}:${String(linha.faixa)}`,
-        linha.valorPremio,
-      ]),
-    );
+    const valores = await this.#valoresPremiacao(apostas, conferencias);
 
     return somenteProximaDaTeimosinha(
       apostas.map((aposta) => {
