@@ -1,4 +1,10 @@
-import { IconBulb, IconChartHistogram, IconChecklist, IconDice5 } from '@tabler/icons-react';
+import {
+  IconBulb,
+  IconChartHistogram,
+  IconChecklist,
+  IconDice5,
+  IconHome,
+} from '@tabler/icons-react';
 import type { ReactNode } from 'react';
 import { NavLink } from 'react-router';
 import { paths } from '@/config/paths';
@@ -13,15 +19,17 @@ const classeItem = ({ isActive }: { readonly isActive: boolean }) =>
 
 const Item = ({
   destino,
+  fim = false,
   icone,
   children,
 }: {
   readonly destino: string;
+  readonly fim?: boolean;
   readonly icone: ReactNode;
   readonly children: ReactNode;
 }) => (
   <li>
-    <NavLink to={destino} className={classeItem}>
+    <NavLink to={destino} end={fim} className={classeItem}>
       {icone}
       {children}
     </NavLink>
@@ -30,6 +38,13 @@ const Item = ({
 
 export const MenuPrincipal = () => (
   <ul className="flex gap-0.5 lg:flex-col">
+    <Item
+      destino={paths.inicio}
+      fim
+      icone={<IconHome aria-hidden size="1.375rem" stroke={1.75} className="text-emerald-600" />}
+    >
+      Início
+    </Item>
     <Item
       destino={paths.analises}
       icone={

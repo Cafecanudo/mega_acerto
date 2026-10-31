@@ -1,6 +1,6 @@
 import type { ComponentType } from 'react';
 import { createBrowserRouter, Navigate } from 'react-router';
-import { JOGO_PADRAO, paths } from '@/config/paths';
+import { paths } from '@/config/paths';
 import { ErroRota } from './routes/erro-rota';
 
 type ModuloRota = Promise<{ default: ComponentType }>;
@@ -15,7 +15,7 @@ export const router = createBrowserRouter([
     lazy: carregar(() => import('./routes/raiz')),
     ErrorBoundary: ErroRota,
     children: [
-      { index: true, element: <Navigate to={paths.jogo(JOGO_PADRAO)} replace /> },
+      { index: true, lazy: carregar(() => import('./routes/inicio')) },
       { path: 'analises', lazy: carregar(() => import('./routes/analises')) },
       { path: 'analises/:id', lazy: carregar(() => import('./routes/analise')) },
       { path: 'conferir-apostas', lazy: carregar(() => import('./routes/conferir-apostas')) },

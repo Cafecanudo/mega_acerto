@@ -4,7 +4,7 @@ import { api } from '@/lib/api-client';
 import { calcularFaixaAcertos, type ParametrosBusca } from '@/lib/busca-dezenas';
 import type { Pagina } from '@/types/api';
 import type { ResumoAcertos } from '@/types/conferencia';
-import type { Aposta } from '../types';
+import type { Aposta, TeimosinhaAposta } from '../types';
 
 const CHAVE_APOSTAS = ['apostas'] as const;
 const TAMANHO_PAGINA = 20;
@@ -106,4 +106,45 @@ export const apostasPendentesQuery = (jogo: string) =>
   queryOptions({
     queryKey: [...CHAVE_APOSTAS, 'pendentes', jogo],
     queryFn: () => api.get<ApostaPendente[]>('/apostas/pendentes', { jogo }),
+  });
+
+export interface ApostaProxima {
+  readonly id: number;
+  readonly nome: string | null;
+  readonly dezenas: number[];
+  readonly valor: number | null;
+  readonly teimosinha: TeimosinhaAposta | null;
+}
+
+export interface ApostasDoProximoConcurso {
+  readonly jogo: string;
+  readonly concurso: number;
+  readonly apostas: ApostaProxima[];
+  readonly valorTotal: number | null;
+}
+
+export const apostasProximasQuery = () =>
+  queryOptions({
+    queryKey: [...CHAVE_APOSTAS, 'proximas'],
+    queryFn: () => api.get<ApostasDoProximoConcurso[]>('/apostas/proximas'),
+    select: (grupos) => new Map(grupos.map((grupo) => [grupo.jogo, grupo])),
+  });
+
+export interface BalancoPeriodo {
+  readonly apostas: number;
+  readonly gasto: number;
+  readonly premios: number;
+  readonly incompletas: number;
+}
+
+export interface BalancoApostas {
+  readonly total: BalancoPeriodo;
+  readonly ultimos12Meses: BalancoPeriodo;
+  readonly aguardando: { readonly apostas: number; readonly valor: number };
+}
+
+export const balancoApostasQuery = () =>
+  queryOptions({
+    queryKey: [...CHAVE_APOSTAS, 'balanco'],
+    queryFn: () => api.get<BalancoApostas>('/apostas/balanco'),
   });
