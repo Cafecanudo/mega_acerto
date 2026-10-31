@@ -7,7 +7,9 @@ import {
 } from '@mega/domain';
 import { IconArrowRight, IconClover, IconHome, IconTicket } from '@tabler/icons-react';
 import { useQuery } from '@tanstack/react-query';
+import { lazy, Suspense } from 'react';
 import { Link } from 'react-router';
+import { Carregando } from '@/components/ui/estado';
 import { paths } from '@/config/paths';
 import { AnalisesRecentes } from '@/features/analises/components/analises-recentes';
 import { ApostasProximoConcurso } from '@/features/apostas/components/apostas-proximo-concurso';
@@ -18,6 +20,11 @@ import { DestaqueUltimoConcurso } from '@/features/concursos/components/destaque
 import { estiloCorJogo } from '@/lib/cor-jogo';
 import { formatarData } from '@/lib/formatadores';
 import { useAbrirApostar } from '../apostar-contexto';
+
+const GraficoLinhaDoTempo = lazy(async () => ({
+  default: (await import('@/features/linha-do-tempo/components/grafico-linha-do-tempo'))
+    .GraficoLinhaDoTempo,
+}));
 
 const UM_DIA_MS = 86_400_000;
 
@@ -106,6 +113,9 @@ const PainelJogo = ({
     </header>
     <DestaqueUltimoConcurso regra={regra} />
     <ProximoConcurso regra={regra} />
+    <Suspense fallback={<Carregando mensagem="Carregando linha do tempo…" />}>
+      <GraficoLinhaDoTempo regra={regra} />
+    </Suspense>
   </section>
 );
 
