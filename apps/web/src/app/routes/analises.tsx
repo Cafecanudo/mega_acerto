@@ -39,6 +39,13 @@ const Explicacao = () => (
         milhares de janelas simuladas ao acaso, para separar o que é destaque real do que é efeito
         de seleção.
       </p>
+      <p>
+        A análise de <strong>sorteio específico</strong> mostra o quanto um concurso foi típico:
+        onde cada dezena estava no ranking e há quantos concursos não saía, e como a soma, a
+        paridade e outras características se comparam com todas as combinações possíveis. Ela também
+        propõe um palpite pouco popular, que tem a mesma chance de acerto, mas tende a dividir menos
+        o prêmio.
+      </p>
       <ol className="grid gap-3 md:grid-cols-2 xl:grid-cols-4">
         <Passo titulo="1. Dados">
           O sistema exporta todos os concursos do jogo e as frequências contadas no banco.

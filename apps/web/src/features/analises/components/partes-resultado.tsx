@@ -1,4 +1,5 @@
 import type { ReactNode } from 'react';
+import { percentualNaEscala } from '../escala';
 import type { Analise, ConferenciaSistema } from '../types';
 
 export const Secao = ({
@@ -80,5 +81,25 @@ export const Indicador = ({
   <div className="flex flex-col gap-0.5 rounded-lg border border-slate-200 px-3 py-2 dark:border-slate-800">
     <span className="text-xs text-slate-500 dark:text-slate-400">{rotulo}</span>
     <span className="text-base font-semibold tabular-nums">{valor}</span>
+  </div>
+);
+
+export const PosicaoNoRanking = ({
+  posicao,
+  universo,
+}: {
+  readonly posicao: number;
+  readonly universo: number;
+}) => (
+  <div className="flex items-center gap-2">
+    <div className="relative h-1.5 w-28 rounded-full bg-slate-200 dark:bg-slate-700">
+      <span
+        className="absolute top-1/2 size-3 -translate-x-1/2 -translate-y-1/2 rounded-full bg-jogo ring-2 ring-white dark:ring-slate-900"
+        style={{ left: `${percentualNaEscala(posicao, 1, universo)}%` }}
+      />
+    </div>
+    <span className="text-xs text-slate-500 tabular-nums dark:text-slate-400">
+      {posicao}º de {universo}
+    </span>
   </div>
 );

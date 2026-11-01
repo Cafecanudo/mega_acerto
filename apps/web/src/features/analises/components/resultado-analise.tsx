@@ -24,6 +24,7 @@ import { GraficoFrequencias } from './grafico-frequencias';
 import { Conferencia, Limitacoes, Scripts, Secao } from './partes-resultado';
 import { ResultadoEstrategiaConcluida, type PalpiteAnalise } from './resultado-estrategia';
 import { ResultadoFrequenciaRecenteConcluida } from './resultado-frequencia-recente';
+import { ResultadoSorteioEspecificoConcluido } from './resultado-sorteio-especifico';
 import { SeloStatus } from './selo-status';
 
 interface ResultadoAnaliseProps {
@@ -189,6 +190,16 @@ const ConteudoConcluido = ({
   readonly analise: Analise;
   readonly acoesPalpite: ResultadoAnaliseProps['acoesPalpite'];
 }) => {
+  if (analise.tipo === 'sorteio-especifico') {
+    return analise.resultado ? (
+      <ResultadoSorteioEspecificoConcluido
+        regra={regra}
+        analise={analise}
+        resultado={analise.resultado}
+        acoesPalpite={acoesPalpite}
+      />
+    ) : null;
+  }
   if (analise.tipo === 'frequencia-recente') {
     return analise.resultado ? (
       <ResultadoFrequenciaRecenteConcluida

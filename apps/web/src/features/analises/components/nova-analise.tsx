@@ -2,8 +2,11 @@ import {
   ESFORCO_PADRAO,
   esforcosAnalise,
   JANELAS_FREQUENCIA_RECENTE,
+  JANELAS_SORTEIO_ESPECIFICO,
   MODELO_PADRAO,
   PARAMETROS_FREQUENCIA_RECENTE_PADRAO,
+  PARAMETROS_SORTEIO_ESPECIFICO_PADRAO,
+  type SolicitacaoSorteioEspecifico,
   TAMANHO_TOP_MAXIMO,
   TAMANHO_TOP_MINIMO,
   type ParametrosFrequenciaRecente,
@@ -185,12 +188,60 @@ const CamposFrequenciaRecente = ({
   </div>
 );
 
+const CamposSorteioEspecifico = ({
+  parametros,
+  aoAlterar,
+}: {
+  readonly parametros: SolicitacaoSorteioEspecifico;
+  readonly aoAlterar: (parametros: SolicitacaoSorteioEspecifico) => void;
+}) => (
+  <div className="grid grid-cols-2 gap-3 rounded-lg border border-slate-200 p-3 dark:border-slate-800">
+    <Campo rotulo="Concurso">
+      <input
+        type="number"
+        min={1}
+        value={parametros.concurso ?? ''}
+        placeholder="Último"
+        onChange={(evento) => {
+          const valor = Number.parseInt(evento.target.value, 10);
+          aoAlterar({
+            ...parametros,
+            concurso: Number.isInteger(valor) && valor > 0 ? valor : null,
+          });
+        }}
+        className={`${classeSelect} tabular-nums`}
+      />
+    </Campo>
+    <Campo rotulo="Janela recente">
+      <select
+        value={parametros.janela}
+        onChange={(evento) => {
+          aoAlterar({ ...parametros, janela: Number(evento.target.value) });
+        }}
+        className={classeSelect}
+      >
+        {JANELAS_SORTEIO_ESPECIFICO.map((janela) => (
+          <option key={janela} value={janela}>
+            {janela} anteriores
+          </option>
+        ))}
+      </select>
+    </Campo>
+  </div>
+);
+
+interface ParametrosFormulario {
+  readonly estrategia: ParametrosEstrategia;
+  readonly frequenciaRecente: ParametrosFrequenciaRecente;
+  readonly sorteioEspecifico: SolicitacaoSorteioEspecifico;
+}
+
 const parametrosDoTipo = (
   tipo: TipoAnalise,
-  estrategia: ParametrosEstrategia,
-  frequenciaRecente: ParametrosFrequenciaRecente,
+  { estrategia, frequenciaRecente, sorteioEspecifico }: ParametrosFormulario,
 ): SolicitacaoAnalise['parametros'] => {
   if (tipo === 'frequencia-recente') return frequenciaRecente;
+  if (tipo === 'sorteio-especifico') return sorteioEspecifico;
   if (tipo !== 'estrategia') return null;
   return {
     ...estrategia,
@@ -208,12 +259,15 @@ export const NovaAnalise = ({ aoSolicitar }: NovaAnaliseProps) => {
   const [frequenciaRecente, setFrequenciaRecente] = useState<ParametrosFrequenciaRecente>(
     PARAMETROS_FREQUENCIA_RECENTE_PADRAO,
   );
+  const [sorteioEspecifico, setSorteioEspecifico] = useState<SolicitacaoSorteioEspecifico>(
+    PARAMETROS_SORTEIO_ESPECIFICO_PADRAO,
+  );
   const solicitar = useSolicitarAnalise();
   const definicao = obterTipoAnalise(tipo);
 
   const enviar = (evento: SyntheticEvent) => {
     evento.preventDefault();
-    const parametros = parametrosDoTipo(tipo, estrategia, frequenciaRecente);
+    const parametros = parametrosDoTipo(tipo, { estrategia, frequenciaRecente, sorteioEspecifico });
     solicitar.mutate(
       { jogo, tipo, modelo, esforco, forcar, parametros },
       { onSuccess: aoSolicitar },
@@ -266,6 +320,9 @@ export const NovaAnalise = ({ aoSolicitar }: NovaAnaliseProps) => {
       )}
       {tipo === 'frequencia-recente' && (
         <CamposFrequenciaRecente parametros={frequenciaRecente} aoAlterar={setFrequenciaRecente} />
+      )}
+      {tipo === 'sorteio-especifico' && (
+        <CamposSorteioEspecifico parametros={sorteioEspecifico} aoAlterar={setSorteioEspecifico} />
       )}
       <div className="grid grid-cols-2 gap-3">
         <Campo rotulo="Modelo">

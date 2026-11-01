@@ -7,7 +7,15 @@ import { paths } from '@/config/paths';
 import { formatarDecimal, formatarInteiro, formatarPValor } from '@/lib/formatadores';
 import { useSolicitarAnalise } from '../api/analises';
 import type { AnaliseFrequenciaRecente } from '../types';
-import { Conferencia, Indicador, Limitacoes, Scripts, Secao } from './partes-resultado';
+import { percentualNaEscala } from '../escala';
+import {
+  Conferencia,
+  Indicador,
+  Limitacoes,
+  PosicaoNoRanking,
+  Scripts,
+  Secao,
+} from './partes-resultado';
 
 type DezenaTop = ResultadoFrequenciaRecente['top'][number];
 type EstatisticaSimulada = ResultadoFrequenciaRecente['simulacao']['estatisticas'][number];
@@ -19,29 +27,6 @@ interface ResultadoFrequenciaRecenteProps {
 }
 
 const FOLGA_ESCALA = 0.08;
-
-const percentualNaEscala = (valor: number, minimo: number, maximo: number): number =>
-  maximo === minimo ? 50 : ((valor - minimo) / (maximo - minimo)) * 100;
-
-const PosicaoHistorica = ({
-  posicao,
-  universo,
-}: {
-  readonly posicao: number;
-  readonly universo: number;
-}) => (
-  <div className="flex items-center gap-2">
-    <div className="relative h-1.5 w-28 rounded-full bg-slate-200 dark:bg-slate-700">
-      <span
-        className="absolute top-1/2 size-3 -translate-x-1/2 -translate-y-1/2 rounded-full bg-jogo ring-2 ring-white dark:ring-slate-900"
-        style={{ left: `${percentualNaEscala(posicao, 1, universo)}%` }}
-      />
-    </div>
-    <span className="text-xs text-slate-500 tabular-nums dark:text-slate-400">
-      {posicao}º de {universo}
-    </span>
-  </div>
-);
 
 const BarraFrequencia = ({
   frequencia,
@@ -114,7 +99,7 @@ const TabelaTop = ({
                 {formatarDecimal(item.desvioPadronizado, 2)} σ
               </td>
               <td className={celula}>
-                <PosicaoHistorica posicao={item.posicaoHistorica} universo={universo} />
+                <PosicaoNoRanking posicao={item.posicaoHistorica} universo={universo} />
               </td>
               <td className={`${celula} text-right tabular-nums`}>
                 {formatarInteiro(item.frequenciaHistorica)}
