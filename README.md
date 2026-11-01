@@ -2,6 +2,8 @@
 
 Sistema local de análise das loterias da Caixa: histórico oficial de sorteios, palpites, montagem de jogos, controle de apostas e análises estatísticas feitas pelo Claude. Uso exclusivamente local, sem publicação.
 
+O objetivo, o fluxo e as telas estão em [Como funciona e objetivo](#como-funciona-e-objetivo), no fim deste arquivo.
+
 ## Ambientes
 
 O projeto tem dois ambientes Docker independentes, cada um com seu próprio PostgreSQL e volume. Nada do desenvolvimento alcança os dados de produção.
@@ -171,3 +173,107 @@ Dentro dos containers, `DATABASE_URL` e `PORT` são fixados pelo Compose; os val
 - **Front de desenvolvimento não acha a API:** confira `PORT=3100` no `.env`; o Vite encaminha `/api` para `localhost:3100`.
 - **Análise falha com "CLAUDE_CODE_OAUTH_TOKEN não configurado":** siga a seção de análises e recrie o worker.
 - **Valores das apostas aparecem como "—":** cadastre o preço em **Configurações › Valores**.
+
+## Como funciona e objetivo
+
+### Objetivo
+
+Maximizar o valor esperado das apostas e validar estratégias com backtest, sem prometer previsão. O projeto parte da premissa de que os sorteios são independentes e uniformes: nenhuma escolha de dezenas aumenta a chance de acerto, e toda análise compara o resultado com o que o puro acaso produziria.
+
+Dentro dessa premissa, só há duas alavancas reais:
+
+1. **Custo**: saber quanto se gasta, quanto volta em prêmios e quanto cada estratégia custa, com o balanço de gastos × prêmios e o controle de apostas.
+2. **Divisão do prêmio**: combinações pouco populares têm a mesma chance de sair, mas tendem a dividir menos o prêmio. É o critério do palpite da análise de sorteio específico.
+
+Todo o resto (frequências, atrasos, estratégias) existe para ser medido contra o acaso, e não para ser seguido às cegas.
+
+### Fluxo
+
+```mermaid
+flowchart LR
+  caixa[API da Caixa] -->|importação com throttling| banco[(PostgreSQL)]
+  banco --> app[API e interface]
+  app -->|pedido de análise| fila[Tabela analise]
+  fila --> worker[ai-worker]
+  worker -->|dataset exportado| claude[Claude Code headless<br/>Python]
+  claude -->|JSON no schema| worker
+  worker -->|conferência com SQL| banco
+```
+
+1. **Coleta**: o `app` importa o histórico oficial da API da Caixa, grava o payload bruto e verifica novos concursos a cada 30 minutos.
+2. **Organização**: concursos, apostas e favoritos ficam no PostgreSQL. Conferência de acertos, prêmios e frequências são agregações SQL.
+3. **Análise**: o pedido entra na tabela `analise`. O `ai-worker` exporta o dataset para uma pasta isolada e executa o Claude Code, que calcula tudo em Python e responde num JSON com schema. O sistema valida o schema e confere as contagens do Claude contra o SQL antes de mostrar o resultado.
+4. **Decisão**: palpites, simulador, montagem de jogos, apostas e balanço usam esses dados na interface.
+
+O projeto não implementa cálculo estatístico: ele coleta, organiza, agrega via SQL e valida o que o Claude calcula.
+
+### Tipos de análise
+
+| Tipo                       | Pergunta que responde                                                                     |
+| -------------------------- | ----------------------------------------------------------------------------------------- |
+| Aleatoriedade e frequência | O histórico é compatível com sorteios uniformes e independentes?                          |
+| Estratégia de palpite      | Uma regra de escolha de dezenas teria acertado mais que apostas aleatórias no passado?    |
+| Frequência recente         | O top N das dezenas mais sorteadas numa janela recente é diferente do que o acaso produz? |
+| Sorteio específico         | O quanto um concurso foi típico, e qual palpite tende a dividir menos o prêmio?           |
+
+### Telas
+
+As imagens abaixo foram geradas no ambiente de desenvolvimento, com uma conta de teste e dados de exemplo.
+
+#### Início
+
+![Página Início](docs/telas/01-inicio.jpg)
+
+Resumo por jogo: último sorteio, prêmio estimado do próximo concurso e as apostas já feitas para ele, com o selo "aguardando resultado" quando o sorteio passou e ainda não foi importado. O botão Apostar abre o diálogo já no jogo.
+
+![Linha do tempo de acertos](docs/telas/02-linha-do-tempo.jpg)
+
+Linha do tempo de acertos por concurso: em verde, o melhor acerto das minhas apostas; em azul tracejado, quanto os favoritos não apostados teriam acertado. A linha pontilhada é a média esperada ao acaso (0,6 para uma aposta simples) e o marcador cheio indica faixa premiada. Abaixo ficam o resumo do que há para conferir, as análises recentes e o balanço de gastos × prêmios.
+
+#### Histórico e concurso
+
+![Histórico de sorteios](docs/telas/03-historico.jpg)
+
+Histórico completo do jogo, com busca por dezenas (inclusive combinações parciais), status da sincronização com a Caixa e paginação.
+
+![Detalhe do concurso](docs/telas/04-concurso.jpg)
+
+Detalhe de um concurso: dezenas em ordem de sorteio e de extração, premiação e local. As dezenas acertadas pelas minhas apostas ficam verdes. O botão "Analisar este sorteio" pede ao Claude a análise de sorteio específico.
+
+#### Palpites e simulador
+
+![Palpites](docs/telas/05-palpites.jpg)
+
+Ranking das dezenas por frequência num período, com atalhos de top 6, 10 e 15. A seleção pode virar favorito, ir para o Apostar ou alimentar o Montar jogos, que gera combinações manuais, todas as combinações ou um sorteio delas.
+
+![Simulador](docs/telas/06-simulador.jpg)
+
+Simulador de sorteios no navegador, sem gravar nada. O modo Ao vivo tira uma bola por vez do globo; o Rápido sorteia em lote. Dezenas que coincidem com apostas pendentes ficam verdes e com favoritos, azuis. "Sortear até ganhar" repete sorteios até a aposta ou o favorito atingir a faixa escolhida e mostra quantas tentativas e quanto dinheiro isso custaria.
+
+#### Apostas
+
+![Apostar](docs/telas/07-apostar.jpg)
+
+Diálogo Apostar: monta a lista pela grade ou pelos favoritos, com Teimosinha por item ou para todos, e mostra o total a pagar e o custo por semana e por mês antes de efetivar.
+
+![Conferir apostas](docs/telas/08-conferir-apostas.jpg)
+
+Conferência: apostas sorteadas aparecem com os acertos e o prêmio calculado pelo valor divulgado pela Caixa; as que aguardam sorteio ficam bloqueadas. Cada Teimosinha mostra só a próxima aposta pendente.
+
+![Favoritos](docs/telas/09-favoritos.jpg)
+
+Favoritos: jogos guardados para usar quando quiser, com a conferência contra o último concurso e quantas vezes cada um teria feito sena, quina ou quadra no histórico.
+
+#### Análises com o Claude
+
+![Análises](docs/telas/10-analises.jpg)
+
+Pedido de análise: escolha do jogo, do tipo, dos parâmetros do tipo, do modelo e do esforço. Resultados com os mesmos parâmetros e o mesmo último concurso são reaproveitados, a menos que se peça para executar de novo.
+
+![Conclusão da análise](docs/telas/11-analise-conclusao.jpg)
+
+Resultado: conclusão em linguagem simples, separando o que foi medido, a interpretação e as limitações, e a conferência do sistema contra os agregados SQL.
+
+![Frequências e testes](docs/telas/12-analise-frequencias.jpg)
+
+Frequência de cada dezena contra o esperado (barras em âmbar fora de ±1,96 desvio-padrão) e a tabela de testes estatísticos com p-valor, correção para múltiplas comparações e tamanho de efeito. Os scripts Python executados pelo Claude ficam disponíveis no fim da página.
