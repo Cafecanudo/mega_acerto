@@ -20,7 +20,7 @@ const Resultado = ({ aposta }: { readonly aposta: Aposta }) => {
   const concurso = aposta.conferencia.concursoConferido;
   if (!concurso) {
     return (
-      <span className="rounded-full bg-sky-100 px-2 py-0.5 text-xs font-semibold text-sky-800 dark:bg-sky-500/15 dark:text-sky-300">
+      <span className="rounded-full bg-sky-100 px-2 py-0.5 text-xs font-semibold whitespace-nowrap text-sky-800 dark:bg-sky-500/15 dark:text-sky-300">
         Aguardando sorteio
       </span>
     );
@@ -47,7 +47,7 @@ const Historico = ({ aposta }: { readonly aposta: Aposta }) => (
     {aposta.conferencia.historico.map((faixa) => (
       <span
         key={faixa.acertos}
-        className={`rounded-full px-2 py-0.5 font-medium tabular-nums ${
+        className={`rounded-full px-2 py-0.5 font-medium whitespace-nowrap tabular-nums ${
           faixa.concursos > 0
             ? 'bg-jogo/15 text-slate-900 dark:text-slate-100'
             : 'bg-slate-100 text-slate-500 dark:bg-slate-800 dark:text-slate-400'
@@ -121,13 +121,15 @@ export const TabelaApostas = ({
                 </div>
               </td>
               <td className={celula}>
-                <LinhaDezenas
-                  regra={regra}
-                  dezenas={aposta.dezenas}
-                  destacadas={destacadas}
-                  acertadas={new Set(aposta.conferencia.concursoConferido?.dezenasAcertadas)}
-                  tamanho="sm"
-                />
+                <div className="min-w-56">
+                  <LinhaDezenas
+                    regra={regra}
+                    dezenas={aposta.dezenas}
+                    destacadas={destacadas}
+                    acertadas={new Set(aposta.conferencia.concursoConferido?.dezenasAcertadas)}
+                    tamanho="sm"
+                  />
+                </div>
               </td>
               {exibirCoincidencias && (
                 <td className={`${celula} font-semibold tabular-nums`}>

@@ -80,7 +80,7 @@ const Analises = () => {
     >
       <div className="flex flex-col gap-3 lg:min-h-0 lg:flex-1 lg:overflow-auto">
         <Explicacao />
-        <div className="grid gap-3 xl:grid-cols-[22rem_minmax(0,1fr)]">
+        <div className="grid grid-cols-[minmax(0,1fr)] gap-3 xl:grid-cols-[22rem_minmax(0,1fr)]">
           <div className="xl:self-start">
             <NovaAnalise
               aoSolicitar={(solicitada) => {
