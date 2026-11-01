@@ -20,6 +20,13 @@ export const tiposAnalise = [
       'Mostra as dezenas mais sorteadas nos últimos concursos, onde elas ficam na frequência histórica e quanto desse destaque o acaso explica.',
     versaoPrompt: 1,
   },
+  {
+    codigo: 'sorteio-especifico',
+    nome: 'Sorteio específico',
+    descricao:
+      'Mostra o quanto um concurso foi típico (posição e atraso de cada dezena antes do sorteio, soma, paridade e outras características) e propõe um palpite pouco popular.',
+    versaoPrompt: 1,
+  },
 ] as const;
 
 export type TipoAnalise = (typeof tiposAnalise)[number]['codigo'];
@@ -67,3 +74,5 @@ export const nomeEsforco = (codigo: string): string =>
 
 export * from './estrategia/catalogo.ts';
 export * from './frequencia-recente/catalogo.ts';
+export * from './sorteio-especifico/catalogo.ts';
+export * from './sorteio-especifico/filtros-popularidade.ts';

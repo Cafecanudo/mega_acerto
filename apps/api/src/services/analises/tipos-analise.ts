@@ -2,22 +2,28 @@ import {
   montarPromptAleatoriedade,
   montarPromptEstrategia,
   montarPromptFrequenciaRecente,
+  montarPromptSorteioEspecifico,
   ResultadoAleatoriedadeSchema,
   ResultadoEstrategiaSchema,
   ResultadoFrequenciaRecenteSchema,
+  ResultadoSorteioEspecificoSchema,
   type ContextoPrompt,
   type TipoAnalise,
 } from '@mega/analises';
 import type { RegraJogo } from '@mega/domain';
 import type { TSchema } from 'typebox';
 import type { Analise, ConferenciaSistema } from '../../data/repositories/analise-repository.ts';
-import type { DatasetExportado } from './exportador-dataset.ts';
+import type { DatasetExportado, RecorteDataset } from './exportador-dataset.ts';
 import { conferirComSistema, validarEstrutura } from './validacao-aleatoriedade.ts';
 import { lerParametrosEstrategia, validarEstrategia } from './validacao-estrategia.ts';
 import {
   lerParametrosFrequenciaRecente,
   validarFrequenciaRecente,
 } from './validacao-frequencia-recente.ts';
+import {
+  lerParametrosSorteioEspecifico,
+  validarSorteioEspecifico,
+} from './validacao-sorteio-especifico.ts';
 
 export interface ResultadoValidado {
   readonly resultado: unknown;
@@ -26,7 +32,7 @@ export interface ResultadoValidado {
 
 export interface ExecucaoTipoAnalise {
   readonly schema: TSchema;
-  readonly janelaDataset: (analise: Analise) => number | null;
+  readonly recorte: (analise: Analise) => RecorteDataset | null;
   readonly montarPrompt: (contexto: ContextoPrompt, analise: Analise) => string;
   readonly validar: (
     regra: RegraJogo,
@@ -36,12 +42,12 @@ export interface ExecucaoTipoAnalise {
   ) => ResultadoValidado;
 }
 
-const semJanela = (): null => null;
+const semRecorte = (): null => null;
 
 export const execucoesPorTipo: Record<TipoAnalise, ExecucaoTipoAnalise> = {
   aleatoriedade: {
     schema: ResultadoAleatoriedadeSchema,
-    janelaDataset: semJanela,
+    recorte: semRecorte,
     montarPrompt: (contexto) => montarPromptAleatoriedade(contexto),
     validar: (regra, dataset, _analise, saida) => {
       const resultado = validarEstrutura(saida);
@@ -50,7 +56,7 @@ export const execucoesPorTipo: Record<TipoAnalise, ExecucaoTipoAnalise> = {
   },
   estrategia: {
     schema: ResultadoEstrategiaSchema,
-    janelaDataset: semJanela,
+    recorte: semRecorte,
     montarPrompt: (contexto, analise) =>
       montarPromptEstrategia(contexto, lerParametrosEstrategia(analise.parametros)),
     validar: (regra, dataset, analise, saida) =>
@@ -58,10 +64,24 @@ export const execucoesPorTipo: Record<TipoAnalise, ExecucaoTipoAnalise> = {
   },
   'frequencia-recente': {
     schema: ResultadoFrequenciaRecenteSchema,
-    janelaDataset: (analise) => lerParametrosFrequenciaRecente(analise.parametros).janela,
+    recorte: (analise) => ({
+      ateConcurso: analise.ultimoConcurso,
+      janela: lerParametrosFrequenciaRecente(analise.parametros).janela,
+    }),
     montarPrompt: (contexto, analise) =>
       montarPromptFrequenciaRecente(contexto, lerParametrosFrequenciaRecente(analise.parametros)),
     validar: (regra, dataset, analise, saida) =>
       validarFrequenciaRecente(regra, dataset, analise.ultimoConcurso, analise.parametros, saida),
+  },
+  'sorteio-especifico': {
+    schema: ResultadoSorteioEspecificoSchema,
+    recorte: (analise) => {
+      const parametros = lerParametrosSorteioEspecifico(analise.parametros);
+      return { ateConcurso: parametros.concurso - 1, janela: parametros.janela };
+    },
+    montarPrompt: (contexto, analise) =>
+      montarPromptSorteioEspecifico(contexto, lerParametrosSorteioEspecifico(analise.parametros)),
+    validar: (regra, dataset, analise, saida) =>
+      validarSorteioEspecifico(regra, dataset, analise.ultimoConcurso, analise.parametros, saida),
   },
 };

@@ -8,18 +8,13 @@ import type { RegraJogo } from '@mega/domain';
 import type { ConferenciaSistema } from '../../data/repositories/analise-repository.ts';
 import type { AgregadoDezena } from '../../data/repositories/dataset-repository.ts';
 import type { DatasetExportado } from './exportador-dataset.ts';
+import { posicaoNoRanking, tamanhoUniverso } from './ranking.ts';
 import { ErroValidacaoResultado, validarContraSchema } from './validacao-schema.ts';
 
 const TOLERANCIA_ESPERADO = 0.01;
 
 export const lerParametrosFrequenciaRecente = (parametros: unknown): ParametrosFrequenciaRecente =>
   validarContraSchema(ParametrosFrequenciaRecenteSchema, parametros, 'Parâmetros da análise');
-
-const tamanhoUniverso = (regra: RegraJogo): number =>
-  regra.universo.maximo - regra.universo.minimo + 1;
-
-const posicao = (agregados: readonly AgregadoDezena[], frequencia: number): number =>
-  1 + agregados.filter((agregado) => agregado.frequencia > frequencia).length;
 
 const validarTop = (
   regra: RegraJogo,
@@ -108,10 +103,10 @@ const conferirItensTop = (
         `Top ${item.dezena}: ${item.frequenciaHistorica} no histórico, SQL ${frequenciaHistorica}`,
       );
     }
-    if (item.posicaoJanela !== posicao(janela, frequenciaJanela)) {
+    if (item.posicaoJanela !== posicaoNoRanking(janela, frequenciaJanela)) {
       divergencias.push(`Top ${item.dezena}: posição na janela ${item.posicaoJanela} incorreta`);
     }
-    if (item.posicaoHistorica !== posicao(dataset.agregados, frequenciaHistorica)) {
+    if (item.posicaoHistorica !== posicaoNoRanking(dataset.agregados, frequenciaHistorica)) {
       divergencias.push(`Top ${item.dezena}: posição histórica ${item.posicaoHistorica} incorreta`);
     }
     return divergencias;

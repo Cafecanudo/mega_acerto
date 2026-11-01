@@ -3,6 +3,8 @@ import {
   type EsforcoAnalise,
   type ParametrosEstrategia,
   type ParametrosFrequenciaRecente,
+  type ParametrosSorteioEspecifico,
+  type SolicitacaoSorteioEspecifico,
   type ModeloAnalise,
   type TipoAnalise,
 } from '@mega/analises';
@@ -15,14 +17,18 @@ import type {
 import type { ConcursoLeituraRepository } from '../data/repositories/concurso-leitura-repository.ts';
 import { entradaInvalida, naoEncontrado } from '../shared/erros.ts';
 
-type ParametrosAnalise = ParametrosEstrategia | ParametrosFrequenciaRecente;
+type ParametrosAnalise =
+  ParametrosEstrategia | ParametrosFrequenciaRecente | ParametrosSorteioEspecifico;
+
+type ParametrosSolicitados =
+  ParametrosEstrategia | ParametrosFrequenciaRecente | SolicitacaoSorteioEspecifico;
 
 export interface SolicitacaoAnalise {
   readonly tipo: TipoAnalise;
   readonly modelo: ModeloAnalise;
   readonly esforco: EsforcoAnalise;
   readonly forcar: boolean;
-  readonly parametros?: ParametrosAnalise | null | undefined;
+  readonly parametros?: ParametrosSolicitados | null | undefined;
 }
 
 export interface AnaliseSolicitada {
@@ -38,16 +44,16 @@ interface ContextoParametros {
 const LIMITE_LISTAGEM = 50;
 
 const isParametrosEstrategia = (
-  parametros: ParametrosAnalise | null | undefined,
+  parametros: ParametrosSolicitados | null | undefined,
 ): parametros is ParametrosEstrategia => !!parametros && 'estrategia' in parametros;
 
 const isParametrosFrequenciaRecente = (
-  parametros: ParametrosAnalise | null | undefined,
+  parametros: ParametrosSolicitados | null | undefined,
 ): parametros is ParametrosFrequenciaRecente => !!parametros && 'tamanhoTop' in parametros;
 
 const prepararFrequenciaRecente = (
   { ultimoConcurso }: ContextoParametros,
-  parametros: ParametrosAnalise | null | undefined,
+  parametros: ParametrosSolicitados | null | undefined,
 ): ParametrosFrequenciaRecente => {
   if (!isParametrosFrequenciaRecente(parametros)) {
     throw entradaInvalida('Informe a janela e o tamanho do top');
@@ -58,9 +64,32 @@ const prepararFrequenciaRecente = (
   return { janela: parametros.janela, tamanhoTop: parametros.tamanhoTop };
 };
 
+const isSolicitacaoSorteioEspecifico = (
+  parametros: ParametrosSolicitados | null | undefined,
+): parametros is SolicitacaoSorteioEspecifico => !!parametros && 'concurso' in parametros;
+
+const prepararSorteioEspecifico = (
+  { ultimoConcurso }: ContextoParametros,
+  parametros: ParametrosSolicitados | null | undefined,
+): ParametrosSorteioEspecifico => {
+  if (!isSolicitacaoSorteioEspecifico(parametros)) {
+    throw entradaInvalida('Informe o concurso e a janela');
+  }
+  const concurso = parametros.concurso ?? ultimoConcurso;
+  if (concurso > ultimoConcurso) {
+    throw entradaInvalida(`O concurso ${concurso} ainda não foi importado`);
+  }
+  if (concurso <= parametros.janela) {
+    throw entradaInvalida(
+      `O concurso precisa ter pelo menos ${parametros.janela} concursos antes dele`,
+    );
+  }
+  return { concurso, janela: parametros.janela };
+};
+
 const prepararEstrategia = (
   { jogo }: ContextoParametros,
-  parametros: ParametrosAnalise | null | undefined,
+  parametros: ParametrosSolicitados | null | undefined,
 ): ParametrosEstrategia => {
   if (!isParametrosEstrategia(parametros)) {
     throw entradaInvalida('Informe os parâmetros da estratégia');
@@ -88,12 +117,13 @@ const preparadores: Record<
   TipoAnalise,
   (
     contexto: ContextoParametros,
-    parametros: ParametrosAnalise | null | undefined,
+    parametros: ParametrosSolicitados | null | undefined,
   ) => ParametrosAnalise | null
 > = {
   aleatoriedade: () => null,
   estrategia: prepararEstrategia,
   'frequencia-recente': prepararFrequenciaRecente,
+  'sorteio-especifico': prepararSorteioEspecifico,
 };
 
 export class AnaliseService {

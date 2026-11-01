@@ -11,3 +11,10 @@ export { montarPromptFrequenciaRecente } from './frequencia-recente/prompt.ts';
 export { ParametrosFrequenciaRecenteSchema } from './frequencia-recente/parametros.ts';
 export type { ResultadoFrequenciaRecente } from './frequencia-recente/resultado.ts';
 export { ResultadoFrequenciaRecenteSchema } from './frequencia-recente/resultado.ts';
+export { montarPromptSorteioEspecifico } from './sorteio-especifico/prompt.ts';
+export {
+  ParametrosSorteioEspecificoSchema,
+  SolicitacaoSorteioEspecificoSchema,
+} from './sorteio-especifico/parametros.ts';
+export type { ResultadoSorteioEspecifico } from './sorteio-especifico/resultado.ts';
+export { ResultadoSorteioEspecificoSchema } from './sorteio-especifico/resultado.ts';
