@@ -37,6 +37,7 @@ Observações de dados para as próximas fases:
 - [x] Persistência da análise: versão do prompt, modelo, esforço, duração, custo equivalente, scripts gerados, resultado
 - [x] Seletor de modelo e esforço na UI (Opus 5.5 e esforço alto como padrão) e tela de resultado com gráfico
 - [x] Template `frequencia-recente` v1 (31/10/2026): top N de uma janela recente com posição no ranking histórico, faixa do acaso por simulação, persistência entre janelas e backtest walk-forward; conferido contra agregados SQL da janela (`agregados_janela.json`). Execução real com o Claude ainda não feita
+- [x] Template `sorteio-especifico` v1 (31/10/2026): perfil de um concurso antes do sorteio (posição, atraso e chance do atraso de cada dezena; soma, paridade e outras características em percentil entre todas as combinações) e palpite pouco popular conferido contra `filtrosPopularidade`; atalho na página do concurso. Execução real com o Claude ainda não feita
 - [x] Teste ponta a ponta com o Opus 5.5 (29/10/2026: 5 min 24 s, custo equivalente US$ 1,07, conferência com SQL sem divergências)
 
 ## Gestão de apostas — concluída
@@ -76,7 +77,7 @@ Dados separados por usuário.
 - [x] Teimosinha de 1 a 12 concursos no Apostar, com uma aposta gravada por concurso e etiqueta nas listas
 - [x] Simulador: sorteios aleatórios no navegador, sem gravação. Modo Ao vivo com globo animado (uma bola por intervalo, até 100 sorteios) e modo Rápido (até 10 mil por clique, 100 mil na lista); dezenas que coincidem com apostas pendentes ficam verdes e com favoritos, azuis, com filtro de sorteios premiados; "Sortear até ganhar" com busca em Web Worker e diálogo de match
 - [x] Página Início (`/`): por jogo, último sorteio e minhas apostas do próximo concurso (selo "aguardando resultado" quando a ingestão está atrasada); resumo do que há a conferir, análises recentes e balanço de gasto × prêmios (12 meses e todo o período); linha do tempo de acertos (apostas × favoritos não apostados × acaso) em 20, 50 ou 100 concursos
-- [ ] Filtro de popularidade (evitar combinações muito jogadas)
+- [ ] Filtro de popularidade (evitar combinações muito jogadas): primeira versão heurística no palpite do `sorteio-especifico` (`filtrosPopularidade`); falta aplicar ao Montar jogos e ao Apostar
 - [ ] Fechamentos (desdobramentos com garantia)
 
 ## Fase 3: Backtest e valor esperado
